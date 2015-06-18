@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Unitcraft</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="uikit/css/uikit.min.css" />
+    <link rel="shortcut icon" href="favicon.png" type="image/png"/>
+    <script src="jquery-2.1.3.min.js"></script>
+    <script src="uikit/js/uikit.min.js"></script>
+    <script src="kefir.min.js"></script>
+    <script src="ramda.min.js"></script>
+    <script src="util.js"></script>
+    <script src="redraw.js"></script>
+    <script src="server.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<canvas id="canvasGrid"></canvas>
+<canvas id="canvasAkts"></canvas>
+<canvas id="canvasToolbar"></canvas>
+<canvas id="canvasOpter"></canvas>
+
+<div id="modalLogin" class="uk-modal">
+    <div class="uk-modal-dialog">
+        <fieldset data-uk-margin>
+            <h3>Welcome to Unitcraft: Tactical Duel Game</h3>
+            <input id="txtKey" type="password" placeholder="Enter you key">
+            <button id="btnLogin" class="uk-button">Login</button><br/>
+            <button id="btnReg" class="uk-button">I am new user, give me a key</button>
+            <span id="spanKey"></span>
+        </fieldset>
+    </div>
+</div>
+
+<div id="modalFatal" class="uk-modal">
+    <div class="uk-modal-dialog">
+        <h3 id="spanFatal"></h3>
+        <button id="btnRefresh" class="uk-button">Refresh page</button>
+    </div>
+</div>
+</html>
