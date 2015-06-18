@@ -11,7 +11,7 @@ class CdxCatapult(r:Resource): Cdx(r){
     val tile:Int = r.tile(name)
     val tlsAkt = r.tlsAkt(name)
 
-    override fun initRules(land: Land,g: Game) = rules{
+    override fun createRules(land: Land,g: Game) = rules{
         val flats = Grid<Boolean>()
         flats[land.pgser.pg(3, 3)] = true
 

@@ -54,7 +54,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
     }
 
     fun refresh(id: Id) {
-        sendGame(false)
+        sendGame(false,id)
     }
 
     fun land(id: Id) {
@@ -84,12 +84,12 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
         }
     }
 
-    private fun sendGame(isErr: Boolean = false) {
-        for ((id,side) in sides) {
+    private fun sendGame(isErr: Boolean,idOnly:Id?=null) {
+        for ((id,side) in sides) if(idOnly==null || id==idOnly){
             val json = state.json[side]!!
             json["version"] = cmds.size()
             json["bet"] = bet
-            if (isErr) json["err"] = true
+            if (isErr) json["err"] = true else json.remove("err")
             send(id, "g" + json)
         }
     }

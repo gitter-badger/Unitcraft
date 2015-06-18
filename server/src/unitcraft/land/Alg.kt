@@ -10,7 +10,7 @@ import unitcraft.land.Random
 
 object Algs {
     fun prod(land: Land) {
-        disbnTimes.rnd(land.r).times {
+        repeat(disbnTimes.rnd(land.r)) {
             land.(disbnAlg.rnd(land.r).f)()}
 //            land.(disbnAlgLate.rnd(land.r).f)()
         blur(land)
@@ -39,7 +39,7 @@ object Algs {
             val nexts = last.near.filter{it !in river && it.near.filter{it in river}.size()==1 && it.neardiag.filter{it in river}.size()<=1 && (river.size()>6 || !isEdge(it))}
             if (nexts.isEmpty() || nexts.last().place==water){break}
             river.add(selRnd(nexts))
-            3.times{wide.add(selRnd(selRnd(river).near))}
+            repeat(3){wide.add(selRnd(selRnd(river).near))}
             //            wide.add(selRnd(selRnd(river).near))
         }
         for (pg in river) pg(place)
@@ -92,7 +92,7 @@ object Algs {
         ArrayList<Pg>().init{
             add(start)
             add(selRnd(start.near))
-            area.times{ add(pgRnd { it !in this && it.near8.filter{it in this}.size()>1})}
+            repeat(area){ add(pgRnd { it !in this && it.near8.filter{it in this}.size()>1})}
             addAll(pgs.filter{it.near8.filter{it in this}.size()==7})
         }.forEach{it(mount)}
     }
@@ -174,7 +174,7 @@ object Algs {
         ArrayList<Pg>().init{
             add(start)
             add(selRnd(start.near))
-            area.times{ add(pgRnd { it !in this && it.near8.filter{it in this}.size()>1})}
+            repeat(area){ add(pgRnd { it !in this && it.near8.filter{it in this}.size()>1})}
             addAll(pgs.filter{it.near8.filter{it in this}.size()==7})
         }.forEach{ pg ->
             //val plcs = Land.places.filter{it !in pg.near.map{it.place}}
@@ -242,8 +242,8 @@ object Algs {
             riverMount
     )
 
-    private val disbnAlg = Disbn(*all.map { it to it.chance }.copyToArray())
-    private val disbnAlgLate = Disbn(*allLate.map { it to it.chance }.copyToArray())
+    private val disbnAlg = Disbn(*all.map { it to it.chance }.toTypedArray())
+    private val disbnAlgLate = Disbn(*allLate.map { it to it.chance }.toTypedArray())
 }
 
 class Alg(val chance: Int, val f: Land.() -> Unit)

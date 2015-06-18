@@ -26,7 +26,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     val rulesEdit: List<RuleEdit>?
 
     init {
-        val rules = cdxs.flatMap { it.initRules(land, this) }
+        val rules = cdxs.flatMap { it.createRules(land, this) }
         rulesDraw = filterRules<RuleDraw>(rules)
         rulesSpot = filterRules<RuleSpot>(rules)
         rulesVoin = filterRules<RuleVoin>(rules)

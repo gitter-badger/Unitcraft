@@ -5,8 +5,8 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.ArrayList
 
-abstract class Cdx(r: Resource) {
-    abstract fun initRules(land: Land, g: Game): List<Rule>
+abstract class Cdx(val r: Resource) {
+    abstract fun createRules(land: Land, g: Game): List<Rule>
 }
 
 fun rules(fn: Rules.() -> Unit): List<Rule> {
@@ -17,7 +17,13 @@ fun rules(fn: Rules.() -> Unit): List<Rule> {
 
 class Rules {
     val rules = ArrayList<Rule>()
-    val optsTest = ArrayList<Opt>()
+//    val optsTest = ArrayList<Opt>()
+
+//    fun extend(cdx:Cdx,land:Land,g:Game):Rules{
+//        val extRules = cdx.initRules(land,g)
+//        rules.addAll(extRules)
+//        return extRules
+//    }
 
     fun draw(prior: Int, apply: CtxDraw.() -> Unit) {
         rules.add(RuleDraw(prior, apply))
@@ -97,7 +103,7 @@ class Raise(val sideOwner:Side?,val isOn:Boolean){
 
     private fun addAkt(akt: Akt) {
         val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
-        if (idx == listSloy.size()) listSloy.add(Sloy())
+        if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
     }
 

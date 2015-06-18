@@ -18,8 +18,8 @@ interface Log {
         log("violation")
     }
     fun error(ex: Throwable) {
-        ex.printStackTrace()
         log("error")
+        ex.printStackTrace()
     }
     fun vsRobot(id: Id) {
         log("vsRobot $id")

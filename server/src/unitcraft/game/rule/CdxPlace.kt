@@ -11,7 +11,7 @@ import java.util.*
 class CdxPlace(r:Resource) : Cdx(r){
     val tiles = values().map{it to r.tlsList(sizeFix[it]!!, it.name(),Resource.effectPlace)}.toMap()
 
-    override fun initRules(land: Land,g: Game) = rules{
+    override fun createRules(land: Land,g: Game) = rules{
         val places = Grid<Place>()
         val fixs = Grid<Map<Place, Int>>()
 
@@ -23,7 +23,7 @@ class CdxPlace(r:Resource) : Cdx(r){
         draw(0) {
             for (pg in g.pgs) {
                 val place = places[pg]
-                drawTile(pg, tiles[place]!![fixs[pg][place]!!])
+                drawTile(pg, tiles[place]!![fixs[pg]!![place]!!])
             }
         }
 
