@@ -49,17 +49,21 @@ class Rules {
         rules.add(RuleEndTurn(prior, apply))
     }
 
-    fun make(prior: Int, apply: CtxMake.() -> Unit) {
-        rules.add(RuleMake(prior, apply))
+    fun trap(prior: Int, apply: CtxTrap.() -> Unit) {
+        rules.add(RuleTrap(prior, apply))
     }
 
     fun stop(prior: Int, apply: CtxStop.() -> Boolean) {
         rules.add(RuleStop(prior, apply))
     }
-// может refute следует через make и stop? или выделение refute улучшает семантику?
+
 //    fun refute(prior: Int, apply: (CtxRefute) -> Boolean) {
 //
 //    }
+
+    fun make(prior: Int, apply: CtxMake.() -> Unit) {
+        rules.add(RuleMake(prior, apply))
+    }
 }
 
 abstract class Rule(val prior: Int)
@@ -77,14 +81,19 @@ class CtxDraw(val side: Side) {
     }
 }
 
+class RuleEndTurn(prior: Int, val apply: () -> Unit) : Rule(prior)
+
 class RuleSpot(prior: Int, val apply: (CtxSpot) -> Unit) : Rule(prior)
-class CtxSpot(val pgRaise: Pg, val side: Side, private val g:Game) {
+class CtxSpot(private val g:Game,val pgRaise: Pg, val side: Side) {
     val raises = ArrayList<Raise>()
 
     fun raise(sideOwner:Side?):Raise{
-        val ctxTggl = CtxTgglRaise(pgRaise,side,g.sideTurn==side && g.sideTurn==sideOwner)
-        g.rulesTgglRaise.forEach{it.apply(ctxTggl)}
-        val r = Raise(sideOwner,ctxTggl.isOn)
+        val isOn = if(g.sideTurn==side) {
+            val ctxTggl = CtxTgglRaise(pgRaise, side, g.sideTurn == sideOwner)
+            g.rulesTgglRaise.forEach { it.apply(ctxTggl) }
+            ctxTggl.isOn
+        } else false
+        val r = Raise(g,sideOwner,isOn)
         raises.add(r)
         return r
     }
@@ -95,11 +104,13 @@ class CtxSpot(val pgRaise: Pg, val side: Side, private val g:Game) {
     }
 }
 
-class Raise(val sideOwner:Side?,val isOn:Boolean){
+class Raise(private val g:Game,val sideOwner:Side?,val isOn:Boolean){
     private val listSloy = ArrayList<Sloy>()
 
-    fun akt(pgAim: Pg, tlsAkt: TlsAkt, fnAkt: () -> Unit) = addAkt(Akt(pgAim, tlsAkt(isOn), fnAkt, null))
-    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
+    fun add(pgAkt:Pg, tlsAkt: TlsAkt, efk: Efk) {
+        if(g.trap(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+    }
+//    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
     private fun addAkt(akt: Akt) {
         val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
@@ -122,11 +133,21 @@ class CtxTgglRaise(val pgRaise: Pg, val side: Side,var isOn:Boolean){
     }
 }
 
+class RuleTrap(prior: Int, val apply: (CtxTrap) -> Unit) : Rule(prior)
+class CtxTrap(private val g:Game,val efk:Efk){
+    var voin : Voin? = null
+        private set
+
+    fun trp(traper:Voin?){
+        if(voin!=null) this.voin = voin
+    }
+}
+
 class RuleStop(prior: Int, val apply: (CtxStop) -> Boolean) : Rule(prior)
-class CtxStop(val from: From, val aim: Aim, val tp: TpMake)
+class CtxStop(val efk:Efk,val traper:Traper)
 
 class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-class CtxMake(val from: From, val aim: Aim, val tp: TpMake)
+class CtxMake(val efk:Efk)
 
 enum class TpMake {
     move, // пойти из from.pg в aim.pg
@@ -135,15 +156,11 @@ enum class TpMake {
 }
 
 class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
-class CtxEdit(val tp: TpEdit, val pgAim: Pg, val side: Side) {
+class CtxEdit(val efk: EfkEdit) {
     var isConsumed = false
     fun consume(b: Boolean) {
         isConsumed = b
     }
-}
-
-enum class TpEdit {
-    add, remove, destroy, change
 }
 
 class RuleVoin(prior: Int, val apply: (CtxVoin) -> Unit) : Rule(prior)
@@ -156,4 +173,11 @@ class CtxVoin(val pg: Pg, val side: Side) {
     }
 }
 
-class RuleEndTurn(prior: Int, val apply: () -> Unit) : Rule(prior)
+abstract class Efk
+
+abstract class EfkEdit(val pg:Pg):Efk()
+class EfkEditAdd(pg:Pg,val side:Side):EfkEdit(pg)
+class EfkEditRemove(pg:Pg):EfkEdit(pg)
+class EfkEditDestroy(pg:Pg):EfkEdit(pg)
+class EfkEditChange(pg:Pg,val side:Side):EfkEdit(pg)
+

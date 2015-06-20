@@ -53,7 +53,7 @@ class Server(val log: Log) : Sender{
     fun onOpen(ws: Ws) {
         threadMain.execute {
             log.open()
-            if(ws.ip()=="127.0.0.1") {
+            if(ws.isLocal) {
                 var id = Id("dev"+users.users.size())
                 val user = users.get(id)
                 if (user == null) users.add(id, "")
@@ -219,7 +219,7 @@ abstract class Ws {
 
     abstract fun send(msg: String)
     abstract fun close()
-    abstract fun ip():String
+    abstract val isLocal:Boolean
 }
 
 interface Sender{

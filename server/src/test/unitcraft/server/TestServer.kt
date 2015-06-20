@@ -95,5 +95,5 @@ class WsTest(id: String? = null, val server: Server? = null) : Ws() {
         server!!.onMsg(this, msg)
         Thread.sleep(500)
     }
-    override fun ip() = "1.1.1.1"
+    override val isLocal = false
 }

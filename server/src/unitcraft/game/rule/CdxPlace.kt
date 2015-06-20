@@ -31,14 +31,13 @@ class CdxPlace(r:Resource) : Cdx(r){
 
         for(place in values())
             edit(place.ordinal(),tiles[place]!!.first()) {
-                if(tp==TpEdit.add) places[pgAim] = place
+                if(efk is EfkEditAdd) places[efk.pg] = place
             }
-
 
         endTurn(5) {
             for ((pg,place) in places) {
                 // скрыть врагов в лесу
-                if (place == Place.forest) g.make(From(pg),Aim(pg).voin(g.sideTurn.vs()),TpMake.hide)
+                if (place == Place.forest) g.make(EfkHide(pg,g.sideTurn.vs()))
             }
         }
     }

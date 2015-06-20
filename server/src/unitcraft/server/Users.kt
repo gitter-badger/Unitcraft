@@ -3,6 +3,10 @@ package unitcraft.server
 import java.util.HashMap
 import java.util.Random
 
+// TODO журнал пользователей и счет пользователя
+// TODO удалять пользователя, не зашедшего ни разу, через сутки
+// TODO удалять пользователя, зашедшего ровно один раз, через неделю
+// если журнал пользователей станет слишком длинным, то его можно будет начать заново
 class Users(val log: Log) {
     val users = HashMap<Id, User>()
 

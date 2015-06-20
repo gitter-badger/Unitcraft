@@ -15,7 +15,7 @@ class CdxStaziser(r:Resource): Cdx(r){
     val tlsStazis = r.tlsList(5, "stazis")
 
     override fun createRules(land: Land,g: Game) = rules{
-        val voins = extVoin.createRules(this,land,g)
+        val rsVoin = extVoin.createRules(this,land,g)
         val stazis = Grid<Int>()
 
         fun plant(pg:Pg) {
@@ -33,28 +33,39 @@ class CdxStaziser(r:Resource): Cdx(r){
         }
 
         spot(0) {
-            val voin = voins[pgRaise]
+            val voin = rsVoin[pgRaise]
             if(voin!=null) {
                 val r = raise(voin.side)
-                for (pgNear in pgRaise.near) if (g.can(From(pgRaise).voin(voin.side), Aim(pgNear), TpMake.skil)) {
-                    r.akt(pgNear, tlsAkt) { plant(pgNear) }
+                for (pgNear in pgRaise.near) {
+                    r.add(pgNear,tlsAkt,EfkStazisPlant(pgNear))
                 }
             }
         }
 
-        stop(1) {
-            stazis[from.pg]!=null || stazis[aim.pg] != null
+        trap(0){
+            if(efk is EfkStazisPlant) trp(stazis[efk.pg]==null)
         }
 
-        edit(50,tlsStazis.last()) {
-            when(tp) {
-                TpEdit.add -> plant(pgAim)
-                TpEdit.remove -> consume(stazis.remove(pgAim)!=null)
-            }
+        make(0){
+            if(efk is EfkStazisPlant) plant(efk.pg)
         }
+
+        stop(1) { when(efk){
+            is EfkMove -> stazis[efk.pgFrom]!=null || stazis[efk.pgTo] != null
+            is EfkSttAdd -> stazis[efk.pgTo] != null
+            is EfkHide -> stazis[efk.pg]!=null
+            else -> false
+        }}
+
+        edit(50,tlsStazis.last()) {when(efk) {
+                is EfkEditAdd -> plant(efk.pg)
+                is EfkEditRemove -> consume(stazis.remove(efk.pg)!=null)
+        }}
 
         endTurn(10){
             stazis.forEach { decoy(it.key) }
         }
     }
 }
+
+class EfkStazisPlant(val pg:Pg,var target:Boolean:=false) : Efk()

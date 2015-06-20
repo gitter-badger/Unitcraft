@@ -8,17 +8,13 @@ import java.util.ArrayList
 import unitcraft.server.Violation
 import kotlin.properties.Delegates
 
-class Akt(val pgAim:Pg,val tile:Int,val fnAkt: (() -> Unit)?,val opter: Opter?) : JSONAware{
+class Akt(val pgAim:Pg,val tile:Int,val efk: Efk,val opter: Opter?) : JSONAware{
 
-    init{
-        if(fnAkt==null && opter==null) throw Err("fnAkt and opter == null")
-    }
-
-    fun akt() = (fnAkt?:throw Violation("akt is opter"))()
-    fun aktOpt(num:Int){
-        if(opter==null) throw Violation("akt is simple")
-        if(num<opter.opts.size()) opter.opts[num].fn() else throw Violation("idx of opter out of bound")
-    }
+//    fun akt() = (fnAkt?:throw Violation("akt is opter"))()
+//    fun aktOpt(num:Int){
+//        if(opter==null) throw Violation("akt is simple")
+//        if(num<opter.opts.size()) opter.opts[num].fn() else throw Violation("idx of opter out of bound")
+//    }
 
     override fun toJSONString() = jsonObj {
         put("x", pgAim.x)
@@ -34,7 +30,7 @@ class Opter(val opts : List<Opt>) : JSONAware{
 }
 
 // что рисовать и тип указывающий на выбор
-class Opt(val dabs:List<Dab>,val fn:()->Unit): JSONAware{
+class Opt(val dabs:List<Dab>): JSONAware{
     override fun toJSONString() = dabs.toJSONString()
 }
 

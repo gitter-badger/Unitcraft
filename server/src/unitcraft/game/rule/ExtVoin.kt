@@ -11,13 +11,13 @@ class ExtVoin(r: Resource, name: String) {
     val hintTextLife = r.hintTextLife
     val buildik = r.buildik(tlsVoin.neut)
 
-    fun createRules(r: Rules, land: Land, g: Game): Voins {
-        val voins = Voins(land, g)
-        r.rules.addAll(voins.rs)
-        return voins
+    fun createRules(r: Rules, land: Land, g: Game): Ruleset {
+        val rs = Ruleset(land, g)
+        r.rules.addAll(rs.rs)
+        return rs
     }
 
-    inner class Voins(land: Land, g: Game) {
+    inner class Ruleset(land: Land, g: Game) {
         private val voins = Grid<VoinStd>()
 
         fun get(pg:Pg) = voins[pg]
@@ -32,31 +32,39 @@ class ExtVoin(r: Resource, name: String) {
                 }
             }
 
-            spot(0) {
+            spot(10) {
                 val voin = voins[pgRaise]
                 if(voin!=null) {
                     val r = raise(voin.side)
-                    for (pgNear in pgRaise.near) if (g.can(From(pgRaise).voin(voin.side), Aim(pgNear), TpMake.move)) {
-                        r.akt(pgNear, tlsMove) { g.make(From(pgRaise).voin(voin.side), Aim(pgNear), TpMake.move) }
+                    for (pgNear in pgRaise.near) {
+                        r.add(pgNear,tlsMove,EfkMove(pgRaise,pgNear,voin.side))
                     }
                 }
             }
 
             stop(0) {
-                tp == TpMake.move && voins[aim.pg] != null
+                efk is EfkMove && voins[efk.pgTo] != null
             }
 
-            make(0) {
-                if (tp == TpMake.move) {
-                    val v = voins[from.pg]
-                    if (v != null) {
-                        voins.remove(from.pg)
-                        voins[aim.pg] = v
-                        val xd = from.pg.x - aim.pg.x
-                        if (xd != 0) v.flip = xd > 0
+            make(0) { when (efk) {
+                    is EfkMove -> voins[efk.pgFrom]?.let {
+                        voins.remove(efk.pgFrom)
+                        voins[efk.pgTo] = it
+                        val xd = efk.pgFrom.x - efk.pgTo.x
+                        if (xd != 0) it.flip = xd > 0
                     }
+                    is EfkHide -> voins[efk.pg]?.let {
+                        if(it.side == efk.side) it.hide = true
+                    }
+            }}
+
+            trap(0) { when (efk) {
+                is EfkMove -> ok(efk.pgFrom in voins)
+                is EfkHide -> voins[efk.pg]?.let{
+                    ok(it.side == efk.side)
                 }
-            }
+                is EfkSttAdd -> ok(efk.pgTo in voins)
+            }}
 
             voin(10) {
                 val v = voins[pg]
@@ -64,22 +72,22 @@ class ExtVoin(r: Resource, name: String) {
             }
 
             fun editChange(side: Side, pg: Pg): Boolean {
-                val unt = voins[pg]
-                if (unt != null) {
+                val v = voins[pg]
+                if (v != null) {
                     when {
-                        unt.isAlly(side) -> unt.side = side.vs()
-                        unt.isEnemy(side) -> unt.side = null
-                        unt.isNeutral() -> unt.side = side
+                        v.isAlly(side) -> v.side = side.vs()
+                        v.isEnemy(side) -> v.side = null
+                        v.isNeutral() -> v.side = side
                     }
                     return true
                 } else return false
             }
 
             edit(12, tlsVoin.neut) {
-                when (tp) {
-                    TpEdit.add -> voins[pgAim] = VoinStd(side, pgAim.x > pgAim.pgser.xr / 2)
-                    TpEdit.remove -> consume(voins.remove(pgAim) != null)
-                    TpEdit.change -> consume(editChange(side, pgAim))
+                when (efk) {
+                    is EfkEditAdd -> voins[efk.pg] = VoinStd(efk.side, efk.pg.x > efk.pg.pgser.xr / 2)
+                    is EfkEditRemove -> consume(voins.remove(efk.pg) != null)
+                    is EfkEditChange -> consume(editChange(efk.side, efk.pg))
                 }
             }
         }
@@ -91,3 +99,12 @@ class VoinStd(override var side: Side?, var flip: Boolean) : Voin {
     var hide = false
     fun isVid(side: Side) = !hide || isAlly(side)
 }
+
+/** Самостоятельное перемещение юнита со стороной [side] */
+class EfkMove(val pgFrom:Pg,val pgTo:Pg,val side:Side?) : Efk()
+
+class EfkHide(val pg:Pg,val side:Side) : Efk()
+
+abstract class Stt
+
+class EfkSttAdd(val stt:Stt,val pgTo:Pg) : Efk()

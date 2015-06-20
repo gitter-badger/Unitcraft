@@ -24,20 +24,18 @@ class CdxCatapult(r:Resource): Cdx(r){
 
         /** если воин стоит на катапульте, то дать ему способность катапульты */
         spot(1){
-            val voin = g.voin(pgRaise,side)
-            if (pgRaise in flats && voin!=null) {
-                val r = raise(voin.side)
-                for(pg in g.pgs) if(g.can(From(pgRaise).voin(voin.side),Aim(pg),TpMake.move)){
-                    r.akt(pg,tlsAkt){ g.make(From(pgRaise).voin(voin.side),Aim(pg),TpMake.move) }
+            if (pgRaise in flats) {
+                val voin = g.voin(pgRaise,side)
+                if(voin!=null) {
+                    val r = raise(voin.side)
+                    for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, voin.side))
                 }
             }
         }
 
-        edit(5,tile) {
-            when(tp){
-                TpEdit.add -> flats[pgAim] = true
-                TpEdit.remove -> consume(flats.remove(pgAim)!=null)
-            }
-        }
+        edit(5,tile) { when(efk){
+            is EfkEditAdd -> flats[efk.pg] = true
+            is EfkEditRemove -> consume(flats.remove(efk.pg)!=null)
+        }}
     }
 }

@@ -10,28 +10,32 @@ class CdxEnforcer(r:Resource) : Cdx(r){
     val tlsAkt = r.tlsAkt(name)
 
     override fun createRules(land: Land,g: Game) = rules{
-        val gridVoin = extVoin.createRules(this,land,g)
+        val rsVoin = extVoin.createRules(this,land,g)
 
         spot(0) {
-            val voin = gridVoin[pgRaise]
+            val voin = rsVoin[pgRaise]
             if(voin!=null) {
                 val r = raise(voin.side)
-                for (pgNear in pgRaise.near) if (g.can(From(pgRaise).voin(voin.side), Aim(pgNear), TpMake.skil)) {
-                    r.akt(pgNear, tlsAkt) { g.sttAdd(pgNear,SttEnforcer(true)) }
+                for (pgNear in pgRaise.near) {
+                    r.add(pgNear, tlsAkt,EfkSttAdd(SttEnforcer(true),pgNear))
                 }
             }
         }
 
-        endTurn(0){
-            g.sttEach<SttEnforcer>{
+        stop(0){
+            if(efk is EfkSttAdd && efk.stt is SttEnforcer && traper is Voin){
 
             }
+        }
 
-            g.sttExclude<SttEnforcer>{voin.side == g.sideTurn}
+        endTurn(0){
+//            g.sttEach<SttEnforcer>{
+//
+//            }
+//
+//            g.sttExclude<SttEnforcer>{voin.side == g.sideTurn}
         }
     }
 }
 
-class Stt
-
-class SttEnforcer(val isActive:Boolean)
+class SttEnforcer(val isActive:Boolean) : Stt()
