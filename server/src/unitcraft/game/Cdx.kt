@@ -41,9 +41,9 @@ class Rules {
         rules.add(RuleEdit(prior, tile, apply))
     }
 
-    fun voin(prior: Int, apply: CtxVoin.() -> Unit) {
-        rules.add(RuleVoin(prior, apply))
-    }
+//    fun voin(prior: Int, apply: CtxVoin.() -> Unit) {
+//        rules.add(RuleVoin(prior, apply))
+//    }
 
     fun endTurn(prior: Int, apply: () -> Unit) {
         rules.add(RuleEndTurn(prior, apply))
@@ -53,7 +53,7 @@ class Rules {
         rules.add(RuleTrap(prior, apply))
     }
 
-    fun stop(prior: Int, apply: CtxStop.() -> Boolean) {
+    fun stop(prior: Int, apply: CtxStop.() -> Unit) {
         rules.add(RuleStop(prior, apply))
     }
 
@@ -87,13 +87,8 @@ class RuleSpot(prior: Int, val apply: (CtxSpot) -> Unit) : Rule(prior)
 class CtxSpot(private val g:Game,val pgRaise: Pg, val side: Side) {
     val raises = ArrayList<Raise>()
 
-    fun raise(sideOwner:Side?):Raise{
-        val isOn = if(g.sideTurn==side) {
-            val ctxTggl = CtxTgglRaise(pgRaise, side, g.sideTurn == sideOwner)
-            g.rulesTgglRaise.forEach { it.apply(ctxTggl) }
-            ctxTggl.isOn
-        } else false
-        val r = Raise(g,sideOwner,isOn)
+    fun raise(isOn:Boolean):Raise{
+        val r = Raise(g,if(g.sideTurn == side) isOn else false)
         raises.add(r)
         return r
     }
@@ -104,7 +99,11 @@ class CtxSpot(private val g:Game,val pgRaise: Pg, val side: Side) {
     }
 }
 
-class Raise(private val g:Game,val sideOwner:Side?,val isOn:Boolean){
+enum class TpTgglRaise{
+    on, off, disable
+}
+
+class Raise(private val g:Game,val isOn:Boolean){
     private val listSloy = ArrayList<Sloy>()
 
     fun add(pgAkt:Pg, tlsAkt: TlsAkt, efk: Efk) {
@@ -127,33 +126,24 @@ class Raise(private val g:Game,val sideOwner:Side?,val isOn:Boolean){
 }
 
 class RuleTgglRaise(prior: Int, val apply: (CtxTgglRaise) -> Unit) : Rule(prior)
-class CtxTgglRaise(val pgRaise: Pg, val side: Side,var isOn:Boolean){
-    fun isOn(b:Boolean){
-        isOn = b
+class CtxTgglRaise(val pgRaise: Pg, val side: Side){
+    var responder:Any? = null
+    var tp:TpTgglRaise? = null
+        private set
+
+    fun state(tp:TpTgglRaise){
+        this.tp = tp
     }
 }
 
 class RuleTrap(prior: Int, val apply: (CtxTrap) -> Unit) : Rule(prior)
-class CtxTrap(private val g:Game,val efk:Efk){
-    var voin : Voin? = null
-        private set
+class CtxTrap(private val g:Game,val msg:Msg)
 
-    fun trp(traper:Voin?){
-        if(voin!=null) this.voin = voin
-    }
-}
-
-class RuleStop(prior: Int, val apply: (CtxStop) -> Boolean) : Rule(prior)
-class CtxStop(val efk:Efk,val traper:Traper)
+class RuleStop(prior: Int, val apply: (CtxStop) -> Unit) : Rule(prior)
+class CtxStop(val msg:Msg)
 
 class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
 class CtxMake(val efk:Efk)
-
-enum class TpMake {
-    move, // пойти из from.pg в aim.pg
-    skil, // применить способность
-    hide // скрыть точку aim.pg
-}
 
 class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
 class CtxEdit(val efk: EfkEdit) {
@@ -163,19 +153,37 @@ class CtxEdit(val efk: EfkEdit) {
     }
 }
 
-class RuleVoin(prior: Int, val apply: (CtxVoin) -> Unit) : Rule(prior)
-class CtxVoin(val pg: Pg, val side: Side) {
-    var voin: Voin? = null
+//class RuleVoin(prior: Int, val apply: (CtxVoin) -> Unit) : Rule(prior)
+//class CtxVoin(val pg: Pg, val side: Side) {
+//    var voin: Voin? = null
+//        private set
+//
+//    fun put(voin: Voin) {
+//        this.voin = voin
+//    }
+//}
+
+abstract class Msg{
+    abstract fun isOk():Boolean
+
+    var isStoped:Boolean = false
         private set
 
-    fun put(voin: Voin) {
-        this.voin = voin
+    fun stop(){
+        isStoped = true
+    }
+
+    fun refute(){
+        isStoped = false
     }
 }
 
-abstract class Efk
+abstract class Efk : Msg()
 
-abstract class EfkEdit(val pg:Pg):Efk()
+abstract class EfkEdit(val pg:Pg):Efk(){
+    override fun isOk() = true
+}
+
 class EfkEditAdd(pg:Pg,val side:Side):EfkEdit(pg)
 class EfkEditRemove(pg:Pg):EfkEdit(pg)
 class EfkEditDestroy(pg:Pg):EfkEdit(pg)

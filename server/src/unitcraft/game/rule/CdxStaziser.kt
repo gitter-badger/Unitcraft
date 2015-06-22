@@ -6,7 +6,6 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.init
 import unitcraft.game.Game
-import unitcraft.game.Voin
 
 class CdxStaziser(r:Resource): Cdx(r){
     val name = "staziser"
@@ -35,26 +34,27 @@ class CdxStaziser(r:Resource): Cdx(r){
         spot(0) {
             val voin = rsVoin[pgRaise]
             if(voin!=null) {
-                val r = raise(voin.side)
-                for (pgNear in pgRaise.near) {
-                    r.add(pgNear,tlsAkt,EfkStazisPlant(pgNear))
+                val msg = MsgRaiseVoin(pgRaise,voin)
+                if(g.trap(msg)) {
+                    val r = raise(msg.isOn)
+                    for (pgNear in pgRaise.near) {
+                        r.add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
+                    }
                 }
             }
-        }
-
-        trap(0){
-            if(efk is EfkStazisPlant) trp(stazis[efk.pg]==null)
         }
 
         make(0){
             if(efk is EfkStazisPlant) plant(efk.pg)
         }
 
-        stop(1) { when(efk){
-            is EfkMove -> stazis[efk.pgFrom]!=null || stazis[efk.pgTo] != null
-            is EfkSttAdd -> stazis[efk.pgTo] != null
-            is EfkHide -> stazis[efk.pg]!=null
-            else -> false
+        stop(1) { when(msg){
+            is EfkMove -> if(stazis[msg.pgFrom]!=null || stazis[msg.pgTo] != null) msg.stop()
+            is EfkSttAdd -> if(stazis[msg.pgTo]!=null) msg.stop()
+            is EfkHide -> if(stazis[msg.pg]!=null) msg.stop()
+            is EfkStazisPlant -> if(stazis[msg.pg]!=null) msg.stop()
+            is MsgRaiseVoin -> if(stazis[msg.pg]!=null) msg.stop()
+            is MsgRaiseCatapult -> if(stazis[msg.pg]!=null) msg.stop()
         }}
 
         edit(50,tlsStazis.last()) {when(efk) {
@@ -68,4 +68,6 @@ class CdxStaziser(r:Resource): Cdx(r){
     }
 }
 
-class EfkStazisPlant(val pg:Pg,var target:Boolean:=false) : Efk()
+class EfkStazisPlant(val pg:Pg,var target:Boolean=false) : Efk() {
+    override fun isOk()=true
+}

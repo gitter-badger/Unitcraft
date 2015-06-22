@@ -17,7 +17,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     val rulesDraw: List<RuleDraw>
     val rulesSpot: List<RuleSpot>
     val rulesTgglRaise: List<RuleTgglRaise>
-    val rulesVoin: List<RuleVoin>
+//    val rulesVoin: List<RuleVoin>
     val rulesEndTurn: List<RuleEndTurn>
     val rulesTrap: List<RuleTrap>
     val rulesStop: List<RuleStop>
@@ -31,7 +31,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         rulesDraw = filterRules<RuleDraw>(rules)
         rulesSpot = filterRules<RuleSpot>(rules)
         rulesTgglRaise = filterRules<RuleTgglRaise>(rules)
-        rulesVoin = filterRules<RuleVoin>(rules)
+//        rulesVoin = filterRules<RuleVoin>(rules)
         rulesEndTurn = filterRules<RuleEndTurn>(rules)
         rulesTrap = filterRules<RuleTrap>(rules)
         rulesMake = filterRules<RuleMake>(rules)
@@ -163,30 +163,31 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         if (!canEdit) throw Violation("only for test game")
     }
 
-    fun voin(pg: Pg, sideVid: Side): Voin? {
-        val ctx = CtxVoin(pg, sideVid)
-        rulesVoin.forEach { it.apply(ctx) }
-        return ctx.voin
-    }
+//    fun voin(pg: Pg, sideVid: Side): Voin? {
+//        val ctx = CtxVoin(pg, sideVid)
+//        rulesVoin.forEach { it.apply(ctx) }
+//        return ctx.voin
+//    }
 
-    fun trap(efk:Efk): Boolean {
+    fun trap(msg:Msg): Boolean {
+        val ctx = CtxTrap(this, msg)
         for (rule in rulesTrap) {
-            val ctx = CtxTrap(this,efk)
             rule.apply(ctx)
-            if(ctx.isOk && !stop(efk)) return true
+            if (msg.isOk() && !stop(msg)) return true
         }
         return false
     }
 
-    private fun stop(efk:Efk):Boolean{
-        val ctx = CtxStop(efk)
+    private fun stop(msg:Msg):Boolean{
+        val ctx = CtxStop(msg)
         for (rule in rulesStop) {
-            if(rule.apply(ctx) && !refute(efk)) return true
+            rule.apply(ctx)
+            if(msg.isStoped && !refute(msg)) return true
         }
         return false
     }
 
-    private fun refute(efk:Efk):Boolean{
+    private fun refute(msg:Msg):Boolean{
         return false
     }
 
@@ -196,11 +197,13 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     }
 }
 
-interface Voin {
+interface HasOwner{
     val side: Side?
-    val life: Int
-
     fun isEnemy(side: Side) = this.side == side.vs()
     fun isAlly(side: Side) = this.side == side
     fun isNeutral() = this.side == null
+}
+
+interface HasLife{
+    val life: Int
 }

@@ -12,8 +12,8 @@ class CdxCatapult(r:Resource): Cdx(r){
     val tlsAkt = r.tlsAkt(name)
 
     override fun createRules(land: Land,g: Game) = rules{
-        val flats = Grid<Boolean>()
-        flats[land.pgser.pg(3, 3)] = true
+        val flats = Grid<Catapult>()
+        flats[land.pgser.pg(3, 3)] = Catapult
 
 
         draw(10) {
@@ -25,17 +25,30 @@ class CdxCatapult(r:Resource): Cdx(r){
         /** если воин стоит на катапульте, то дать ему способность катапульты */
         spot(1){
             if (pgRaise in flats) {
-                val voin = g.voin(pgRaise,side)
-                if(voin!=null) {
-                    val r = raise(voin.side)
-                    for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, voin.side))
+                val msg = MsgRaiseCatapult(pgRaise)
+                if(g.trap(msg)){
+                    val r = raise(msg.isOn)
+                    for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, msg.what!!))
                 }
             }
         }
 
         edit(5,tile) { when(efk){
-            is EfkEditAdd -> flats[efk.pg] = true
+            is EfkEditAdd -> flats[efk.pg] = Catapult
             is EfkEditRemove -> consume(flats.remove(efk.pg)!=null)
         }}
     }
+}
+
+abstract class Flat
+
+object Catapult : Flat()
+
+abstract class MsgRaise : Msg(){
+    var isOn = false
+}
+
+class MsgRaiseCatapult(val pg:Pg) : MsgRaise(){
+    var what:Any? = null
+    override fun isOk() = what!=null
 }
