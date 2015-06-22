@@ -45,12 +45,12 @@ class CdxStaziser(r:Resource): Cdx(r){
         }
 
         make(0){
-            if(efk is EfkStazisPlant) plant(efk.pg)
+            if(msg is EfkStazisPlant) plant(msg.pg)
         }
 
         stop(1) { when(msg){
             is EfkMove -> if(stazis[msg.pgFrom]!=null || stazis[msg.pgTo] != null) msg.stop()
-            is EfkSttAdd -> if(stazis[msg.pgTo]!=null) msg.stop()
+            is EfkEnforce -> if(stazis[msg.pg]!=null) msg.stop()
             is EfkHide -> if(stazis[msg.pg]!=null) msg.stop()
             is EfkStazisPlant -> if(stazis[msg.pg]!=null) msg.stop()
             is MsgRaiseVoin -> if(stazis[msg.pg]!=null) msg.stop()

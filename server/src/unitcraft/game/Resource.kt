@@ -42,6 +42,7 @@ class Resource {
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
     fun tlsAkt(name:String) = TlsAkt(tile(name+".akt",effectAkt),tile(name+".akt",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect =effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
+    fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
     fun tile(tile: String, effect: Effect = effectStandard):Int {
         val t = Tile(tile, effect)
@@ -133,6 +134,10 @@ class TlsVoin(val ally:Int,val enemy:Int,val neut:Int){
 
 class TlsAkt(val aktOn:Int,val aktOff:Int){
     fun invoke(isOn: Boolean) = if(isOn) aktOn else aktOff
+}
+
+class TlsBool(val tileTrue:Int,val tileFalse:Int){
+    fun invoke(b: Boolean) = if(b) tileTrue else tileFalse
 }
 
 data class Tile(val name: String, val effect: Effect) {

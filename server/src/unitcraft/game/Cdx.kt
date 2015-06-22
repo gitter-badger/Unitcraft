@@ -137,13 +137,13 @@ class CtxTgglRaise(val pgRaise: Pg, val side: Side){
 }
 
 class RuleTrap(prior: Int, val apply: (CtxTrap) -> Unit) : Rule(prior)
-class CtxTrap(private val g:Game,val msg:Msg)
+class CtxTrap(val msg:Msg)
 
 class RuleStop(prior: Int, val apply: (CtxStop) -> Unit) : Rule(prior)
 class CtxStop(val msg:Msg)
 
 class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-class CtxMake(val efk:Efk)
+class CtxMake(val msg:Msg)
 
 class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
 class CtxEdit(val efk: EfkEdit) {

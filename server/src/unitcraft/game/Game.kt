@@ -170,29 +170,23 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
 //    }
 
     fun trap(msg:Msg): Boolean {
-        val ctx = CtxTrap(this, msg)
-        for (rule in rulesTrap) {
-            rule.apply(ctx)
-            if (msg.isOk() && !stop(msg)) return true
-        }
-        return false
+        val ctx = CtxTrap(msg)
+        rulesTrap.forEach { it.apply(ctx) }
+        return msg.isOk() && !stop(msg)
     }
 
     private fun stop(msg:Msg):Boolean{
         val ctx = CtxStop(msg)
-        for (rule in rulesStop) {
-            rule.apply(ctx)
-            if(msg.isStoped && !refute(msg)) return true
-        }
-        return false
+        rulesStop.forEach { it.apply(ctx) }
+        return msg.isStoped && !refute(msg)
     }
 
     private fun refute(msg:Msg):Boolean{
         return false
     }
 
-    fun make(efk:Efk) {
-        val ctx = CtxMake(efk)
+    fun make(msg:Msg) {
+        val ctx = CtxMake(msg)
         rulesMake.forEach { it.apply(ctx) }
     }
 }

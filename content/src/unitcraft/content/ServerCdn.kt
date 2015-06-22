@@ -47,16 +47,25 @@ class ServerCdn() : NanoHTTPD(8000) {
         File(dirCdn,"png/").mkdirs()
         prepareJsServer(dirCdn,"ws://localhost:8080")
         WatchDir(listOf(File(dirTiles), File(dirPanels))){ file ->
-            if(file.directory.name == "tiles") {
-                if (file.name == "maskPlace.png") {
-                    maskPlace = ImageIO.read(file)
-                } else {
-                    imgsTile[file.nameBase] = ImageIO.read(file)!!
+            for(i in 0..2) {
+                try {
+                    if (file.directory.name == "tiles") {
+                        if (file.name == "maskPlace.png") {
+                            maskPlace = ImageIO.read(file)
+                        } else {
+                            imgsTile[file.nameBase] = ImageIO.read(file)!!
+                        }
+                        qdmnsTileUpdated.clear()
+                        break
+                    } else {
+                        imgsPanel[file.nameBase] = ImageIO.read(file)!!
+                        qdmnsPanelUpdated.clear()
+                        break
+                    }
+                }catch(ex:Exception){
+                    ex.printStackTrace()
+                    Thread.sleep(100)
                 }
-                qdmnsTileUpdated.clear()
-            }else{
-                imgsPanel[file.nameBase] = ImageIO.read(file)!!
-                qdmnsPanelUpdated.clear()
             }
         }
         super.start()

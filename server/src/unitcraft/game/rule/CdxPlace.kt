@@ -37,7 +37,8 @@ class CdxPlace(r:Resource) : Cdx(r){
         endTurn(5) {
             for ((pg,place) in places) {
                 // скрыть врагов в лесу
-                if (place == Place.forest) g.make(EfkHide(pg,g.sideTurn.vs()))
+                val efkHide = EfkHide(pg,g.sideTurn.vs())
+                if (place == Place.forest && g.trap(efkHide)) g.make(efkHide)
             }
         }
     }

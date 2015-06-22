@@ -1,13 +1,10 @@
 package unitcraft.game
 
-import unitcraft.game.rule.CdxCatapult
-import unitcraft.game.rule.CdxEnforcer
-import unitcraft.game.rule.CdxPlace
-import unitcraft.game.rule.CdxStaziser
 import unitcraft.land.Land
 import unitcraft.server.CreatorGame
 import unitcraft.server.IGame
 import unitcraft.game.Game
+import unitcraft.game.rule.*
 
 class Unitcraft() : CreatorGame {
     val cdxs = Resource().createRules(kCdxs)
@@ -22,7 +19,8 @@ class Unitcraft() : CreatorGame {
                 CdxEnforcer::class,
                 CdxPlace::class,
                 CdxCatapult::class,
-                CdxStaziser::class
+                CdxStaziser::class,
+                CdxVoid::class
         )
     }
 }
