@@ -12,26 +12,25 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
 
     override fun createRules(land: Land, g: Game) = rules {
         val rsVoin = extVoin.createRules(this, land, g)
-        val enforced = WeakHashMap<Any, Boolean>()
+        val enforced = WeakHashMap<Voin, Boolean>()
 
         spot(0) {
             val voin = rsVoin[pgRaise]
             if (voin != null) {
                 val r = raise(MsgRaiseVoin(pgRaise, voin))
                 if(r!=null) for (pgNear in pgRaise.near) {
-                    r.add(pgNear, tlsAkt, EfkEnforce(pgNear))
+                    g.info(MsgVoin(pgNear)).voin?.let {
+                        r.add(pgNear, tlsAkt, EfkEnforce(pgNear,it))
+                    }
                 }
             }
         }
 
         make(0) {
             when (msg) {
-                is EfkEnforce -> {
-                    val aim = msg.aim!!
-                    enforced[aim] = true
-                }
-                is MsgDraw -> {
-                    val enf = enforced[msg.what]
+                is EfkEnforce -> enforced[msg.voin] = true
+                is MsgDrawVoin -> {
+                    val enf = enforced[msg.voin]
                     if (enf != null) msg.draw {
                         drawTile(msg.pg, tlsEnforced(enf))
                     }
@@ -39,13 +38,13 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
             }
         }
 
-        comp(10){
+        info(10){
             if(msg is MsgRaiseVoin && enforced[msg.voin]==true) msg.isOn = true
         }
 
         stop(0) {
             when {
-                msg is EfkEnforce && enforced[msg.aim!!] != null -> msg.stop()
+                msg is EfkEnforce && enforced[msg.voin!!] != null -> msg.stop()
 
             }
         }
@@ -56,6 +55,4 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
     }
 }
 
-class EfkEnforce(val pg: Pg, var aim: Any? = null) : Efk() {
-    override fun isComplete() = aim != null
-}
+class EfkEnforce(val pg: Pg, var voin: Voin) : Efk()

@@ -42,8 +42,8 @@ class Rules {
         rules.add(RuleEndTurn(prior, apply))
     }
 
-    fun comp(prior: Int, apply: CtxTrap.() -> Unit) {
-        rules.add(RuleTrap(prior, apply))
+    fun info(prior: Int, apply: CtxInfo.() -> Unit) {
+        rules.add(RuleInfo(prior, apply))
     }
 
     fun stop(prior: Int, apply: CtxStop.() -> Unit) {
@@ -52,6 +52,10 @@ class Rules {
 
     fun make(prior: Int, apply: CtxMake.() -> Unit) {
         rules.add(RuleMake(prior, apply))
+    }
+
+    fun after(prior: Int, apply: CtxMake.() -> Unit) {
+        rules.add(RuleAfter(prior, apply))
     }
 }
 
@@ -77,8 +81,7 @@ class CtxSpot(private val g:Game,val pgRaise: Pg, val side: Side) {
     val raises = ArrayList<Raise>()
 
     fun raise(msg: MsgRaise):Raise?{
-        if(!g.comp(msg)) return null
-        val r = Raise(g, if (g.sideTurn == side) msg.isOn else false)
+        val r = Raise(g, if (g.sideTurn == side) g.info(msg).isOn else false)
         raises.add(r)
         return r
     }
@@ -97,7 +100,7 @@ class Raise(private val g:Game,val isOn:Boolean){
     private val listSloy = ArrayList<Sloy>()
 
     fun add(pgAkt:Pg, tlsAkt: TlsAkt, efk: Efk) {
-        if(g.comp(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+        if(!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
     }
 //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
@@ -115,25 +118,16 @@ class Raise(private val g:Game,val isOn:Boolean){
     }
 }
 
-class RuleTgglRaise(prior: Int, val apply: (CtxTgglRaise) -> Unit) : Rule(prior)
-class CtxTgglRaise(val pgRaise: Pg, val side: Side){
-    var responder:Any? = null
-    var tp:TpTgglRaise? = null
-        private set
-
-    fun state(tp:TpTgglRaise){
-        this.tp = tp
-    }
-}
-
-class RuleTrap(prior: Int, val apply: (CtxTrap) -> Unit) : Rule(prior)
-class CtxTrap(val msg:Msg)
+class RuleInfo(prior: Int, val apply: (CtxInfo) -> Unit) : Rule(prior)
+class CtxInfo(val msg:Msg)
 
 class RuleStop(prior: Int, val apply: (CtxStop) -> Unit) : Rule(prior)
 class CtxStop(val msg:Msg)
 
 class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
 class CtxMake(val msg:Msg)
+
+class RuleAfter(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
 
 class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
 class CtxEdit(val efk: EfkEdit) {
@@ -143,19 +137,7 @@ class CtxEdit(val efk: EfkEdit) {
     }
 }
 
-//class RuleVoin(prior: Int, val apply: (CtxVoin) -> Unit) : Rule(prior)
-//class CtxVoin(val pg: Pg, val side: Side) {
-//    var voin: Voin? = null
-//        private set
-//
-//    fun put(voin: Voin) {
-//        this.voin = voin
-//    }
-//}
-
 abstract class Msg{
-    abstract fun isComplete():Boolean
-
     var isStoped:Boolean = false
         private set
 
@@ -170,10 +152,7 @@ abstract class Msg{
 
 abstract class Efk : Msg()
 
-abstract class EfkEdit(val pg:Pg):Efk(){
-    override fun isComplete() = true
-}
-
+abstract class EfkEdit(val pg:Pg):Efk()
 class EfkEditAdd(pg:Pg,val side:Side):EfkEdit(pg)
 class EfkEditRemove(pg:Pg):EfkEdit(pg)
 class EfkEditDestroy(pg:Pg):EfkEdit(pg)

@@ -23,11 +23,13 @@ class CdxCatapult(r:Resource): Cdx(r){
         }
 
         /** если воин стоит на катапульте, то дать ему способность катапульты */
-        spot(1){
+        spot(20){
             if (pgRaise in flats) {
-                val msg = MsgRaiseCatapult(pgRaise)
-                val r = raise(msg)
-                if(r!=null) for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, msg.what!!))
+                val voin = g.info(MsgVoin(pgRaise)).voin
+                if(voin!=null) {
+                    val r = raise(MsgRaiseVoin(pgRaise, voin))
+                    if (r != null) for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise,pg,voin))
+                }
             }
         }
 
@@ -45,10 +47,4 @@ object Catapult : Flat()
 abstract class MsgRaise : Msg(){
     var isOn = false
     var raise:Raise? = null
-    override fun isComplete() = raise!=null
-}
-
-class MsgRaiseCatapult(val pg:Pg) : MsgRaise(){
-    var what:Any? = null
-    override fun isComplete() = super.isComplete() && what!=null
 }

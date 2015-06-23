@@ -13,12 +13,11 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
 
     val rulesDraw: List<RuleDraw>
     val rulesSpot: List<RuleSpot>
-    val rulesTgglRaise: List<RuleTgglRaise>
-//    val rulesVoin: List<RuleVoin>
     val rulesEndTurn: List<RuleEndTurn>
-    val rulesTrap: List<RuleTrap>
+    val rulesInfo: List<RuleInfo>
     val rulesStop: List<RuleStop>
     val rulesMake: List<RuleMake>
+    val rulesAfter: List<RuleAfter>
 
     val opterTest: Opter?
     val rulesEdit: List<RuleEdit>?
@@ -27,12 +26,11 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         val rules = cdxs.flatMap { it.createRules(land, this) }
         rulesDraw = filterRules<RuleDraw>(rules)
         rulesSpot = filterRules<RuleSpot>(rules)
-        rulesTgglRaise = filterRules<RuleTgglRaise>(rules)
-//        rulesVoin = filterRules<RuleVoin>(rules)
         rulesEndTurn = filterRules<RuleEndTurn>(rules)
-        rulesTrap = filterRules<RuleTrap>(rules)
+        rulesInfo = filterRules<RuleInfo>(rules)
         rulesMake = filterRules<RuleMake>(rules)
         rulesStop = filterRules<RuleStop>(rules)
+        rulesAfter = filterRules<RuleAfter>(rules)
 
         if (canEdit) {
             rulesEdit = filterRules<RuleEdit>(rules)
@@ -166,14 +164,13 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
 //        return ctx.voin
 //    }
 
-    fun comp(msg:Msg): Boolean {
-        val ctx = CtxTrap(msg)
-        rulesTrap.forEach { it.apply(ctx) }
-        return msg.isComplete() && !stop(msg)
+    fun <T:Msg> info(msg:T): T {
+        val ctx = CtxInfo(msg)
+        rulesInfo.forEach { it.apply(ctx) }
+        return msg
     }
 
     fun stop(msg:Msg):Boolean{
-        if(!msg.isComplete()) throw Err("cant stop uncomplete msg=$msg")
         val ctx = CtxStop(msg)
         rulesStop.forEach { it.apply(ctx) }
         return msg.isStoped && !refute(msg)
@@ -184,20 +181,16 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     }
 
     fun make(msg:Msg) {
-        if(!msg.isComplete()) throw Err("cant make uncomplete msg=$msg")
-        if(msg.isStoped) throw Err("cant make stoped msg=$msg")
         val ctx = CtxMake(msg)
         if(!stop(msg)) rulesMake.forEach { it.apply(ctx) }
+        rulesAfter.forEach { it.apply(ctx) }
     }
 }
 
-interface HasOwner{
+interface Voin{
+    val life: Int
     val side: Side?
     fun isEnemy(side: Side) = this.side == side.vs()
     fun isAlly(side: Side) = this.side == side
     fun isNeutral() = this.side == null
-}
-
-interface HasLife{
-    val life: Int
 }

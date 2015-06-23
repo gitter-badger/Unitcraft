@@ -3,6 +3,7 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.land.Land
 import unitcraft.server.Side
+import java.util.*
 
 class ExtVoin(r: Resource, name: String) {
     val tlsVoin = r.tlsVoin(name)
@@ -29,8 +30,8 @@ class ExtVoin(r: Resource, name: String) {
                 for ((pg, v) in voins) {
                     drawTile(pg, tlsVoin(side, v.side), if (v.flip) hintTileFlip else null)
                     drawText(pg, v.life.toString(), hintTextLife)
-                    if (v.hide) drawTile(pg, tileHide)
-                    g.make(MsgDraw(this, pg, v))
+                    if (g.info(InfoIsHide(v)).hide) drawTile(pg, tileHide)
+                    g.make(MsgDrawVoin(this, pg, v))
                 }
             }
 
@@ -50,41 +51,35 @@ class ExtVoin(r: Resource, name: String) {
             make(0) {
                 when (msg) {
                     is EfkMove -> voins[msg.pgFrom]?.let {
-                        if (it === msg.what) {
+                        if (it === msg.voin) {
                             voins.remove(msg.pgFrom)
                             voins[msg.pgTo] = it
                             val xd = msg.pgFrom.x - msg.pgTo.x
                             if (xd != 0) it.flip = xd > 0
                         }
                     }
-                    is EfkHide -> voins[msg.pg]?.let {
-                        if (it == msg.voin) it.hide = true
-                    }
                     is EfkDmg -> voins[msg.pg]?.let {
-                        if (it == msg.aim) it.life -= 1
+                        if (it == msg.voin) it.life -= 1
                     }
                 }
             }
 
-            comp(0) {
+            after(0) {
                 when (msg) {
-                    is EfkHide -> voins[msg.pg]?.let {
-                        if (it.side == msg.side) msg.voin = it
-                    }
-                    is EfkDmg -> voins[msg.pg]?.let { msg.aim = it }
-                    is EfkEnforce -> voins[msg.pg]?.let { msg.aim = it }
-                    is MsgRaiseVoin -> msg.isOn = msg.voin.side == g.sideTurn
-                    is MsgRaiseCatapult -> voins[msg.pg]?.let {
-                        msg.what = it
-                        msg.isOn = it.side == g.sideTurn
+                    is EfkMove -> for (pg in msg.pgTo.near) {
+                        g.info(MsgVoin(pg)).voin?.let{
+                            g.make(MsgUnhide(pg,it))
+                        }
                     }
                 }
             }
 
-            //            voin(10) {
-            //                val v = voins[pg]
-            //                if (v != null && v.isVid(side)) put(v)
-            //            }
+            info(0) {
+                when (msg) {
+                    is MsgVoin -> voins[msg.pg]?.let { msg.voins.add(it) }
+                    is MsgRaiseVoin -> msg.isOn = msg.voin.side == g.sideTurn
+                }
+            }
 
             fun editChange(side: Side, pg: Pg): Boolean {
                 val v = voins[pg]
@@ -109,35 +104,30 @@ class ExtVoin(r: Resource, name: String) {
     }
 }
 
-class VoinStd(override var side: Side?, var flip: Boolean) : HasLife, HasOwner {
+class VoinStd(override var side: Side?, var flip: Boolean) : Voin {
     override var life = 3
-    var hide = false
-    fun isVid(side: Side) = !hide || isAlly(side)
 }
 
-class EfkMove(val pgFrom: Pg, val pgTo: Pg, val what: Any) : Efk() {
-    override fun isComplete() = true
-}
+class EfkMove(val pgFrom: Pg, val pgTo: Pg, val voin: Voin) : Efk()
 
-class EfkHide(val pg: Pg, val side: Side, var voin: Any? = null) : Efk() {
-    override fun isComplete() = voin != null
-}
+class EfkHide(val pg: Pg, val side: Side, val voin: Voin) : Efk()
 
-class MsgUnhide(val pg: Pg,var aim:Any? = null) : Efk() {
-    override fun isComplete() = aim!=null
-}
+class MsgUnhide(val pg: Pg,val voin:Voin) : Efk()
 
-class MsgRaiseVoin(val pg: Pg, val voin: HasOwner) : MsgRaise() {
-    override fun isComplete() = true
-}
+class MsgRaiseVoin(val pg: Pg, val voin: Voin) : MsgRaise()
 
-class MsgDraw(val ctx: CtxDraw, val pg: Pg, val what: Any) : Msg() {
-    override fun isComplete() = true
+class MsgDrawVoin(val ctx: CtxDraw, val pg: Pg, val voin: Voin) : Msg() {
     fun draw(fn: CtxDraw.() -> Unit) {
         ctx.fn()
     }
 }
 
-class EfkDmg(val pg: Pg, var aim: Any? = null) : Efk() {
-    override fun isComplete() = aim != null
+class EfkDmg(val pg: Pg, val voin: Voin) : Efk()
+
+class MsgVoin(val pg:Pg) : Msg(){
+    val voins = ArrayList<Voin>()
+    val voin : Voin?
+        get() = voins.firstOrNull()
 }
+
+class InfoIsHide(val voin:Voin,var hide:Boolean = false) : Efk()
