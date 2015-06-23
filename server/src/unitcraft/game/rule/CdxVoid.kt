@@ -6,6 +6,7 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.init
 import unitcraft.game.Game
+import java.util.*
 
 class CdxVoid(r:Resource): Cdx(r){
     val name = "void"
@@ -14,18 +15,19 @@ class CdxVoid(r:Resource): Cdx(r){
 
     override fun createRules(land: Land,g: Game) = rules{
         val rsVoin = extVoin.createRules(this,land,g)
+        val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
 
         spot(0){
-            val voin = rsVoin[pgRaise]
-            if(voin!=null) {
-                val msg = MsgRaiseVoin(pgRaise,voin)
-                if(g.trap(msg)) {
-                    val r = raise(msg.isOn)
-                    for (pgNear in pgRaise.near) {
-                        r.add(pgNear, tlsAkt, EfkDmg(pgNear))
-                    }
+            rsVoin[pgRaise]?.let {
+                val r = raise(MsgRaiseVoin(pgRaise, it))
+                if (r != null) for (pgNear in pgRaise.near) {
+                    r.add(pgNear, tlsAkt, EfkDmg(pgNear))
                 }
             }
+        }
+
+        make(0){
+            if(msg is MsgUnhide) hide.remove(rsVoin[msg.pg])
         }
 
         endTurn(10) {
@@ -33,7 +35,7 @@ class CdxVoid(r:Resource): Cdx(r){
                 val side = v.side
                 if(side!=null) {
                     val efk = EfkHide(pg, side, v)
-                    if (g.trap(efk)) g.make(efk)
+                    if(g.stop(efk)) hide.add(v)
                 }
             }
         }

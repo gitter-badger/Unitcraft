@@ -35,14 +35,10 @@ class ExtVoin(r: Resource, name: String) {
             }
 
             spot(10) {
-                val voin = voins[pgRaise]
-                if (voin != null) {
-                    val msg = MsgRaiseVoin(pgRaise, voin)
-                    if (g.trap(msg)) {
-                        val r = raise(msg.isOn)
-                        for (pgNear in pgRaise.near) {
-                            r.add(pgNear, tlsMove, EfkMove(pgRaise, pgNear, voin))
-                        }
+                voins[pgRaise]?.let {
+                    val r = raise(MsgRaiseVoin(pgRaise, it))
+                    if (r != null) for (pgNear in pgRaise.near) {
+                        r.add(pgNear, tlsMove, EfkMove(pgRaise, pgNear, it))
                     }
                 }
             }
@@ -70,9 +66,9 @@ class ExtVoin(r: Resource, name: String) {
                 }
             }
 
-            trap(0) {
+            comp(0) {
                 when (msg) {
-                    is EfkHide -> if (!msg.isOk()) voins[msg.pg]?.let {
+                    is EfkHide -> voins[msg.pg]?.let {
                         if (it.side == msg.side) msg.voin = it
                     }
                     is EfkDmg -> voins[msg.pg]?.let { msg.aim = it }
@@ -120,24 +116,28 @@ class VoinStd(override var side: Side?, var flip: Boolean) : HasLife, HasOwner {
 }
 
 class EfkMove(val pgFrom: Pg, val pgTo: Pg, val what: Any) : Efk() {
-    override fun isOk() = true
+    override fun isComplete() = true
 }
 
 class EfkHide(val pg: Pg, val side: Side, var voin: Any? = null) : Efk() {
-    override fun isOk() = voin != null
+    override fun isComplete() = voin != null
+}
+
+class MsgUnhide(val pg: Pg,var aim:Any? = null) : Efk() {
+    override fun isComplete() = aim!=null
 }
 
 class MsgRaiseVoin(val pg: Pg, val voin: HasOwner) : MsgRaise() {
-    override fun isOk() = true
+    override fun isComplete() = true
 }
 
 class MsgDraw(val ctx: CtxDraw, val pg: Pg, val what: Any) : Msg() {
-    override fun isOk() = true
+    override fun isComplete() = true
     fun draw(fn: CtxDraw.() -> Unit) {
         ctx.fn()
     }
 }
 
 class EfkDmg(val pg: Pg, var aim: Any? = null) : Efk() {
-    override fun isOk() = aim != null
+    override fun isComplete() = aim != null
 }

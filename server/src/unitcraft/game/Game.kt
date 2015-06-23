@@ -1,10 +1,7 @@
 package unitcraft.game
 
 import unitcraft.land.Land
-import unitcraft.server.GameState
-import unitcraft.server.IGame
-import unitcraft.server.Side
-import unitcraft.server.Violation
+import unitcraft.server.*
 import java.util.HashMap
 
 class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
@@ -169,13 +166,14 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
 //        return ctx.voin
 //    }
 
-    fun trap(msg:Msg): Boolean {
+    fun comp(msg:Msg): Boolean {
         val ctx = CtxTrap(msg)
         rulesTrap.forEach { it.apply(ctx) }
-        return msg.isOk() && !stop(msg)
+        return msg.isComplete() && !stop(msg)
     }
 
-    private fun stop(msg:Msg):Boolean{
+    fun stop(msg:Msg):Boolean{
+        if(!msg.isComplete()) throw Err("cant stop uncomplete msg=$msg")
         val ctx = CtxStop(msg)
         rulesStop.forEach { it.apply(ctx) }
         return msg.isStoped && !refute(msg)
@@ -186,8 +184,10 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     }
 
     fun make(msg:Msg) {
+        if(!msg.isComplete()) throw Err("cant make uncomplete msg=$msg")
+        if(msg.isStoped) throw Err("cant make stoped msg=$msg")
         val ctx = CtxMake(msg)
-        rulesMake.forEach { it.apply(ctx) }
+        if(!stop(msg)) rulesMake.forEach { it.apply(ctx) }
     }
 }
 

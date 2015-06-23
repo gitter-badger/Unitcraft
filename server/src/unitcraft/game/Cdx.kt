@@ -1,6 +1,7 @@
 package unitcraft.game
 
 import org.json.simple.JSONAware
+import unitcraft.game.rule.MsgRaise
 import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.ArrayList
@@ -33,33 +34,21 @@ class Rules {
         rules.add(RuleSpot(prior, apply))
     }
 
-    fun tgglRaise(prior: Int, apply: CtxTgglRaise.() -> Unit) {
-        rules.add(RuleTgglRaise(prior, apply))
-    }
-
     fun edit(prior: Int, tile: Int, apply: CtxEdit.() -> Unit) {
         rules.add(RuleEdit(prior, tile, apply))
     }
-
-//    fun voin(prior: Int, apply: CtxVoin.() -> Unit) {
-//        rules.add(RuleVoin(prior, apply))
-//    }
 
     fun endTurn(prior: Int, apply: () -> Unit) {
         rules.add(RuleEndTurn(prior, apply))
     }
 
-    fun trap(prior: Int, apply: CtxTrap.() -> Unit) {
+    fun comp(prior: Int, apply: CtxTrap.() -> Unit) {
         rules.add(RuleTrap(prior, apply))
     }
 
     fun stop(prior: Int, apply: CtxStop.() -> Unit) {
         rules.add(RuleStop(prior, apply))
     }
-
-//    fun refute(prior: Int, apply: (CtxRefute) -> Boolean) {
-//
-//    }
 
     fun make(prior: Int, apply: CtxMake.() -> Unit) {
         rules.add(RuleMake(prior, apply))
@@ -87,8 +76,9 @@ class RuleSpot(prior: Int, val apply: (CtxSpot) -> Unit) : Rule(prior)
 class CtxSpot(private val g:Game,val pgRaise: Pg, val side: Side) {
     val raises = ArrayList<Raise>()
 
-    fun raise(isOn:Boolean):Raise{
-        val r = Raise(g,if(g.sideTurn == side) isOn else false)
+    fun raise(msg: MsgRaise):Raise?{
+        if(!g.comp(msg)) return null
+        val r = Raise(g, if (g.sideTurn == side) msg.isOn else false)
         raises.add(r)
         return r
     }
@@ -107,7 +97,7 @@ class Raise(private val g:Game,val isOn:Boolean){
     private val listSloy = ArrayList<Sloy>()
 
     fun add(pgAkt:Pg, tlsAkt: TlsAkt, efk: Efk) {
-        if(g.trap(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+        if(g.comp(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
     }
 //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
@@ -164,7 +154,7 @@ class CtxEdit(val efk: EfkEdit) {
 //}
 
 abstract class Msg{
-    abstract fun isOk():Boolean
+    abstract fun isComplete():Boolean
 
     var isStoped:Boolean = false
         private set
@@ -181,7 +171,7 @@ abstract class Msg{
 abstract class Efk : Msg()
 
 abstract class EfkEdit(val pg:Pg):Efk(){
-    override fun isOk() = true
+    override fun isComplete() = true
 }
 
 class EfkEditAdd(pg:Pg,val side:Side):EfkEdit(pg)

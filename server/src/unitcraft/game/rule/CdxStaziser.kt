@@ -32,14 +32,10 @@ class CdxStaziser(r:Resource): Cdx(r){
         }
 
         spot(0) {
-            val voin = rsVoin[pgRaise]
-            if(voin!=null) {
-                val msg = MsgRaiseVoin(pgRaise,voin)
-                if(g.trap(msg)) {
-                    val r = raise(msg.isOn)
-                    for (pgNear in pgRaise.near) {
-                        r.add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
-                    }
+            rsVoin[pgRaise]?.let{
+                val r = raise(MsgRaiseVoin(pgRaise,it))
+                if(r!=null) for (pgNear in pgRaise.near) {
+                    r.add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
                 }
             }
         }
@@ -69,5 +65,5 @@ class CdxStaziser(r:Resource): Cdx(r){
 }
 
 class EfkStazisPlant(val pg:Pg,var target:Boolean=false) : Efk() {
-    override fun isOk()=true
+    override fun isComplete()=true
 }

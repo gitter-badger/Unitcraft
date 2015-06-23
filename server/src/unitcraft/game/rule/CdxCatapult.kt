@@ -26,10 +26,8 @@ class CdxCatapult(r:Resource): Cdx(r){
         spot(1){
             if (pgRaise in flats) {
                 val msg = MsgRaiseCatapult(pgRaise)
-                if(g.trap(msg)){
-                    val r = raise(msg.isOn)
-                    for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, msg.what!!))
-                }
+                val r = raise(msg)
+                if(r!=null) for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, msg.what!!))
             }
         }
 
@@ -46,9 +44,11 @@ object Catapult : Flat()
 
 abstract class MsgRaise : Msg(){
     var isOn = false
+    var raise:Raise? = null
+    override fun isComplete() = raise!=null
 }
 
 class MsgRaiseCatapult(val pg:Pg) : MsgRaise(){
     var what:Any? = null
-    override fun isOk() = what!=null
+    override fun isComplete() = super.isComplete() && what!=null
 }

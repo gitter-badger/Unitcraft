@@ -14,6 +14,7 @@ class CdxPlace(r:Resource) : Cdx(r){
     override fun createRules(land: Land,g: Game) = rules{
         val places = Grid<Place>()
         val fixs = Grid<Map<Place, Int>>()
+        val hide : MutableSet<Any> = Collections.newSetFromMap(WeakHashMap<Any,Boolean>())
 
         for (pg in land.pgser.pgs) {
             places[pg] = land.place(pg)
@@ -34,11 +35,15 @@ class CdxPlace(r:Resource) : Cdx(r){
                 if(efk is EfkEditAdd) places[efk.pg] = place
             }
 
+        make(0){
+            if(msg is MsgUnhide) hide.remove(msg.aim!!)
+        }
+
         endTurn(5) {
-            for ((pg,place) in places) {
-                // скрыть врагов в лесу
+            // скрыть врагов в лесу
+            for ((pg,place) in places) if (place == Place.forest){
                 val efkHide = EfkHide(pg,g.sideTurn.vs())
-                if (place == Place.forest && g.trap(efkHide)) g.make(efkHide)
+                if(g.comp(efkHide)) hide.add(efkHide.voin!!)
             }
         }
     }
