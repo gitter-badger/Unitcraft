@@ -21,7 +21,12 @@ class Unitcraft() : CreatorGame {
                 CdxCatapult::class,
                 CdxStaziser::class,
                 CdxVoid::class,
-                CdxMultwin::class
+                CdxMultwin::class,
+                CdxImitator::class,
+                CdxFlag::class,
+                CdxMine::class,
+                CdxElectric::class,
+                CdxRedeployer::class
         )
     }
 }

@@ -21,10 +21,11 @@ class CdxPlace(r:Resource) : Cdx(r){
             fixs[pg] = land.fixs(pg)
         }
 
-        draw(0) {
+        info(0) {
+            if(msg is MsgDraw)
             for (pg in g.pgs) {
                 val place = places[pg]
-                drawTile(pg, tiles[place]!![fixs[pg]!![place]!!])
+                msg.drawTile(pg, tiles[place]!![fixs[pg]!![place]!!])
             }
         }
 
@@ -38,7 +39,7 @@ class CdxPlace(r:Resource) : Cdx(r){
             }
 
         make(0){
-            if(msg is MsgUnhide) hide.remove(msg.voin)
+            if(efk is EfkUnhide) hide.remove(efk.voin)
         }
 
         endTurn(5) {

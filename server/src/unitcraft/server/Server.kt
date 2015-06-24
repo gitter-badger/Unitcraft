@@ -54,7 +54,7 @@ class Server(val log: Log) : Sender{
         threadMain.execute {
             log.open()
             if(ws.isLocal) {
-                var id = Id("dev"+users.users.size())
+                var id = Id("dev"+wss.size())
                 val user = users.get(id)
                 if (user == null) users.add(id, "")
                 loginOk(ws, id, 1)
@@ -67,8 +67,8 @@ class Server(val log: Log) : Sender{
             log.close()
             if (ws.isLogin) {
                 rooms.close(ws.id)
+                wss.remove(ws.id)
             }
-            if(ws.isLogin) wss.remove(ws.id)
         }
     }
 
@@ -197,8 +197,7 @@ class Server(val log: Log) : Sender{
     }
 
     override fun invoke(id: Id, msg: String) {
-        val ws = wss[id]
-        if(ws==null) throw Err("User $id disconnected")
+        val ws = wss[id] ?: throw Err("User $id disconnected")
         ws.send(msg)
     }
 }

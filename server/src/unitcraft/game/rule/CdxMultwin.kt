@@ -21,49 +21,53 @@ class CdxMultwin(r: Resource) : Cdx(r) {
 
         val coreBySide = HashMap<Side,MultwinCore>()
 
-        draw(20) {
+        info(20) {
+            if(msg is MsgDraw)
             for ((pg, v) in voins) {
-                drawTile(pg, tlsVoin(side, v.side), if (v.flip) hintTileFlip else null)
-                drawText(pg, v.life.toString(), hintTextLife)
-                if (g.info(InfoIsHide(v)).hide) drawTile(pg, tileHide)
-                g.make(MsgDrawVoin(this, pg, v))
+                msg.drawTile(pg, tlsVoin(msg.side, v.side), if (v.flip) hintTileFlip else null)
+                msg.drawText(pg, v.life.toString(), hintTextLife)
+                if (g.info(InfoIsHide(v)).hide) msg.drawTile(pg, tileHide)
+                g.info(MsgDrawVoin(msg, pg, v))
             }
         }
 
-        spot(10) {
-            voins[pgRaise]?.let {
-                val r = raise(MsgRaise(pgRaise, it))
-                if (r != null) for (pgNear in pgRaise.near) {
-                    r.add(pgNear, tlsMove, EfkMove(pgRaise, pgNear, it))
+        info(0) {
+            if (msg is MsgSpot) {
+                voins[msg.pg]?.let{
+                    msg.add(g.info(MsgRaise(g, msg.pg,it,it)))
                 }
             }
+            if (msg is MsgRaise) if (voins.containsValue(msg.src))
+                for (pgNear in msg.pg.near) {
+                    msg.add(pgNear, tlsMove, EfkMove(msg.pg, pgNear, msg.voinEfk))
+                }
         }
 
         stop(0) {
-            if (msg is EfkMove && voins[msg.pgTo] != null) msg.stop()
+            if (efk is EfkMove && voins[efk.pgTo] != null) efk.stop()
         }
 
         make(0) {
-            when (msg) {
-                is EfkMove -> voins[msg.pgFrom]?.let {
-                    if (it === msg.voin) {
-                        voins.remove(msg.pgFrom)
-                        voins[msg.pgTo] = it
-                        val xd = msg.pgFrom.x - msg.pgTo.x
+            when (efk) {
+                is EfkMove -> voins[efk.pgFrom]?.let {
+                    if (it === efk.voin) {
+                        voins.remove(efk.pgFrom)
+                        voins[efk.pgTo] = it
+                        val xd = efk.pgFrom.x - efk.pgTo.x
                         if (xd != 0) it.flip = xd > 0
                     }
                 }
-                is EfkDmg -> voins[msg.pg]?.let {
-                    if (it == msg.voin) it.core.life -= 1
+                is EfkDmg -> voins[efk.pg]?.let {
+                    if (it == efk.voin) it.core.life -= 1
                 }
             }
         }
 
         after(0) {
-            when (msg) {
-                is EfkMove -> for (pg in msg.pgTo.near) {
+            when (efk) {
+                is EfkMove -> for (pg in efk.pgTo.near) {
                     g.info(MsgVoin(pg)).voin?.let{
-                        g.make(MsgUnhide(pg,it))
+                        g.make(EfkUnhide(pg,it))
                     }
                 }
             }
@@ -72,7 +76,7 @@ class CdxMultwin(r: Resource) : Cdx(r) {
         info(0) {
             when (msg) {
                 is MsgVoin -> voins[msg.pg]?.let { msg.voins.add(it) }
-                is MsgRaise -> msg.isOn = msg.voin.side == g.sideTurn
+                is MsgRaise -> msg.isOn = msg.voinEfk.side == g.sideTurn
             }
         }
 
@@ -82,7 +86,7 @@ class CdxMultwin(r: Resource) : Cdx(r) {
                 when {
                     v.isAlly(side) -> v.core.side = side.vs()
                     v.isEnemy(side) -> v.core.side = null
-                    v.isNeutral() -> v.core.side = side
+                    v.side == null -> v.core.side = side
                 }
                 return true
             } else return false
@@ -94,8 +98,8 @@ class CdxMultwin(r: Resource) : Cdx(r) {
                     val core = coreBySide.getOrPut(efk.side){MultwinCore(efk.side)}
                     voins[efk.pg] = Multwin(core, efk.pg.x > efk.pg.pgser.xr / 2)
                 }
-                is EfkEditRemove -> consume(voins.remove(efk.pg) != null)
-                is EfkEditChange -> consume(editChange(efk.side, efk.pg))
+                is EfkEditRemove -> if(voins.remove(efk.pg) != null) efk.eat()
+                is EfkEditChange -> if(editChange(efk.side, efk.pg)) efk.eat()
             }
         }
     }

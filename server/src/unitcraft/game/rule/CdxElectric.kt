@@ -5,8 +5,8 @@ import unitcraft.land.Land
 import java.util.Collections
 import java.util.WeakHashMap
 
-class CdxVoid(r: Resource) : Cdx(r) {
-    val name = "void"
+class CdxElectric(r: Resource) : Cdx(r) {
+    val name = "electric"
     val extVoin = ExtVoin(r, name)
     val tlsAkt = r.tlsAkt(name)
 
@@ -19,21 +19,6 @@ class CdxVoid(r: Resource) : Cdx(r) {
                 g.info(MsgVoin(pgNear)).voin?.let {
                     msg.add(pgNear, tlsAkt, EfkDmg(pgNear, it))
                 }
-            }
-        }
-
-        make(0) {
-            if (efk is EfkUnhide) hide.remove(rsVoin[efk.pg])
-        }
-
-        info(0){
-            if(msg is InfoIsHide) if(msg.voin in hide) msg.hide = true
-        }
-
-        endTurn(10) {
-            for ((pg, v) in rsVoin.voins) {
-                val side = v.side
-                if (side != null) if (!g.stop(EfkHide(pg, side, v))) hide.add(v)
             }
         }
     }

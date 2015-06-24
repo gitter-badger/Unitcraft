@@ -2,7 +2,8 @@ package unitcraft.game
 
 import unitcraft.land.Land
 import unitcraft.server.*
-import java.util.*
+import java.util.ArrayList
+import java.util.HashMap
 
 class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     val pgser = land.pgser
@@ -11,8 +12,6 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         private set
     val bonus = HashMap<Side, Int>()
 
-    val rulesDraw: List<RuleDraw>
-    val rulesSpot: List<RuleSpot>
     val rulesEndTurn: List<RuleEndTurn>
     val rulesInfo: List<RuleInfo>
     val rulesStop: List<RuleStop>
@@ -24,8 +23,6 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
 
     init {
         val rules = cdxs.flatMap { it.createRules(land, this) }
-        rulesDraw = filterRules<RuleDraw>(rules)
-        rulesSpot = filterRules<RuleSpot>(rules)
         rulesEndTurn = filterRules<RuleEndTurn>(rules)
         rulesInfo = filterRules<RuleInfo>(rules)
         rulesMake = filterRules<RuleMake>(rules)
@@ -84,7 +81,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     private fun editRemove(prm: Prm) {
         ensureTest()
         prm.ensureSize(2)
-        edit(EfkEditRemove(prm.pg(0)),true)
+        edit(EfkEditRemove(prm.pg(0)), true)
     }
 
     private fun editDestroy(prm: Prm) {
@@ -99,32 +96,32 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         edit(EfkEditChange(prm.pg(0), side))
     }
 
-    private fun edit(efk:EfkEdit,isReverse:Boolean = false){
-        for (it in if(isReverse) rulesEdit!!.reverse() else rulesEdit!! ) {
+    private fun edit(efk: EfkEdit, isReverse: Boolean = false) {
+        for (it in if (isReverse) rulesEdit!!.reverse() else rulesEdit!! ) {
             val ctx = CtxEdit(efk)
             it.apply(ctx)
-            if (ctx.isConsumed) break
+            if (efk.isEated) return
         }
     }
 
     private fun akt(side: Side, prm: Prm) {
         prm.ensureSize(5)
-        val sloy = spot(prm.pg(0),side)[prm.int(2)]
-        if(!sloy.isOn) throw Violation("sloy is off")
-        val akt = sloy.aktByPg(prm.pg(3))?:throw Violation("akt not found")
+        val sloy = spot(prm.pg(0), side)[prm.int(2)]
+        if (!sloy.isOn) throw Violation("sloy is off")
+        val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
         make(akt.efk)
-        println("akt "+side+" from "+prm.pg(0) + " index "+prm.int(2)+" to "+prm.pg(3))
+        println("akt " + side + " from " + prm.pg(0) + " index " + prm.int(2) + " to " + prm.pg(3))
     }
 
     private fun aktOpt(side: Side, prm: Prm) {
         prm.ensureSize(6)
-        val sloy = spot(prm.pg(0),side)[prm.int(2)]
-        if(!sloy.isOn) throw Violation("sloy is off")
-        val akt = sloy.aktByPg(prm.pg(3))?:throw Violation("akt not found")
+        val sloy = spot(prm.pg(0), side)[prm.int(2)]
+        if (!sloy.isOn) throw Violation("sloy is off")
+        val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
         //make(akt.efkOpt) prm.int(5)
-        println("akt "+side+" from "+prm.pg(0) + " index "+prm.int(2)+" to "+prm.pg(3)+" opt "+prm.int(5))
+        println("akt " + side + " from " + prm.pg(0) + " index " + prm.int(2) + " to " + prm.pg(3) + " opt " + prm.int(5))
     }
 
     private fun endTurn(side: Side, prm: Prm) {
@@ -140,86 +137,97 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
             val sloys = spot(pg, side)
             if (sloys.isNotEmpty()) spots[pg] = sloys
         }
-        val ctxDraw = CtxDraw(side)
-        rulesDraw.forEach { it.apply(ctxDraw) }
-        val snap = Snap(pgser.xr, pgser.yr, ctxDraw.dabOnGrids, spots, traces, side == sideTurn, Stage.turn, opterTest)
+        val snap = Snap(pgser.xr, pgser.yr, info(MsgDraw(side)).dabOnGrids, spots, traces, side == sideTurn, Stage.turn, opterTest)
         return snap
     }
 
     private fun spot(pg: Pg, side: Side): List<Sloy> {
-        return rulesSpot.flatMap {
-            val ctx = CtxSpot(this,pg, side)
-            it.apply(ctx)
-            ctx.sloys()
-        }
+        return info(MsgSpot(pg, side)).sloys()
     }
 
     private fun ensureTest() {
         if (!canEdit) throw Violation("only for test game")
     }
 
-//    fun voin(pg: Pg, sideVid: Side): Voin? {
-//        val ctx = CtxVoin(pg, sideVid)
-//        rulesVoin.forEach { it.apply(ctx) }
-//        return ctx.voin
-//    }
-
-    fun <T:Msg> info(msg:T): T {
+    //    fun voin(pg: Pg, sideVid: Side): Voin? {
+    //        val ctx = CtxVoin(pg, sideVid)
+    //        rulesVoin.forEach { it.apply(ctx) }
+    //        return ctx.voin
+    //    }
+    /**
+     * Напололняет [msg] разными данными, передается всем подписавшимся правилам в порядке приоритета. Нельзя менять состояние правил.
+     */
+    fun <T : Msg> info(msg: T): T {
         val ctx = CtxInfo(msg)
         rulesInfo.forEach { it.apply(ctx) }
         return msg
     }
 
-    fun stop(msg:Msg):Boolean{
-        val ctx = CtxStop(msg)
-        rulesStop.forEach { it.apply(ctx) }
-        return msg.isStoped && !refute(msg)
+    /**
+     * Выполняет [efk], передается всем подписавшимся правилам в порядке приоритета, пока одно из них не съест [efk].
+     * Можно менять состояние правил. После вызывается событие after.
+     */
+    fun make(efk: Efk) {
+        val ctx = CtxMake(efk)
+        if (!stop(efk)) for (it in rulesMake) {
+            it.apply(ctx)
+            if(efk.isEated) {
+                rulesAfter.forEach { it.apply(ctx) }
+                return
+            }
+        }
     }
 
-    private fun refute(msg:Msg):Boolean{
+    /**
+     * Проверка на выполнимость [efk], передается всем правилам в порядке приоритета, пока одно из них не запретит [efk].
+     * После запрета проверяется допустимость запрета.
+     */
+    fun stop(efk: Efk): Boolean {
+        val ctx = CtxMake(efk)
+        for (it in rulesStop) {
+            it.apply(ctx)
+            if(efk.isStoped && !refute(efk)) return true
+        }
         return false
     }
 
-    fun make(msg:Msg) {
-        val ctx = CtxMake(msg)
-        if(!stop(msg)) rulesMake.forEach { it.apply(ctx) }
-        rulesAfter.forEach { it.apply(ctx) }
+    private fun refute(efk: Efk): Boolean {
+        return false
     }
 }
 
-interface Voin{
+interface Voin : Obj {
     val life: Int
     val side: Side?
     fun isEnemy(side: Side) = this.side == side.vs()
     fun isAlly(side: Side) = this.side == side
-    fun isNeutral() = this.side == null
 }
 
-class MsgSpot(val pg:Pg) : Msg(){
-    val raises = ArrayList<Raise>()
+class MsgSpot(val pg: Pg, val side: Side) : Msg() {
+    val raises = ArrayList<MsgRaise>()
 
-    fun add(raise:Raise){
-//        if (g.sideTurn == side) raise.isOn = false
+    fun add(raise: MsgRaise) {
+        //        if (g.sideTurn == side) raise.isOn = false
         raises.add(raise)
     }
 
-    fun sloys():List<Sloy>{
+    fun sloys(): List<Sloy> {
         // схлопнуть, если нет пересечений
-        return raises.flatMap{it.sloys()}
+        return raises.flatMap { it.sloys() }
     }
 }
 
-class MsgRaise(private val g:Game,val pg: Pg, val voinRaiser: Voin,val voinEfk:Von):Msg(){
+class MsgRaise(private val g: Game, val pg: Pg, val src: Obj, val voinEfk: Voin) : Msg() {
     private val listSloy = ArrayList<Sloy>()
     var isOn = false
-    val raise = Raise(g,false)
 
-    fun add(pgAkt:Pg, tlsAkt: TlsAkt, efk: Efk) {
-        if(!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+    fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
+        if (!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
     }
     //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
     private fun addAkt(akt: Akt) {
+        if (akt.pgAim == pg) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
         val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
         if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
@@ -229,8 +237,8 @@ class MsgRaise(private val g:Game,val pg: Pg, val voinRaiser: Voin,val voinEfk:V
         // заполнить пустоты сверху снизу
         return listSloy
     }
-
-//    fun raise(fn:Raise.()->Unit){
-//        r.fn()
-//    }
 }
+
+interface Obj
+
+abstract class Flat : Obj

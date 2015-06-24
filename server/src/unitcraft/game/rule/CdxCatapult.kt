@@ -16,30 +16,32 @@ class CdxCatapult(r:Resource): Cdx(r){
         flats[land.pgser.pg(3, 3)] = Catapult
 
 
-        draw(10) {
-            for ((pg, flat) in flats) {
-                drawTile(pg, tile)
-            }
+        info(10) {
+            if(msg is MsgDraw) for ((pg, flat) in flats)
+                msg.drawTile(pg, tile)
         }
 
         /** если воин стоит на катапульте, то дать ему способность катапульты */
-        spot(20){
-            if (pgRaise in flats) {
-                val voin = g.info(MsgVoin(pgRaise)).voin
-                if(voin!=null) {
-                    val r = raise(MsgRaise(pgRaise, voin))
-                    if (r != null) for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise,pg,voin))
+        info(20){ when(msg){
+            is MsgRaise -> {
+                if(msg.src is Catapult) for (pg in g.pgs) msg.add(pg, tlsAkt, EfkMove(msg.pg,pg,msg.voinEfk))
+            }
+            is MsgSpot ->{
+                if (msg.pg in flats) {
+                    g.info(MsgVoin(msg.pg)).voin?.let {
+                        msg.add(g.info(MsgRaise(g, msg.pg, Catapult, it)))
+                    }
                 }
             }
-        }
+        }}
 
         edit(5,tile) { when(efk){
             is EfkEditAdd -> flats[efk.pg] = Catapult
-            is EfkEditRemove -> consume(flats.remove(efk.pg)!=null)
+            is EfkEditRemove -> if(flats.remove(efk.pg)!=null) efk.eat()
         }}
     }
 }
 
-abstract class Flat
+abstract class Flat : Obj
 
 object Catapult : Flat()

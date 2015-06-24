@@ -12,7 +12,7 @@ $(function () {
     var status = initStatus(server);
     var memo = initMemo(server);
     var key = initKey(keyboard);
-    var keyTest = initKeyTest(keyboard)
+    var keyTest = initKeyTest(keyboard);
     var cmdScale = initCmdScale(keyboard);
     var tileset = Kefir.pool();
     var panelset = Kefir.pool();
@@ -439,7 +439,7 @@ function createPing(server, keyboard) {
 
 function initMemo(server) {
     var sizeMemo = 10;
-    return server.msg("g").map(JSON.parse).slidingWindow(sizeMemo);
+    return server.msg("g").map(JSON.parse).onValue(game => {if(game.err) showErr()}).slidingWindow(sizeMemo);
 }
 
 function initStatus(server) {

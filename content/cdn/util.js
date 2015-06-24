@@ -29,6 +29,10 @@ function showFatal(msg){
     $.UIkit.modal("#modalFatal", {bgclose: false}).show();
 }
 
+function showErr(){
+    $.UIkit.modal("#modalErr", {bgclose: true}).show();
+}
+
 function pstEvent(e){
     return {
         x: e.pageX,

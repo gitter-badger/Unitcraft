@@ -40,8 +40,9 @@ class Resource {
 
     fun createRules(rules:List<KClass<out Cdx>>) = rules.map{(it.java as Class<out Cdx>).getConstructor(javaClass<Resource>()).newInstance(this)}
 
+    fun tlsFlatControl(name:String) = TlsFlatControl(tile(name),tile(name+".ally"),tile(name+".enemy"))
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
-    fun tlsAkt(name:String) = TlsAkt(tile(name+".akt",effectAkt),tile(name+".akt",effectAktOff))
+    fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect =effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
@@ -125,6 +126,11 @@ class Resource {
 //            r.optsTest.mapTo(prmsTestAdd) { it.component2() }
 //        }
 //    }
+}
+
+class TlsFlatControl(val neut:Int,val ally:Int,val enemy:Int){
+    fun invoke(side:Side,sideFlat: Side?) =
+            if(sideFlat==null) neut else if(sideFlat==side) ally else enemy
 }
 
 class TlsVoin(val ally:Int,val enemy:Int,val neut:Int){
