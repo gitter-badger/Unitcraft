@@ -27,7 +27,7 @@ class CdxCatapult(r:Resource): Cdx(r){
             if (pgRaise in flats) {
                 val voin = g.info(MsgVoin(pgRaise)).voin
                 if(voin!=null) {
-                    val r = raise(MsgRaiseVoin(pgRaise, voin))
+                    val r = raise(MsgRaise(pgRaise, voin))
                     if (r != null) for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise,pg,voin))
                 }
             }
@@ -43,8 +43,3 @@ class CdxCatapult(r:Resource): Cdx(r){
 abstract class Flat
 
 object Catapult : Flat()
-
-abstract class MsgRaise : Msg(){
-    var isOn = false
-    var raise:Raise? = null
-}

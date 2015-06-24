@@ -33,7 +33,7 @@ class CdxStaziser(r:Resource): Cdx(r){
 
         spot(0) {
             rsVoin[pgRaise]?.let{
-                val r = raise(MsgRaiseVoin(pgRaise,it))
+                val r = raise(MsgRaise(pgRaise,it))
                 if(r!=null) for (pgNear in pgRaise.near) if(stazis[pgNear]==null) {
                     r.add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
                 }
@@ -48,7 +48,7 @@ class CdxStaziser(r:Resource): Cdx(r){
             is EfkMove -> if(stazis[msg.pgFrom]!=null || stazis[msg.pgTo] != null) msg.stop()
             is EfkEnforce -> if(stazis[msg.pg]!=null) msg.stop()
             is EfkHide -> if(stazis[msg.pg]!=null) msg.stop()
-            is MsgRaiseVoin -> if(stazis[msg.pg]!=null) msg.stop()
+            is MsgRaise -> if(stazis[msg.pg]!=null) msg.stop()
         }}
 
         edit(50,tlsStazis.last()) {when(efk) {

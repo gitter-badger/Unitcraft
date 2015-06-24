@@ -1,7 +1,8 @@
 package unitcraft.game
 
 import org.json.simple.JSONAware
-import unitcraft.game.rule.MsgRaise
+import unitcraft.game.rule.MsgRaiseA
+import unitcraft.game.rule.MsgRaiseVoin
 import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.ArrayList
@@ -30,9 +31,9 @@ class Rules {
         rules.add(RuleDraw(prior, apply))
     }
 
-    fun spot(prior: Int, apply: CtxSpot.() -> Unit) {
-        rules.add(RuleSpot(prior, apply))
-    }
+//    fun spot(prior: Int, apply: CtxSpot.() -> Unit) {
+//        rules.add(RuleSpot(prior, apply))
+//    }
 
     fun edit(prior: Int, tile: Int, apply: CtxEdit.() -> Unit) {
         rules.add(RuleEdit(prior, tile, apply))
@@ -92,10 +93,6 @@ class CtxSpot(private val g:Game,val pgRaise: Pg, val side: Side) {
     }
 }
 
-enum class TpTgglRaise{
-    on, off, disable
-}
-
 class Raise(private val g:Game,val isOn:Boolean){
     private val listSloy = ArrayList<Sloy>()
 
@@ -109,8 +106,6 @@ class Raise(private val g:Game,val isOn:Boolean){
         if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
     }
-
-    fun isNotEmpty() = listSloy.isNotEmpty()
 
     fun sloys(): List<Sloy> {
         // заполнить пустоты сверху снизу

@@ -14,18 +14,6 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
         val rsVoin = extVoin.createRules(this, land, g)
         val enforced = WeakHashMap<Voin, Boolean>()
 
-        spot(0) {
-            val voin = rsVoin[pgRaise]
-            if (voin != null) {
-                val r = raise(MsgRaiseVoin(pgRaise, voin))
-                if(r!=null) for (pgNear in pgRaise.near) {
-                    g.info(MsgVoin(pgNear)).voin?.let {
-                        r.add(pgNear, tlsAkt, EfkEnforce(pgNear,it))
-                    }
-                }
-            }
-        }
-
         make(0) {
             when (msg) {
                 is EfkEnforce -> enforced[msg.voin] = true
@@ -39,7 +27,14 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
         }
 
         info(10){
-            if(msg is MsgRaiseVoin && enforced[msg.voin]==true) msg.isOn = true
+            if(msg is MsgRaise) {
+                if(enforced[msg.voin]==true) msg.isOn = true
+                if(rsVoin.voins.containsValue(msg.voin)) for (pgNear in msg.pg.near) {
+                    g.info(MsgVoin(pgNear)).voin?.let {
+                        msg.add(pgNear, tlsAkt, EfkEnforce(pgNear, it))
+                    }
+                }
+            }
         }
 
         stop(0) {

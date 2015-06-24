@@ -2,7 +2,7 @@ package unitcraft.game
 
 import unitcraft.land.Land
 import unitcraft.server.*
-import java.util.HashMap
+import java.util.*
 
 class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     val pgser = land.pgser
@@ -193,4 +193,44 @@ interface Voin{
     fun isEnemy(side: Side) = this.side == side.vs()
     fun isAlly(side: Side) = this.side == side
     fun isNeutral() = this.side == null
+}
+
+class MsgSpot(val pg:Pg) : Msg(){
+    val raises = ArrayList<Raise>()
+
+    fun add(raise:Raise){
+//        if (g.sideTurn == side) raise.isOn = false
+        raises.add(raise)
+    }
+
+    fun sloys():List<Sloy>{
+        // схлопнуть, если нет пересечений
+        return raises.flatMap{it.sloys()}
+    }
+}
+
+class MsgRaise(private val g:Game,val pg: Pg, val voinRaiser: Voin,val voinEfk:Von):Msg(){
+    private val listSloy = ArrayList<Sloy>()
+    var isOn = false
+    val raise = Raise(g,false)
+
+    fun add(pgAkt:Pg, tlsAkt: TlsAkt, efk: Efk) {
+        if(!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+    }
+    //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
+
+    private fun addAkt(akt: Akt) {
+        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
+        if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
+        listSloy[idx].akts.add(akt)
+    }
+
+    fun sloys(): List<Sloy> {
+        // заполнить пустоты сверху снизу
+        return listSloy
+    }
+
+//    fun raise(fn:Raise.()->Unit){
+//        r.fn()
+//    }
 }

@@ -34,6 +34,7 @@ class Resource {
     val tileEdgeTurn = tile("edgeTurn", effectPlace)
     val tileEdgeWait = tile("edgeWait", effectPlace)
     val tlsAktMove = tlsAkt("move")
+    val tileHide = tile("hide")
 
     val buildiks = ArrayList<Int>()
 

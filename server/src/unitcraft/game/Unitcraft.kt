@@ -20,7 +20,8 @@ class Unitcraft() : CreatorGame {
                 CdxPlace::class,
                 CdxCatapult::class,
                 CdxStaziser::class,
-                CdxVoid::class
+                CdxVoid::class,
+                CdxMultwin::class
         )
     }
 }
