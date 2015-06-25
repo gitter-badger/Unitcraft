@@ -12,12 +12,6 @@ abstract class Cdx(val r: Resource) {
     abstract fun createRules(land: Land, g: Game): Rules
 }
 
-//fun rules(fn: Rules.() -> Unit): List<Rule> {
-//    val rules = Rules()
-//    rules.fn()
-//    return rules.rules
-//}
-
 class Rules() {
     val rulesInfo = HashMap<KClass<out Msg>,MutableList<Rule>>()
     val rulesStop = HashMap<KClass<out Efk>,MutableList<Rule>>()
@@ -73,16 +67,10 @@ fun rules(fn: Rules.() -> Unit):Rules{
     rules.fn()
     return rules
 }
-//
-//enum class TpRule{
-//    info,make,stop,refute,after
-//}
 
 class Rule(val prior:Int,appl: Any){
     val apply = appl as (Any)->Unit
 }
-
-//abstract class Rule(val prior: Int)
 
 class MsgDraw(val sideVid: Side):Msg() {
     val dabOnGrids = ArrayList<DabOnGrid>()
@@ -95,21 +83,6 @@ class MsgDraw(val sideVid: Side):Msg() {
         dabOnGrids.add(DabOnGrid(pg, DabText(text, hint)))
     }
 }
-//
-//class RuleEndTurn(prior: Int, val apply: () -> Unit) : Rule(prior)
-//
-//class RuleInfo(prior: Int, val apply: (CtxInfo) -> Unit) : Rule(prior)
-//class CtxInfo(val msg:Msg)
-//
-//class RuleStop(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-//
-//class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-//class CtxMake(val efk:Efk)
-//
-//class RuleAfter(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-//
-//class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
-//class CtxEdit(val efk: EfkEdit)
 
 abstract class Msg
 

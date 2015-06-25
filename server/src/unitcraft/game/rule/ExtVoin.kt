@@ -118,7 +118,7 @@ class ExtVoin(r: Resource, name: String) {
                 if (editChange(sideVid, pgEdit)) eat()
             }
 
-            make<EfkEditRemove>(12) {
+            make<EfkEditRemove>(-12) {
                 if (voins.remove(pgEdit) != null) eat()
             }
         }

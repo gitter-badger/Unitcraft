@@ -38,7 +38,7 @@ class CdxCatapult(r:Resource): Cdx(r){
             flats[pgEdit] = Catapult
         }
 
-        make<EfkEditRemove>(5){
+        make<EfkEditRemove>(-5){
             if(flats.remove(pgEdit)!=null) eat()
         }
     }

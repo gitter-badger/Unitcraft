@@ -28,11 +28,8 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         rulesStop = sortRules(rules.rulesStop)
         rulesMake = sortRules(rules.rulesMake)
         rulesAfter = sortRules(rules.rulesAfter)
-        if (canEdit) {
-            opterTest = Opter(rules.tilesEditAdd.sortBy{it.first}.map { Opt(listOf(DabTile(it.second))) })
-        } else {
-            opterTest = null
-        }
+        opterTest = if (canEdit) Opter(rules.tilesEditAdd.sortBy{it.first}.map { Opt(listOf(DabTile(it.second))) }) else null
+
     }
 
     val traces = Traces()
@@ -74,27 +71,19 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     private fun editRemove(prm: Prm) {
         ensureTest()
         prm.ensureSize(2)
-        edit(EfkEditRemove(prm.pg(0)), true)
+        make(EfkEditRemove(prm.pg(0)))
     }
 
     private fun editDestroy(prm: Prm) {
         ensureTest()
         prm.ensureSize(2)
-        edit(EfkEditDestroy(prm.pg(0)))
+        make(EfkEditDestroy(prm.pg(0)))
     }
 
     private fun editChange(side: Side, prm: Prm) {
         ensureTest()
         prm.ensureSize(2)
-        edit(EfkEditChange(prm.pg(0), side))
-    }
-
-    private fun edit(efk: EfkEdit, isReverse: Boolean = false) {
-        val rules = rulesMake[efk.javaClass.kotlin]
-        if(rules!=null) for (it in if (isReverse) rules.reverse() else rules ) {
-            it.apply(efk)
-            if (efk.isEated) return
-        }
+        make(EfkEditChange(prm.pg(0), side))
     }
 
     private fun akt(side: Side, prm: Prm) {
@@ -218,9 +207,10 @@ class MsgSpot(val pgSpot: Pg, val side: Side) : Msg() {
 class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinEfk: Voin) : Msg() {
     private val listSloy = ArrayList<Sloy>()
     var isOn = false
+    var isStoped = false
 
     fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
-        if (!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+        if (!isStoped && !g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
     }
     //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 

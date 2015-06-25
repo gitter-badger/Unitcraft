@@ -97,7 +97,7 @@ class CdxMultwin(r: Resource) : Cdx(r) {
             voins[pgEdit] = Multwin(core, pgEdit.x > pgEdit.pgser.xr / 2)
         }
 
-        make<EfkEditRemove>(12){
+        make<EfkEditRemove>(-12){
             if(voins.remove(pgEdit) != null) eat()
         }
         make<EfkEditChange>(12){
