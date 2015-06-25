@@ -16,29 +16,31 @@ class CdxCatapult(r:Resource): Cdx(r){
         flats[land.pgser.pg(3, 3)] = Catapult
 
 
-        info(10) {
-            if(msg is MsgDraw) for ((pg, flat) in flats)
-                msg.drawTile(pg, tile)
-        }
+        info<MsgDraw>(10, {
+            for ((pg, flat) in flats)
+                drawTile(pg, tile)
+        })
 
         /** если воин стоит на катапульте, то дать ему способность катапульты */
-        info(20){ when(msg){
-            is MsgRaise -> {
-                if(msg.src is Catapult) for (pg in g.pgs) msg.add(pg, tlsAkt, EfkMove(msg.pg,pg,msg.voinEfk))
-            }
-            is MsgSpot ->{
-                if (msg.pg in flats) {
-                    g.info(MsgVoin(msg.pg)).voin?.let {
-                        msg.add(g.info(MsgRaise(g, msg.pg, Catapult, it)))
-                    }
+        info<MsgRaise>(20){
+                if(src is Catapult) for (pg in g.pgs) add(pg, tlsAkt, EfkMove(pgRaise,pg,voinEfk))
+        }
+
+        info<MsgSpot>(20) {
+            if (pgSpot in flats) {
+                g.info(MsgVoin(pgSpot)).voin?.let {
+                    add(g.info(MsgRaise(g, pgSpot, Catapult, it)))
                 }
             }
-        }}
+        }
 
-        edit(5,tile) { when(efk){
-            is EfkEditAdd -> flats[efk.pg] = Catapult
-            is EfkEditRemove -> if(flats.remove(efk.pg)!=null) efk.eat()
-        }}
+        editAdd(5,tile) {
+            flats[pgEdit] = Catapult
+        }
+
+        make<EfkEditRemove>(5){
+            if(flats.remove(pgEdit)!=null) eat()
+        }
     }
 }
 

@@ -15,10 +15,9 @@ class CdxMine(r:Resource): Cdx(r){
         flats[land.pgser.pg(4, 6)] = FlatControl()
 
 
-        info(10) {
-            if(msg is MsgDraw)
+        info<MsgDraw>(10) {
             for ((pg, flat) in flats) {
-                msg.drawTile(pg, tls(msg.side,flat.side))
+                drawTile(pg, tls(sideVid,flat.side))
             }
         }
 
@@ -27,8 +26,9 @@ class CdxMine(r:Resource): Cdx(r){
                 g.info(MsgVoin(pg)).voin?.let{
                     flat.side = it.side
                 }
-            for((pg,flat) in flats)
-                flat.side?.let{if(it == g.sideTurn) g.make(EfkGold(1,it))}
+            for((pg,flat) in flats) flat.side?.let{
+                if(it == g.sideTurn) g.make(EfkGold(1,it))
+            }
         }
     }
 }

@@ -14,32 +14,25 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
         val rsVoin = extVoin.createRules(this, land, g)
         val enforced = WeakHashMap<Voin, Boolean>()
 
-        make(0) {
-            when (efk) {
-                is EfkEnforce -> enforced[efk.voin] = true
-            }
+        make<EfkEnforce>(0) {
+            enforced[voin] = true
         }
 
-        info(10) {
-            when (msg) {
-                is MsgRaise -> {
-                    if (enforced[msg.src] == true) msg.isOn = true
-                    if (rsVoin.voins.containsValue(msg.src)) for (pgNear in msg.pg.near) {
-                        g.info(MsgVoin(pgNear)).voin?.let {
-                            msg.add(pgNear, tlsAkt, EfkEnforce(pgNear, it))
-                        }
-                    }
-                }
-                is MsgDrawVoin -> enforced[msg.voin]?.let {
-                    msg.drawTile(msg.pg, tlsEnforced(it))
+        info<MsgRaise>(10) {
+            if (enforced[src] == true) isOn = true
+            if (rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near) {
+                g.info(MsgVoin(pgNear)).voin?.let {
+                    add(pgNear, tlsAkt, EfkEnforce(pgNear, it))
                 }
             }
         }
 
-        stop(0) {
-            when {
-                efk is EfkEnforce && enforced[efk.voin!!] != null -> efk.stop()
-            }
+        info<MsgDrawVoin>(10) {
+            enforced[voin]?.let { drawTile(pg, tlsEnforced(it)) }
+        }
+
+        stop<EfkEnforce>(0) {
+            if(enforced[voin] != null) stop()
         }
 
         endTurn(0) {

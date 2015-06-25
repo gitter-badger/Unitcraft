@@ -12,14 +12,12 @@ class CdxElectric(r: Resource) : Cdx(r) {
 
     override fun createRules(land: Land, g: Game) = rules {
         val rsVoin = extVoin.createRules(this, land, g)
-        val hide: MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd, Boolean>())
 
-        info(0) {
-            if(msg is MsgRaise) if(rsVoin.voins.containsValue(msg.src)) for (pgNear in msg.pg.near) {
+        info<MsgRaise>(0) {
+             if(rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near)
                 g.info(MsgVoin(pgNear)).voin?.let {
-                    msg.add(pgNear, tlsAkt, EfkDmg(pgNear, it))
+                    add(pgNear, tlsAkt, EfkDmg(pgNear, it))
                 }
-            }
         }
     }
 }

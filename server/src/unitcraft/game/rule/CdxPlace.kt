@@ -21,25 +21,24 @@ class CdxPlace(r:Resource) : Cdx(r){
             fixs[pg] = land.fixs(pg)
         }
 
-        info(0) {
-            if(msg is MsgDraw)
+        info<MsgDraw>(0) {
             for (pg in g.pgs) {
                 val place = places[pg]
-                msg.drawTile(pg, tiles[place]!![fixs[pg]!![place]!!])
+                drawTile(pg, tiles[place]!![fixs[pg]!![place]!!])
             }
         }
 
-        info(0){
-            if(msg is InfoIsHide) if(msg.voin in hide) msg.hide = true
+        info<InfoIsHide>(0){
+            if(voin in hide) hide()
         }
 
         for(place in values())
-            edit(place.ordinal(),tiles[place]!!.first()) {
-                if(efk is EfkEditAdd) places[efk.pg] = place
+            editAdd(place.ordinal(),tiles[place]!!.first()) {
+                places[pgEdit] = place
             }
 
-        make(0){
-            if(efk is EfkUnhide) hide.remove(efk.voin)
+        make<EfkUnhide>(0){
+            hide.remove(voin)
         }
 
         endTurn(5) {
@@ -53,6 +52,7 @@ class CdxPlace(r:Resource) : Cdx(r){
             }
         }
     }
+
     companion object  {
         val sizeFix:Map<Place,Int> = mapOf(
                 forest to 4,

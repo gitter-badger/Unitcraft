@@ -15,7 +15,7 @@ class ExtVoin(r: Resource, name: String) {
 
     fun createRules(r: Rules, land: Land, g: Game): Ruleset {
         val rs = Ruleset(land, g)
-        r.rules.addAll(rs.rs)
+        r.addRules(rs.rs)
         return rs
     }
 
@@ -26,71 +26,76 @@ class ExtVoin(r: Resource, name: String) {
 
         val rs = rules {
 
-            info(20) {
-                if(msg is MsgDraw)
+            info<MsgDraw>(20) {
                 for ((pg, v) in voins) {
-                    msg.drawTile(pg, tlsVoin(msg.side, v.side), if (v.flip) hintTileFlip else null)
-                    msg.drawText(pg, v.life.toString(), hintTextLife)
-                    if (g.info(InfoIsHide(v)).hide) msg.drawTile(pg, tileHide)
-                    g.info(MsgDrawVoin(msg, pg, v))
+                    drawTile(pg, tlsVoin(sideVid, v.side), if (v.flip) hintTileFlip else null)
+                    drawText(pg, v.life.toString(), hintTextLife)
+                    if (g.info(InfoIsHide(v)).isHided) drawTile(pg, tileHide)
+                    g.info(MsgDrawVoin(this, pg, v))
                 }
             }
 
-            info(0) {
-                if (msg is MsgSpot) {
-                    voins[msg.pg]?.let{
-                        msg.add(g.info(MsgRaise(g, msg.pg,it,it)))
+            info<MsgSpot>(0) {
+                voins[pgSpot]?.let {
+                    add(g.info(MsgRaise(g, pgSpot, it, it)))
+                }
+            }
+
+            info<MsgRaise>(10) {
+                if (voins.containsValue(src))
+                    for (pgNear in pgRaise.near) {
+                        add(pgNear, tlsMove, EfkMove(pgRaise, pgNear, voinEfk))
+                    }
+            }
+
+            stop<EfkMove>(0) {
+                if (voins[pgTo] != null) stop()
+            }
+
+            stop<EfkBuild>(0) {
+                if (voins[pg] != null) stop()
+            }
+
+            make<EfkRemove>(0) {
+               voins.values().remove(obj)
+            }
+
+            make<EfkHeal>(0){
+                voins[pg]?.let {
+                    if (it == voin) it.life += value
+                }
+            }
+
+            make<EfkDmg>(0){
+                voins[pgAim]?.let {
+                    if (it == voin) it.life -= value
+                }
+            }
+            make<EfkMove>(0) {
+                voins[pgFrom]?.let {
+                    if (it === voin) {
+                        voins.remove(pgFrom)
+                        voins[pgTo] = it
+                        val xd = pgFrom.x - pgTo.x
+                        if (xd != 0) it.flip = xd > 0
                     }
                 }
             }
 
-            info(10) {
-                if (msg is MsgRaise) if (voins.containsValue(msg.src))
-                    for (pgNear in msg.pg.near) {
-                        msg.add(pgNear, tlsMove, EfkMove(msg.pg, pgNear, msg.voinEfk))
-                    }
-            }
-
-            stop(0) {
-                if (efk is EfkMove) if (voins[efk.pgTo] != null) efk.stop()
-                if (efk is EfkBuild) if(voins[efk.pg]!=null) efk.stop()
-            }
-
-            make(0) {
-                when (efk) {
-                    is EfkMove -> voins[efk.pgFrom]?.let {
-                        if (it === efk.voin) {
-                            voins.remove(efk.pgFrom)
-                            voins[efk.pgTo] = it
-                            val xd = efk.pgFrom.x - efk.pgTo.x
-                            if (xd != 0) it.flip = xd > 0
-                        }
-                    }
-                    is EfkDmg -> voins[efk.pg]?.let {
-                        if (it == efk.voin) it.life -= efk.value
-                    }
-                    is EfkHeal -> voins[efk.pg]?.let {
-                        if (it == efk.voin) it.life += efk.value
-                    }
-                    is EfkRemove -> voins.values().remove(efk.obj)
-                }
-            }
-
-            after(0) {
-                when (efk) {
-                    is EfkMove -> for (pg in efk.pgTo.near) {
-                        g.info(MsgVoin(pg)).voin?.let {
-                            g.make(EfkUnhide(pg, it))
-                        }
+            after<EfkMove>(0) {
+                for (pg in pgTo.near) {
+                    g.info(MsgVoin(pg)).voin?.let {
+                        g.make(EfkUnhide(pg, it))
                     }
                 }
             }
 
-            info(0) {
-                when (msg) {
-                    is MsgVoin -> voins[msg.pg]?.let { msg.voins.add(it) }
-                    is MsgRaise -> msg.isOn = msg.voinEfk.side == g.sideTurn
-                }
+            info<MsgVoin>(0) {
+                voins[pg]?.let { all.add(it) }
+            }
+
+            info<MsgRaise>(0) {
+                isOn = voinEfk.side == g.sideTurn
             }
 
             fun editChange(side: Side, pg: Pg): Boolean {
@@ -99,18 +104,22 @@ class ExtVoin(r: Resource, name: String) {
                     when {
                         v.isAlly(side) -> v.side = side.vs()
                         v.isEnemy(side) -> v.side = null
-                        v.side==null -> v.side = side
+                        v.side == null -> v.side = side
                     }
                     return true
                 } else return false
             }
 
-            edit(12, tlsVoin.neut) {
-                when (efk) {
-                    is EfkEditAdd -> voins[efk.pg] = VoinStd(efk.side, efk.pg.x > efk.pg.pgser.xr / 2)
-                    is EfkEditRemove -> if(voins.remove(efk.pg) != null) efk.eat()
-                    is EfkEditChange -> if(editChange(efk.side, efk.pg)) efk.eat()
-                }
+            editAdd(12, tlsVoin.neut) {
+                voins[pgEdit] = VoinStd(sideVid, pgEdit.x > pgEdit.pgser.xr / 2)
+            }
+
+            make<EfkEditChange>(12) {
+                if (editChange(sideVid, pgEdit)) eat()
+            }
+
+            make<EfkEditRemove>(12) {
+                if (voins.remove(pgEdit) != null) eat()
             }
         }
     }
@@ -136,18 +145,30 @@ class MsgDrawVoin(val ctx: MsgDraw, val pg: Pg, val voin: Voin) : Msg() {
     }
 }
 
-class EfkDmg(val pg: Pg, val voin: Voin,val value:Int = 1) : Efk()
+class EfkDmg(val pgAim: Pg, val voin: Voin, val value: Int = 1) : Efk()
 
 class MsgVoin(val pg: Pg) : Msg() {
-    val voins = ArrayList<Voin>(1)
+    val all = ArrayList<Voin>(1)
+
+    fun add(voin: Voin) {
+        all.add(voin)
+    }
+
     val voin: Voin?
-        get() = voins.firstOrNull()
+        get() = all.firstOrNull()
 }
 
-class InfoIsHide(val voin: Voin, var hide: Boolean = false) : Msg()
+class InfoIsHide(val voin: Voin) : Msg() {
+    var isHided: Boolean = false
+        private set
 
-class EfkRemove(val pg:Pg,val obj:Obj) : Efk()
+    fun hide() {
+        isHided = true
+    }
+}
 
-class EfkHeal(val pg:Pg,val voin:Voin,val value:Int = 1) : Efk()
+class EfkRemove(val pg: Pg, val obj: Obj) : Efk()
 
-class EfkBuild(val pg:Pg) : Efk()
+class EfkHeal(val pg: Pg, val voin: Voin, val value: Int = 1) : Efk()
+
+class EfkBuild(val pg: Pg) : Efk()

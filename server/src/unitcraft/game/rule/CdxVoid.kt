@@ -14,20 +14,20 @@ class CdxVoid(r: Resource) : Cdx(r) {
         val rsVoin = extVoin.createRules(this, land, g)
         val hide: MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd, Boolean>())
 
-        info(0) {
-            if(msg is MsgRaise) if(rsVoin.voins.containsValue(msg.src)) for (pgNear in msg.pg.near) {
+        info<MsgRaise>(0) {
+            if(rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near) {
                 g.info(MsgVoin(pgNear)).voin?.let {
-                    msg.add(pgNear, tlsAkt, EfkDmg(pgNear, it))
+                    add(pgNear, tlsAkt, EfkDmg(pgNear, it))
                 }
             }
         }
 
-        make(0) {
-            if (efk is EfkUnhide) hide.remove(rsVoin[efk.pg])
+        make<EfkUnhide>(0) {
+            hide.remove(rsVoin[pg])
         }
 
-        info(0){
-            if(msg is InfoIsHide) if(msg.voin in hide) msg.hide = true
+        info<InfoIsHide>(0){
+            if(voin in hide) hide()
         }
 
         endTurn(10) {

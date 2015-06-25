@@ -11,14 +11,12 @@ class CdxImitator(r: Resource) : Cdx(r) {
     override fun createRules(land: Land, g: Game) = rules {
         val rsVoin = extVoin.createRules(this, land, g)
 
-        info(0) {
-            if(msg is MsgSpot) {
-                val voin = rsVoin[msg.pg]
-                if (voin != null) {
-                    for (pgNear in msg.pg.near) {
-                        g.info(MsgVoin(pgNear)).voins.forEach {
-                            msg.add(g.info(MsgRaise(g,msg.pg,it,voin)))
-                        }
+        info<MsgSpot>(0) {
+            val voin = rsVoin[pgSpot]
+            if (voin != null) {
+                for (pgNear in pgSpot.near) {
+                    g.info(MsgVoin(pgNear)).all.forEach {
+                        add(g.info(MsgRaise(g,pgSpot,it,voin)))
                     }
                 }
             }

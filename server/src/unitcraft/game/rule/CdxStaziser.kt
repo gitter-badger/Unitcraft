@@ -27,36 +27,42 @@ class CdxStaziser(r:Resource): Cdx(r){
             else stazis.remove(pg)
         }
 
-        info(30) {
-            if(msg is MsgDraw)
-            for ((pg,num) in stazis) msg.drawTile(pg, tlsStazis[num-1])
+        info<MsgDraw>(30) {
+            for ((pg,num) in stazis) drawTile(pg, tlsStazis[num-1])
         }
 
-        info(0) {
-            if(msg is MsgRaise) {
-                if(rsVoin.voins.containsValue(msg.src)) for (pgNear in msg.pg.near)
-                    if(stazis[pgNear]==null) {
-                        msg.add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
-                    }
-            }
+        info<MsgRaise>(0) {
+            if(rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near)
+                if(stazis[pgNear]==null) add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
         }
 
-        make(0){
-            if(efk is EfkStazisPlant) plant(efk.pg)
+        make<EfkStazisPlant>(0){
+            plant(pg)
         }
 
-        stop(1) { when(efk){
-            is EfkMove -> if(stazis[efk.pgFrom]!=null || stazis[efk.pgTo] != null) efk.stop()
-            is EfkEnforce -> if(stazis[efk.pg]!=null) efk.stop()
-            is EfkHide -> if(stazis[efk.pg]!=null) efk.stop()
-//            is MsgSpot -> if(stazis[efk.pg]!=null) efk.stop()
-            is EfkSell -> if(stazis[efk.pg]!=null) efk.stop()
-        }}
+        stop<EfkMove>(1) {
+            if(stazis[pgFrom]!=null || stazis[pgTo] != null) stop()
+        }
 
-        edit(50,tlsStazis.last()) {when(efk) {
-                is EfkEditAdd -> plant(efk.pg)
-                is EfkEditRemove -> if(stazis.remove(efk.pg)!=null) efk.eat()
-        }}
+        stop<EfkEnforce>(1) {
+            if(stazis[pg]!=null) stop()
+        }
+
+        stop<EfkHide>(1) {
+            if(stazis[pg]!=null) stop()
+        }
+
+        stop<EfkSell>(1) {
+            if(stazis[pg]!=null) stop()
+        }
+
+        editAdd(50,tlsStazis.last()) {
+                plant(pgEdit)
+        }
+
+        make<EfkEditRemove>(50){
+            if(stazis.remove(pgEdit)!=null) eat()
+        }
 
         endTurn(10){
             stazis.forEach { decoy(it.key) }

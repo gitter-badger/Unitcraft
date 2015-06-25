@@ -14,18 +14,19 @@ class CdxFlag(r:Resource): Cdx(r){
         val flats = Grid<FlatControl>()
         flats[land.pgser.pg(4, 5)] = FlatControl()
 
-
-        info(10) {
-            if(msg is MsgDraw)
+        info<MsgDraw>(10) {
             for ((pg, flat) in flats) {
-                msg.drawTile(pg, tls(msg.side,flat.side))
+                drawTile(pg, tls(sideVid,flat.side))
             }
         }
 
-        edit(5,tls.neut) { when(efk){
-            is EfkEditAdd -> flats[efk.pg] = FlatControl()
-            is EfkEditRemove -> if(flats.remove(efk.pg)!=null) efk.eat()
-        }}
+        editAdd(5,tls.neut) {
+            flats[pgEdit] = FlatControl()
+        }
+
+        make<EfkEditRemove>(5){
+            if(flats.remove(pgEdit)!=null) eat()
+        }
 
         endTurn(100){
             for((pg,flat) in flats)

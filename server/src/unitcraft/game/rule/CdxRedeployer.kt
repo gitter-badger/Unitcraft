@@ -15,27 +15,26 @@ class CdxRedeployer(r: Resource) : Cdx(r) {
     override fun createRules(land: Land, g: Game) = rules {
         val rsVoin = extVoin.createRules(this, land, g)
 
-        info(0) {
-            if(msg is MsgRaise) if(rsVoin.voins.containsValue(msg.src)) for (pgNear in msg.pg.near) {
+        info<MsgRaise>(0) {
+            if(rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near) {
                 g.info(MsgVoin(pgNear)).voin?.let {
-                    if(it.side!=null && it.life>=3) msg.add(pgNear, tlsAkt, EfkSell(pgNear, it))
+                    if(it.side!=null && it.life>=3) add(pgNear, tlsAkt, EfkSell(pgNear, it))
                 }
-                msg.add(pgNear, tlsBuild, EfkBuild(pgNear))
+                add(pgNear, tlsBuild, EfkBuild(pgNear))
             }
         }
 
-        make(0) {
-            when (efk) {
-                is EfkSell -> {
-                    g.make(EfkRemove(efk.pg, efk.voin))
-                    g.make(EfkGold(5, efk.voin.side!!))
-                }
-                is EfkGold -> rsVoin.voins.forEach { pg, voinStd -> g.make(EfkHeal(pg,voinStd, efk.gold)) }
-            }
+        make<EfkSell>(0) {
+            g.make(EfkRemove(pg, voinAim))
+            g.make(EfkGold(5, voinAim.side!!))
+        }
+
+        make<EfkGold>(0){
+            rsVoin.voins.forEach { pg, voinStd -> g.make(EfkHeal(pg,voinStd, gold)) }
         }
     }
 }
 
-class EfkSell(val pg:Pg,val voin:Voin) : Efk()
+class EfkSell(val pg:Pg,val voinAim:Voin) : Efk()
 
 class EfkGold(val gold:Int,val side: Side) : Efk()

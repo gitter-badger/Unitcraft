@@ -3,49 +3,88 @@ package unitcraft.game
 import org.json.simple.JSONAware
 import unitcraft.land.Land
 import unitcraft.server.Side
-import java.util.ArrayList
+import java.util.*
+import kotlin.reflect.KCallable
+import kotlin.reflect.KClass
+import kotlin.reflect.jvm.kotlin
 
 abstract class Cdx(val r: Resource) {
-    abstract fun createRules(land: Land, g: Game): List<Rule>
+    abstract fun createRules(land: Land, g: Game): Rules
 }
 
-fun rules(fn: Rules.() -> Unit): List<Rule> {
+//fun rules(fn: Rules.() -> Unit): List<Rule> {
+//    val rules = Rules()
+//    rules.fn()
+//    return rules.rules
+//}
+
+class Rules() {
+    val rulesInfo = HashMap<KClass<out Msg>,MutableList<Rule>>()
+    val rulesStop = HashMap<KClass<out Efk>,MutableList<Rule>>()
+    val rulesMake = HashMap<KClass<out Efk>,MutableList<Rule>>()
+    val rulesAfter = HashMap<KClass<out Efk>,MutableList<Rule>>()
+
+    inline fun <reified T:Msg> info(prior: Int, @noinline apply: T.() -> Unit) {
+        rulesInfo.getOrPut(javaClass<T>().kotlin){ArrayList<Rule>()}.add(Rule(prior,apply))
+    }
+
+    inline fun <reified T:Efk> stop(prior: Int, @noinline apply: T.() -> Unit) {
+        rulesStop.getOrPut(javaClass<T>().kotlin){ArrayList<Rule>()}.add(Rule(prior,apply))
+    }
+
+    inline fun <reified T:Efk> after(prior: Int, @noinline apply: T.() -> Unit) {
+        rulesAfter.getOrPut(javaClass<T>().kotlin){ArrayList<Rule>()}.add(Rule(prior,apply))
+    }
+
+    inline fun <reified T:Efk> make(prior:Int, @noinline apply: T.() -> Unit){
+        rulesMake.getOrPut(javaClass<T>().kotlin){ArrayList<Rule>()}.add(Rule(prior,apply))
+    }
+
+    fun endTurn(prior:Int,apply: EfkEndTurn.() -> Unit){
+        after(prior,apply)
+    }
+
+    val tilesEditAdd = ArrayList<Pair<Int,Int>>()
+    fun editAdd(prior:Int,tile: Int,apply: EfkEditAdd.() -> Unit){
+        tilesEditAdd.add(prior to tile)
+        make(prior,apply)
+    }
+
+    fun addRules(r:Rules):Rules{
+        addRulesTo(rulesInfo,r.rulesInfo)
+        addRulesTo(rulesStop,r.rulesStop)
+        addRulesTo(rulesMake,r.rulesMake)
+        addRulesTo(rulesAfter,r.rulesAfter)
+        tilesEditAdd.addAll(r.tilesEditAdd)
+        return this
+    }
+
+    companion object {
+        fun <K> addRulesTo(mapTo: HashMap<K, MutableList<Rule>>, map: Map<K, List<Rule>>) {
+            for ((key, list) in map) {
+                mapTo.getOrPut(key) { ArrayList<Rule>() }.addAll(list)
+            }
+        }
+    }
+}
+
+fun rules(fn: Rules.() -> Unit):Rules{
     val rules = Rules()
     rules.fn()
-    return rules.rules
+    return rules
+}
+//
+//enum class TpRule{
+//    info,make,stop,refute,after
+//}
+
+class Rule(val prior:Int,appl: Any){
+    val apply = appl as (Any)->Unit
 }
 
-class Rules {
-    val rules = ArrayList<Rule>()
+//abstract class Rule(val prior: Int)
 
-    fun edit(prior: Int, tile: Int, apply: CtxEdit.() -> Unit) {
-        rules.add(RuleEdit(prior, tile, apply))
-    }
-
-    fun endTurn(prior: Int, apply: () -> Unit) {
-        rules.add(RuleEndTurn(prior, apply))
-    }
-
-    fun info(prior: Int, apply: CtxInfo.() -> Unit) {
-        rules.add(RuleInfo(prior, apply))
-    }
-
-    fun make(prior: Int, apply: CtxMake.() -> Unit) {
-        rules.add(RuleMake(prior, apply))
-    }
-
-    fun stop(prior: Int, apply: CtxMake.() -> Unit) {
-        rules.add(RuleStop(prior, apply))
-    }
-
-    fun after(prior: Int, apply: CtxMake.() -> Unit) {
-        rules.add(RuleAfter(prior, apply))
-    }
-}
-
-abstract class Rule(val prior: Int)
-
-class MsgDraw(val side: Side):Msg() {
+class MsgDraw(val sideVid: Side):Msg() {
     val dabOnGrids = ArrayList<DabOnGrid>()
 
     fun drawTile(pg: Pg, tile: Int, hint: Int? = null) {
@@ -56,21 +95,21 @@ class MsgDraw(val side: Side):Msg() {
         dabOnGrids.add(DabOnGrid(pg, DabText(text, hint)))
     }
 }
-
-class RuleEndTurn(prior: Int, val apply: () -> Unit) : Rule(prior)
-
-class RuleInfo(prior: Int, val apply: (CtxInfo) -> Unit) : Rule(prior)
-class CtxInfo(val msg:Msg)
-
-class RuleStop(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-
-class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-class CtxMake(val efk:Efk)
-
-class RuleAfter(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
-
-class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
-class CtxEdit(val efk: EfkEdit)
+//
+//class RuleEndTurn(prior: Int, val apply: () -> Unit) : Rule(prior)
+//
+//class RuleInfo(prior: Int, val apply: (CtxInfo) -> Unit) : Rule(prior)
+//class CtxInfo(val msg:Msg)
+//
+//class RuleStop(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
+//
+//class RuleMake(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
+//class CtxMake(val efk:Efk)
+//
+//class RuleAfter(prior: Int, val apply: (CtxMake) -> Unit) : Rule(prior)
+//
+//class RuleEdit(prior: Int, val tile: Int, val apply: (CtxEdit) -> Unit) : Rule(prior)
+//class CtxEdit(val efk: EfkEdit)
 
 abstract class Msg
 
@@ -94,9 +133,9 @@ abstract class Efk{
     }
 }
 
-abstract class EfkEdit(val pg:Pg) : Efk()
-class EfkEditAdd(pg:Pg,val side:Side):EfkEdit(pg)
+abstract class EfkEdit(val pgEdit:Pg) : Efk()
+class EfkEditAdd(pg:Pg,val sideVid:Side):EfkEdit(pg)
 class EfkEditRemove(pg:Pg):EfkEdit(pg)
 class EfkEditDestroy(pg:Pg):EfkEdit(pg)
-class EfkEditChange(pg:Pg,val side:Side):EfkEdit(pg)
+class EfkEditChange(pg:Pg,val sideVid:Side):EfkEdit(pg)
 

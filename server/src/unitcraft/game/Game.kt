@@ -4,6 +4,8 @@ import unitcraft.land.Land
 import unitcraft.server.*
 import java.util.ArrayList
 import java.util.HashMap
+import kotlin.reflect.KClass
+import kotlin.reflect.jvm.kotlin
 
 class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     val pgser = land.pgser
@@ -12,34 +14,25 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         private set
     val bonus = HashMap<Side, Int>()
 
-    val rulesEndTurn: List<RuleEndTurn>
-    val rulesInfo: List<RuleInfo>
-    val rulesStop: List<RuleStop>
-    val rulesMake: List<RuleMake>
-    val rulesAfter: List<RuleAfter>
+    val rulesInfo: Map<KClass<out Msg>,List<Rule>>
+    val rulesStop: Map<KClass<out Efk>,List<Rule>>
+    val rulesMake: Map<KClass<out Efk>,List<Rule>>
+    val rulesAfter: Map<KClass<out Efk>,List<Rule>>
 
     val opterTest: Opter?
-    val rulesEdit: List<RuleEdit>?
+//    val rulesEdit: List<RuleEdit>?
 
     init {
-        val rules = cdxs.flatMap { it.createRules(land, this) }
-        rulesEndTurn = filterRules<RuleEndTurn>(rules)
-        rulesInfo = filterRules<RuleInfo>(rules)
-        rulesMake = filterRules<RuleMake>(rules)
-        rulesStop = filterRules<RuleStop>(rules)
-        rulesAfter = filterRules<RuleAfter>(rules)
-
+        val rules = cdxs.map { it.createRules(land,this) }.reduce { rules, r -> rules.addRules(r) }
+        rulesInfo = sortRules(rules.rulesInfo)
+        rulesStop = sortRules(rules.rulesStop)
+        rulesMake = sortRules(rules.rulesMake)
+        rulesAfter = sortRules(rules.rulesAfter)
         if (canEdit) {
-            rulesEdit = filterRules<RuleEdit>(rules)
-            opterTest = Opter(rulesEdit.map { Opt(listOf(DabTile(it.tile))) })
+            opterTest = Opter(rules.tilesEditAdd.sortBy{it.first}.map { Opt(listOf(DabTile(it.second))) })
         } else {
-            rulesEdit = null
             opterTest = null
         }
-    }
-
-    private inline fun <reified T : Rule> filterRules(rules: List<Rule>): List<T> {
-        return rules.filterIsInstance<T>().sortBy { it.prior }
     }
 
     val traces = Traces()
@@ -74,8 +67,8 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     private fun editAdd(side: Side, prm: Prm) {
         ensureTest()
         prm.ensureSize(3)
-        val ctx = CtxEdit(EfkEditAdd(prm.pg(0), side))
-        rulesEdit!!.elementAtOrElse(prm.int(2)) { throw Violation("editAdd out bound") }.apply(ctx)
+        val efk = EfkEditAdd(prm.pg(0), side)
+        rulesMake[efk.javaClass.kotlin]?.elementAtOrElse(prm.int(2)) { throw Violation("editAdd out bound") }?.apply?.invoke(efk)
     }
 
     private fun editRemove(prm: Prm) {
@@ -97,9 +90,9 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     }
 
     private fun edit(efk: EfkEdit, isReverse: Boolean = false) {
-        for (it in if (isReverse) rulesEdit!!.reverse() else rulesEdit!! ) {
-            val ctx = CtxEdit(efk)
-            it.apply(ctx)
+        val rules = rulesMake[efk.javaClass.kotlin]
+        if(rules!=null) for (it in if (isReverse) rules.reverse() else rules ) {
+            it.apply(efk)
             if (efk.isEated) return
         }
     }
@@ -127,7 +120,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     private fun endTurn(side: Side, prm: Prm) {
         prm.ensureSize(0)
         if (sideTurn != side) throw Violation("endTurn side($side) != sideTurn($sideTurn)")
-        rulesEndTurn.forEach { it.apply() }
+        after(EfkEndTurn)
         sideTurn = sideTurn.vs()
     }
 
@@ -158,8 +151,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
      * Напололняет [msg] разными данными, передается всем подписавшимся правилам в порядке приоритета. Нельзя менять состояние правил.
      */
     fun <T : Msg> info(msg: T): T {
-        val ctx = CtxInfo(msg)
-        rulesInfo.forEach { it.apply(ctx) }
+        rulesInfo[msg.javaClass.kotlin]?.forEach { it.apply(msg) }
         return msg
     }
 
@@ -168,14 +160,17 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
      * Можно менять состояние правил. После вызывается событие after.
      */
     fun make(efk: Efk) {
-        val ctx = CtxMake(efk)
-        if (!stop(efk)) for (it in rulesMake) {
-            it.apply(ctx)
+        if (!stop(efk)) rulesMake[efk.javaClass.kotlin]?.forEach {
+            it.apply(efk)
             if(efk.isEated) {
-                rulesAfter.forEach { it.apply(ctx) }
+                after(efk)
                 return
             }
         }
+    }
+
+    fun after(efk:Efk){
+        rulesAfter[efk.javaClass.kotlin]?.forEach { it.apply(efk) }
     }
 
     /**
@@ -183,9 +178,8 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
      * После запрета проверяется допустимость запрета.
      */
     fun stop(efk: Efk): Boolean {
-        val ctx = CtxMake(efk)
-        for (it in rulesStop) {
-            it.apply(ctx)
+        rulesStop[efk.javaClass.kotlin]?.forEach { it ->
+            it.apply(efk)
             if(efk.isStoped && !refute(efk)) return true
         }
         return false
@@ -193,6 +187,10 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
 
     private fun refute(efk: Efk): Boolean {
         return false
+    }
+
+    companion object {
+        private fun <K> sortRules(map: Map<K, List<Rule>>) = map.mapValues { it.value.sortBy { it.prior } }
     }
 }
 
@@ -203,7 +201,7 @@ interface Voin : Obj {
     fun isAlly(side: Side) = this.side == side
 }
 
-class MsgSpot(val pg: Pg, val side: Side) : Msg() {
+class MsgSpot(val pgSpot: Pg, val side: Side) : Msg() {
     val raises = ArrayList<MsgRaise>()
 
     fun add(raise: MsgRaise) {
@@ -217,7 +215,7 @@ class MsgSpot(val pg: Pg, val side: Side) : Msg() {
     }
 }
 
-class MsgRaise(private val g: Game, val pg: Pg, val src: Obj, val voinEfk: Voin) : Msg() {
+class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinEfk: Voin) : Msg() {
     private val listSloy = ArrayList<Sloy>()
     var isOn = false
 
@@ -227,7 +225,7 @@ class MsgRaise(private val g: Game, val pg: Pg, val src: Obj, val voinEfk: Voin)
     //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
     private fun addAkt(akt: Akt) {
-        if (akt.pgAim == pg) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
+        if (akt.pgAim == pgRaise) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
         val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
         if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
@@ -242,3 +240,5 @@ class MsgRaise(private val g: Game, val pg: Pg, val src: Obj, val voinEfk: Voin)
 interface Obj
 
 abstract class Flat : Obj
+
+object EfkEndTurn : Efk()
