@@ -11,10 +11,11 @@ class CdxElectric(r: Resource) : Cdx(r) {
     val tlsAkt = r.tlsAkt(name)
 
     override fun createRules(land: Land, g: Game) = rules {
-        val rsVoin = extVoin.createRules(this, land, g)
+        val voins = ExtVoin.std()
+        extVoin.createRules(this, g, voins)
 
         info<MsgRaise>(0) {
-             if(rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near)
+             if(voins.has(src)) for (pgNear in pgRaise.near)
                 g.info(MsgVoin(pgNear)).voin?.let {
                     add(pgNear, tlsAkt, EfkDmg(pgNear, it))
                 }

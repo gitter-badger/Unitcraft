@@ -28,8 +28,8 @@ class CdxPlace(r:Resource) : Cdx(r){
             }
         }
 
-        info<InfoIsHide>(0){
-            if(voin in hide) hide()
+        info<MsgIsHided>(0){
+            if(voin in hide) yes()
         }
 
         for(place in values())

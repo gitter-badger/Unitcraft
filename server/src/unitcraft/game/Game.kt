@@ -204,7 +204,7 @@ class MsgSpot(val pgSpot: Pg, val side: Side) : Msg() {
     }
 }
 
-class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinEfk: Voin) : Msg() {
+class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinRaise: Voin) : Msg() {
     private val listSloy = ArrayList<Sloy>()
     var isOn = false
     var isStoped = false

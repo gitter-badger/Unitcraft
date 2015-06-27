@@ -13,10 +13,11 @@ class CdxRedeployer(r: Resource) : Cdx(r) {
     val tlsBuild = r.tlsAkt(name,"build")
 
     override fun createRules(land: Land, g: Game) = rules {
-        val rsVoin = extVoin.createRules(this, land, g)
+        val voins = ExtVoin.std()
+        extVoin.createRules(this, g, voins)
 
         info<MsgRaise>(0) {
-            if(rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near) {
+            if(voins.has(src)) for (pgNear in pgRaise.near) {
                 g.info(MsgVoin(pgNear)).voin?.let {
                     if(it.side!=null && it.life>=3) add(pgNear, tlsAkt, EfkSell(pgNear, it))
                 }
@@ -30,7 +31,7 @@ class CdxRedeployer(r: Resource) : Cdx(r) {
         }
 
         make<EfkGold>(0){
-            rsVoin.voins.forEach { pg, voinStd -> g.make(EfkHeal(pg,voinStd, gold)) }
+            for((pg,voinStd) in voins) g.make(EfkHeal(pg,voinStd, gold))
         }
     }
 }

@@ -10,7 +10,9 @@ class CdxStaziser(r: Resource) : Cdx(r) {
     val tlsStazis = r.tlsList(5, "stazis")
 
     override fun createRules(land: Land, g: Game) = rules {
-        val rsVoin = extVoin.createRules(this, land, g)
+        val voins = ExtVoin.std()
+        extVoin.createRules(this, g,voins)
+
         val stazis = Grid<Int>()
 
         fun plant(pg: Pg) {
@@ -29,7 +31,7 @@ class CdxStaziser(r: Resource) : Cdx(r) {
 
         info<MsgRaise>(0) {
             if (stazis[pgRaise] != null) isStoped = true
-            if (rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near)
+            if (voins.has(src)) for (pgNear in pgRaise.near)
                 if (stazis[pgNear] == null) add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
         }
 

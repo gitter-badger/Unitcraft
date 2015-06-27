@@ -23,7 +23,7 @@ class CdxCatapult(r:Resource): Cdx(r){
 
         /** если воин стоит на катапульте, то дать ему способность катапульты */
         info<MsgRaise>(20){
-                if(src is Catapult) for (pg in g.pgs) add(pg, tlsAkt, EfkMove(pgRaise,pg,voinEfk))
+                if(src is Catapult) for (pg in g.pgs) add(pg, tlsAkt, EfkMove(pgRaise,pg, voinRaise))
         }
 
         info<MsgSpot>(20) {

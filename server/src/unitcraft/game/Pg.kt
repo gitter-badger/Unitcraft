@@ -30,4 +30,6 @@ class Pgser(val xr:Int,val yr:Int){
     fun pg(x: Int, y: Int) = pgs[x * yr + y]
 }
 
-class Grid<V> : HashMap<Pg,V>(), MutableMap<Pg,V>
+class Grid<V> : HashMap<Pg,V>(), MutableMap<Pg,V>{
+    fun has(obj:Obj) = containsValue(obj)
+}

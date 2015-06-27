@@ -11,7 +11,8 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
     val tlsEnforced = r.tlsBool("enforced", "enforcedAlready")
 
     override fun createRules(land: Land, g: Game) = rules {
-        val rsVoin = extVoin.createRules(this, land, g)
+        val voins = ExtVoin.std()
+        extVoin.createRules(this,g,voins)
         val enforced = WeakHashMap<Voin, Boolean>()
 
         make<EfkEnforce>(0) {
@@ -20,7 +21,7 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
 
         info<MsgRaise>(10) {
             if (enforced[src] == true) isOn = true
-            if (rsVoin.voins.containsValue(src)) for (pgNear in pgRaise.near) {
+            if (voins.has(src)) for (pgNear in pgRaise.near) {
                 g.info(MsgVoin(pgNear)).voin?.let {
                     add(pgNear, tlsAkt, EfkEnforce(pgNear, it))
                 }
