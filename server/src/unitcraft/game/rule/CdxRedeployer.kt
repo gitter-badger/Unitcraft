@@ -18,7 +18,7 @@ class CdxRedeployer(r: Resource) : Cdx(r) {
 
         info<MsgRaise>(0) {
             if(voins.has(src)) for (pgNear in pgRaise.near) {
-                g.info(MsgVoin(pgNear)).voin?.let {
+                g.voin(pgNear,sideVid)?.let {
                     if(it.side!=null && it.life>=3) add(pgNear, tlsAkt, EfkSell(pgNear, it))
                 }
                 add(pgNear, tlsBuild, EfkBuild(pgNear))
@@ -31,7 +31,7 @@ class CdxRedeployer(r: Resource) : Cdx(r) {
         }
 
         make<EfkGold>(0){
-            for((pg,voinStd) in voins) g.make(EfkHeal(pg,voinStd, gold))
+            for((pg,voin) in voins) g.make(EfkHeal(pg,voin, gold))
         }
     }
 }

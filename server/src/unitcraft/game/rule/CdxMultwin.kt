@@ -24,7 +24,7 @@ class Multwin(val core: MultwinCore, override var flip: Boolean) : ExtVoin.Voins
     override var life: Int
         get() = core.life
         set(v: Int) {
-            core.life -= v
+            core.life = v
         }
 
     override var side: Side?

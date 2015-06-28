@@ -48,21 +48,18 @@ class ExtVoin(r: Resource, name: String) {
 
         info<MsgSpot>(0) {
             voins[pgSpot]?.let {
-                add(g.info(MsgRaise(g, pgSpot, it, it)))
+                if (!g.info(MsgIsHided(it)).isHided) raise(pgSpot, it, it)
             }
         }
 
         info<MsgRaise>(10) {
-            if (voins[pgRaise] == src)
-                for (pgNear in pgRaise.near) {
-                    add(pgNear, tlsMove, EfkMove(pgRaise, pgNear, voinRaise))
-                }
+            if (voins.has(src)) for (pgNear in pgRaise.near) {
+                add(pgNear, tlsMove, EfkMove(pgRaise, pgNear, voinRaise))
+            }
         }
 
-        info<MsgRaise>(0) {
-            if (voins[pgRaise] == voinRaise){
-                isOn = voinRaise.side == g.sideTurn
-            }
+        info<MsgTgglRaise>(0) {
+            if (voins[pgRaise] == voinRaise) isOn = voinRaise.side == g.sideTurn
         }
 
         stop<EfkMove>(0) {
@@ -88,7 +85,7 @@ class ExtVoin(r: Resource, name: String) {
 
         make<EfkDmg>(0) {
             voins[pgAim]?.let {
-                if (it == voin) it.life -= value
+                if (it == voin) it.life -= dmg
             }
         }
 
@@ -138,8 +135,8 @@ class ExtVoin(r: Resource, name: String) {
 
     }
 
-    companion object{
-        fun <T: Voins.VoinMut> fromGrid(grid:Grid<T>,create:(Side,  Int,  Boolean)->T) = object:Voins {
+    companion object {
+        fun <T : Voins.VoinMut> fromGrid(grid: Grid<T>, create: (Side, Int, Boolean) -> T) = object : Voins {
             override fun iterator() = grid.asSequence().map { it.toPair() }.iterator()
 
             override fun has(obj: Obj) = grid.containsValue(obj)
@@ -157,13 +154,9 @@ class ExtVoin(r: Resource, name: String) {
             override fun remove(pg: Pg) = grid.remove(pg) != null
         }
 
-        fun std() = fromGrid(Grid<VoinStd>(),::VoinStd)
+        fun std() = fromGrid(Grid<VoinStd>(), ::VoinStd)
     }
 }
-
-//class VoinStd(override var side: Side?, var flip: Boolean) : Voin {
-//    override var life = 3
-//}
 
 class EfkMove(val pgFrom: Pg, val pgTo: Pg, val voin: Voin) : Efk()
 
@@ -181,7 +174,7 @@ class MsgDrawVoin(val ctx: MsgDraw, val pg: Pg, val voin: Voin) : Msg() {
     }
 }
 
-class EfkDmg(val pgAim: Pg, val voin: Voin, val value: Int = 1) : Efk()
+class EfkDmg(val pgAim: Pg, val voin: Voin, val dmg: Int = 1) : Efk()
 
 class MsgVoin(val pg: Pg) : Msg() {
     val all = ArrayList<Voin>(1)
@@ -201,6 +194,8 @@ class MsgIsHided(val voin: Voin) : Msg() {
     fun yes() {
         isHided = true
     }
+
+    fun isVid(side: Side) = !isHided || side == voin.side
 }
 
 class EfkRemove(val pg: Pg, val obj: Obj) : Efk()

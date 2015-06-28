@@ -44,10 +44,9 @@ class CdxPlace(r:Resource) : Cdx(r){
         endTurn(5) {
             // скрыть врагов в лесу
             for ((pg,place) in places) if (place == Place.forest){
-                val voin = g.info(MsgVoin(pg)).voin
-                if(voin!=null) {
-                    val efk = EfkHide(pg, g.sideTurn.vs(), voin)
-                    if (!g.stop(efk)) hide.add(voin)
+                 g.info(MsgVoin(pg)).all.forEach{
+                    val efk = EfkHide(pg, g.sideTurn.vs(), it)
+                    if (!g.stop(efk)) hide.add(it)
                 }
             }
         }

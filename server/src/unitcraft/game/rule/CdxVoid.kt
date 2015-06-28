@@ -17,7 +17,7 @@ class CdxVoid(r: Resource) : Cdx(r) {
 
         info<MsgRaise>(0) {
             if(voins.has(src)) for (pgNear in pgRaise.near) {
-                g.info(MsgVoin(pgNear)).voin?.let {
+                g.voin(pgNear,sideVid)?.let {
                     add(pgNear, tlsAkt, EfkDmg(pgNear, it))
                 }
             }

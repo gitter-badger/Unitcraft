@@ -19,10 +19,13 @@ class CdxEnforcer(r: Resource) : Cdx(r) {
             enforced[voin] = true
         }
 
+        info<MsgTgglRaise>(0) {
+            if (enforced[src]?:false) isOn = true
+        }
+
         info<MsgRaise>(10) {
-            if (enforced[src] == true) isOn = true
             if (voins.has(src)) for (pgNear in pgRaise.near) {
-                g.info(MsgVoin(pgNear)).voin?.let {
+                g.voin(pgNear,sideVid)?.let {
                     add(pgNear, tlsAkt, EfkEnforce(pgNear, it))
                 }
             }

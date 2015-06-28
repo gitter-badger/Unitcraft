@@ -7,12 +7,10 @@ class Traces : JSONAware{
     val traces = ArrayList<Trace>()
 
     fun add(trace:Trace){
-        trace.exe()
         traces.add(trace)
     }
 
     fun rem(trace:Trace){
-        trace.undo()
         traces.remove(trace)
     }
 
@@ -24,8 +22,6 @@ class Traces : JSONAware{
 }
 
 abstract class Trace : JSONAware{
-    abstract fun exe()
-    abstract fun undo()
     abstract fun dabsOnGrid():List<DabOnGrid>
 
     override fun toJSONString() = dabsOnGrid().toJSONString()

@@ -29,8 +29,11 @@ class CdxStaziser(r: Resource) : Cdx(r) {
             for ((pg, num) in stazis) drawTile(pg, tlsStazis[num - 1])
         }
 
+        info<MsgTgglRaise>(0) {
+            if (stazis[pgRaise] != null) cancel()
+        }
+
         info<MsgRaise>(0) {
-            if (stazis[pgRaise] != null) isStoped = true
             if (voins.has(src)) for (pgNear in pgRaise.near)
                 if (stazis[pgNear] == null) add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
         }
@@ -53,6 +56,10 @@ class CdxStaziser(r: Resource) : Cdx(r) {
 
         stop<EfkSell>(1) {
             if (stazis[pg] != null) stop()
+        }
+
+        stop<EfkDmg>(1) {
+            if (stazis[pgAim] != null) stop()
         }
 
         editAdd(50, tlsStazis.last()) {

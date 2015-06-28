@@ -2,13 +2,14 @@ package unitcraft.game.rule
 
 import unitcraft.game.*
 import unitcraft.land.Land
-import java.util.Collections
-import java.util.WeakHashMap
+import java.util.*
 
 class CdxElectric(r: Resource) : Cdx(r) {
     val name = "electric"
     val extVoin = ExtVoin(r, name)
     val tlsAkt = r.tlsAkt(name)
+    val tileTrace = r.tile("electric.akt")
+    val hintTrace = r.hintTileTouch
 
     override fun createRules(land: Land, g: Game) = rules {
         val voins = ExtVoin.std()
@@ -17,8 +18,38 @@ class CdxElectric(r: Resource) : Cdx(r) {
         info<MsgRaise>(0) {
              if(voins.has(src)) for (pgNear in pgRaise.near)
                 g.info(MsgVoin(pgNear)).voin?.let {
-                    add(pgNear, tlsAkt, EfkDmg(pgNear, it))
+                    add(pgNear, tlsAkt, EfkElectro(src as Voin,pgNear,pgRaise))
                 }
         }
+
+        fun wave(pgs: HashMap<Pg, List<Voin>>,que:ArrayList<Pg>) {
+            que.firstOrNull()?.let { pg ->
+                que.remove(0)
+                pgs[pg] = g.info(MsgVoin(pg)).all
+                que.addAll(pg.near.filter { it !in pgs && g.info(MsgVoin(it)).all.isNotEmpty() })
+                wave(pgs,que)
+            }
+        }
+
+        make<EfkElectro>(0){
+            val pgs = LinkedHashMap<Pg, List<Voin>>()
+            pgs[pgFrom] = emptyList()
+            val que = ArrayList<Pg>()
+            que.add(pgAim)
+            wave(pgs,que)
+            pgs.remove(pgFrom)
+            pgs.forEach{ p -> p.value.forEach{ g.make(EfkDmg(p.key,it)) }}
+            g.traces.add(TraceElectric(pgs.map { it.key }))
+        }
+
+    }
+
+    inner class TraceElectric(val pgs:List<Pg>):Trace(){
+        override fun dabsOnGrid() =
+            pgs.map { DabOnGrid(it,DabTile(tileTrace,hintTrace)) }
+
     }
 }
+
+class EfkElectro(val src:Voin,val pgAim:Pg,val pgFrom:Pg):Efk()
+

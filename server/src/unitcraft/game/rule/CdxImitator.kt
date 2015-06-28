@@ -16,8 +16,8 @@ class CdxImitator(r: Resource) : Cdx(r) {
             val imitator = voins[pgSpot]
             if (imitator != null) {
                 for (pgNear in pgSpot.near) {
-                    g.info(MsgVoin(pgNear)).all.forEach {
-                        add(g.info(MsgRaise(g,pgSpot,it,imitator)))
+                    g.voins(pgNear,side).forEach {
+                        raise(pgSpot, imitator, it)
                     }
                 }
             }

@@ -1,5 +1,7 @@
 package unitcraft.game
 
+import unitcraft.game.rule.MsgIsHided
+import unitcraft.game.rule.MsgVoin
 import unitcraft.land.Land
 import unitcraft.server.*
 import java.util.ArrayList
@@ -124,7 +126,7 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     }
 
     private fun spot(pg: Pg, side: Side): List<Sloy> {
-        return info(MsgSpot(pg, side)).sloys()
+        return info(MsgSpot(this,pg, side)).sloys()
     }
 
     private fun ensureTest() {
@@ -181,6 +183,14 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
     companion object {
         private fun <K> sortRules(map: Map<K, List<Rule>>) = map.mapValues { it.value.sortBy { it.prior } }
     }
+
+    fun voin(pg:Pg,side:Side) = info(MsgVoin(pg)).all.firstOrNull(){
+        info(MsgIsHided(it)).isVid(side)
+    }
+
+    fun voins(pg:Pg,side:Side) = info(MsgVoin(pg)).all.filter{
+        info(MsgIsHided(it)).isVid(side)
+    }
 }
 
 interface Voin : Obj {
@@ -190,12 +200,13 @@ interface Voin : Obj {
     fun isAlly(side: Side) = this.side == side
 }
 
-class MsgSpot(val pgSpot: Pg, val side: Side) : Msg() {
+class MsgSpot(private val g: Game,val pgSpot: Pg, val side: Side) : Msg() {
     val raises = ArrayList<MsgRaise>()
 
-    fun add(raise: MsgRaise) {
-        //        if (g.sideTurn == side) raise.isOn = false
-        raises.add(raise)
+    fun raise(pgRaise: Pg, voinRaise: Voin, src: Obj) {
+        val tggl = g.info(MsgTgglRaise(pgRaise,src,voinRaise))
+        //if (g.sideTurn != side) tggl.isOn = false
+        if(!tggl.isCanceled) raises.add(g.info(MsgRaise(g,pgRaise,src,voinRaise,tggl.isOn,side)))
     }
 
     fun sloys(): List<Sloy> {
@@ -204,13 +215,20 @@ class MsgSpot(val pgSpot: Pg, val side: Side) : Msg() {
     }
 }
 
-class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinRaise: Voin) : Msg() {
-    private val listSloy = ArrayList<Sloy>()
+class MsgTgglRaise(val pgRaise: Pg, val src: Obj, val voinRaise: Voin) : Msg(){
     var isOn = false
-    var isStoped = false
+    var isCanceled = false
+        private set
+    fun cancel(){
+        isCanceled = true
+    }
+}
+
+class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinRaise: Voin, val isOn:Boolean,val sideVid:Side) : Msg() {
+    private val listSloy = ArrayList<Sloy>()
 
     fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
-        if (!isStoped && !g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+        if (!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
     }
     //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
