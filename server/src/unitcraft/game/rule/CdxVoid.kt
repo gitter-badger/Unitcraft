@@ -6,14 +6,17 @@ import unitcraft.server.Side
 import java.util.Collections
 import java.util.WeakHashMap
 
-class CdxVoid(r: Resource) : Cdx(r) {
+class CdxVoid(r: Resource) : CdxVoin(r) {
     val name = "void"
-    val extVoin = ExtVoin(r, name)
+    val tlsVoin = r.tlsVoin(name)
     val tlsAkt = r.tlsAkt(name)
 
-    override fun createRules(land: Land, g: Game) = rules {
-        val voins = Grid<VoinVoid>()
-        extVoin.createRules(this, g,ExtVoin.fromGrid(voins,::VoinVoid))
+    override fun createRules(land: Land, g: Game) = RulesVoin {
+        val voins = Grid<VoinStd>()
+
+        ruleVoin(g,voins,resVoin,tlsVoin)
+
+        val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
 
         info<MsgRaise>(0) {
             if(voins.has(src)) for (pgNear in pgRaise.near) {
@@ -24,22 +27,18 @@ class CdxVoid(r: Resource) : Cdx(r) {
         }
 
         make<EfkUnhide>(0) {
-            voins[pg]?.isHided = true
+            voins[pg]?.let{hide.remove(it)}
         }
 
         info<MsgIsHided>(0){
-            if(voin is VoinVoid && voin.isHided) yes()
+            if(voin in hide) yes()
         }
 
         endTurn(10) {
             for ((pg, v) in voins) {
                 val side = v.side
-                if (side != null) if (!g.stop(EfkHide(pg, side, v))) v.isHided = true
+                if (side != null) if (!g.stop(EfkHide(pg, side, v))) hide.add(v)
             }
         }
     }
-}
-
-class VoinVoid(side: Side?, life: Int, flip: Boolean) : ExtVoin.VoinStd(side,life,flip){
-    var isHided = false
 }

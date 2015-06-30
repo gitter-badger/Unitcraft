@@ -200,13 +200,17 @@ interface Voin : Obj {
     fun isAlly(side: Side) = this.side == side
 }
 
-class MsgSpot(private val g: Game,val pgSpot: Pg, val side: Side) : Msg() {
-    val raises = ArrayList<MsgRaise>()
+class MsgSpot(private val g: Game,val pgSpot: Pg, val side: Side, val pgSrc:Pg = pgSpot) : Msg() {
+    val raises = ArrayList<Raise>()
 
     fun raise(pgRaise: Pg, voinRaise: Voin, src: Obj) {
-        val tggl = g.info(MsgTgglRaise(pgRaise,src,voinRaise))
+        //val tggl = g.info(MsgTgglRaise(pgRaise,src,voinRaise))
         //if (g.sideTurn != side) tggl.isOn = false
-        if(!tggl.isCanceled) raises.add(g.info(MsgRaise(g,pgRaise,src,voinRaise,tggl.isOn,side)))
+        //if(!tggl.isCanceled) raises.add(g.info(MsgRaise(g,pgRaise,src,voinRaise,tggl.isOn,side)))
+    }
+
+    fun add(r:Raise){
+        raises.add(r)
     }
 
     fun sloys(): List<Sloy> {
@@ -215,12 +219,33 @@ class MsgSpot(private val g: Game,val pgSpot: Pg, val side: Side) : Msg() {
     }
 }
 
-class MsgTgglRaise(val pgRaise: Pg, val src: Obj, val voinRaise: Voin) : Msg(){
+class MsgTgglRaise(val pgRaise: Pg, val voinRaise: Voin) : Msg(){
     var isOn = false
     var isCanceled = false
         private set
     fun cancel(){
         isCanceled = true
+    }
+}
+
+class Raise(val pgRaise: Pg, val isOn:Boolean) : Msg() {
+    private val listSloy = ArrayList<Sloy>()
+
+    fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
+        addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+    }
+    //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
+
+    private fun addAkt(akt: Akt) {
+        if (akt.pgAim == pgRaise) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
+        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
+        if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
+        listSloy[idx].akts.add(akt)
+    }
+
+    fun sloys(): List<Sloy> {
+        // заполнить пустоты сверху снизу
+        return listSloy
     }
 }
 

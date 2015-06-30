@@ -16,6 +16,7 @@ class Resource {
     val tiles = ArrayList<Tile>()
     val hintTiles = ArrayList<HintTile>()
     val hintTexts = ArrayList<HintText>()
+    val buildiks = ArrayList<Int>()
 
     val hintTileFlip = hintTile("ctx.translate(rTile,0);ctx.scale(-1,1);")
     val hintTileDeploy = hintTile("")
@@ -35,10 +36,9 @@ class Resource {
     val tileEdgeWait = tile("edgeWait", effectPlace)
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
+    val resVoin = ResVoin(this)
 
-    val buildiks = ArrayList<Int>()
-
-    fun createRules(rules:List<KClass<out Cdx>>) = rules.map{(it.java as Class<out Cdx>).getConstructor(javaClass<Resource>()).newInstance(this)}
+    fun createCdxs(rules:List<KClass<out Cdx>>) = rules.map{(it.java as Class<out Cdx>).getConstructor(javaClass<Resource>()).newInstance(this)}
 
     fun tlsFlatControl(name:String) = TlsFlatControl(tile(name),tile(name+".ally"),tile(name+".enemy"))
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
@@ -154,3 +154,9 @@ data class Tile(val name: String, val effect: Effect) {
 data class HintTile(val script: String)
 data class HintText(val script: String)
 
+class ResVoin(r:Resource){
+    val tlsMove = r.tlsAktMove
+    val tileHide = r.tileHide
+    val hintTileFlip = r.hintTileFlip
+    val hintTextLife = r.hintTextLife
+}

@@ -5,14 +5,23 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.HashMap
 
-class CdxMultwin(r: Resource) : Cdx(r) {
+class CdxMultwin(r: Resource) : CdxVoin(r) {
     val name = "multwin"
-    val extVoin = ExtVoin(r, name)
+    val tlsVoin = r.tlsVoin(name)
 
-    override fun createRules(land: Land, g: Game) = rules {
+    override fun createRules(land: Land, g: Game) = RulesVoin {
         val voins = Grid<Multwin>()
         val coreBySide = HashMap<Side, MultwinCore>()
-        extVoin.createRules(this, g, ExtVoin.fromGrid(voins) { side, life, flip -> Multwin(coreBySide.getOrPut(side){MultwinCore(side)}, flip) })
+
+        editAdd(12, tlsVoin.neut) {
+            val core = coreBySide.getOrPut(sideVid){MultwinCore(sideVid)}
+            voins[pgEdit] = Multwin(core, pgEdit.x > pgEdit.pgser.xr / 2)
+        }
+
+        ruleEditChangeAndRemove(voins)
+        ruleSolid(voins)
+        ruleDrawUnit(voins,g,tlsVoin,resVoin)
+        ruleEfk(voins,g)
     }
 }
 
@@ -20,7 +29,7 @@ class MultwinCore(var side: Side? = null) {
     var life = 3
 }
 
-class Multwin(val core: MultwinCore, override var flip: Boolean) : ExtVoin.Voins.VoinMut {
+class Multwin(val core: MultwinCore, flip: Boolean) : VoinStd(core.side,0,flip) {
     override var life: Int
         get() = core.life
         set(v: Int) {

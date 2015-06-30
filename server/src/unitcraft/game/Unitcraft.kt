@@ -7,7 +7,7 @@ import unitcraft.game.Game
 import unitcraft.game.rule.*
 
 class Unitcraft() : CreatorGame {
-    val cdxs = Resource().createRules(kCdxs)
+    val cdxs = Resource().createCdxs(kCdxs)
 
     override fun createGame(mission:Int?):()-> IGame {
         val land = Land(mission, cdxs)

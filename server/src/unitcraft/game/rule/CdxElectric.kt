@@ -2,24 +2,25 @@ package unitcraft.game.rule
 
 import unitcraft.game.*
 import unitcraft.land.Land
+import unitcraft.server.Side
 import java.util.*
 
-class CdxElectric(r: Resource) : Cdx(r) {
+class CdxElectric(r: Resource) : CdxVoin(r) {
     val name = "electric"
-    val extVoin = ExtVoin(r, name)
+    val tlsVoin = r.tlsVoin(name)
     val tlsAkt = r.tlsAkt(name)
     val tileTrace = r.tile("electric.akt")
     val hintTrace = r.hintTileTouch
 
-    override fun createRules(land: Land, g: Game) = rules {
-        val voins = ExtVoin.std()
-        extVoin.createRules(this, g, voins)
+    override fun createRules(land: Land, g: Game) = RulesVoin {
+        val voins = Grid<VoinStd>()
 
-        info<MsgRaise>(0) {
-             if(voins.has(src)) for (pgNear in pgRaise.near)
-                g.info(MsgVoin(pgNear)).voin?.let {
-                    add(pgNear, tlsAkt, EfkElectro(src as Voin,pgNear,pgRaise))
-                }
+        ruleVoin(g,voins,resVoin,tlsVoin)
+
+        skilByHandWithMove(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
+            g.info(MsgVoin(pg)).voin?.let {
+                if (!g.stop(EfkDmg(pg,it))) r.add(pg, tlsAkt, EfkElectro(voinRaise, pg, pgRaise))
+            }
         }
 
         fun wave(pgs: HashMap<Pg, List<Voin>>,que:ArrayList<Pg>) {
@@ -52,4 +53,3 @@ class CdxElectric(r: Resource) : Cdx(r) {
 }
 
 class EfkElectro(val src:Voin,val pgAim:Pg,val pgFrom:Pg):Efk()
-

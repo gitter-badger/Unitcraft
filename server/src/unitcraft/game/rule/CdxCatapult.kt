@@ -6,6 +6,7 @@ import unitcraft.server.Side
 import unitcraft.server.init
 import unitcraft.game.Game
 
+/** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
 class CdxCatapult(r:Resource): Cdx(r){
     val name = "catapult"
     val tile:Int = r.tile(name)
@@ -15,20 +16,19 @@ class CdxCatapult(r:Resource): Cdx(r){
         val flats = Grid<Catapult>()
         flats[land.pgser.pg(3, 3)] = Catapult
 
-
         info<MsgDraw>(10, {
             for ((pg, flat) in flats)
                 drawTile(pg, tile)
         })
 
-        /** если воин стоит на катапульте, то дать ему способность катапульты */
-        info<MsgRaise>(20){
-            if(src is Catapult) for (pg in g.pgs) add(pg, tlsAkt, EfkMove(pgRaise,pg, voinRaise))
-        }
-
         info<MsgSpot>(20) {
             if (pgSpot in flats) g.voin(pgSpot,side)?.let {
-                raise(pgSpot, it, Catapult)
+                val pgRaise = pgSpot
+                val tggl = g.info(MsgTgglRaise(pgRaise, it))
+                if(!tggl.isCanceled) {
+                    val r = Raise(pgSpot, tggl.isOn)
+                    for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, it))
+                }
             }
         }
 

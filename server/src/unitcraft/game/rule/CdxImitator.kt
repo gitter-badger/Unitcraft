@@ -4,20 +4,22 @@ import unitcraft.game.*
 import unitcraft.land.Land
 import java.util.WeakHashMap
 
-class CdxImitator(r: Resource) : Cdx(r) {
+class CdxImitator(r: Resource) : CdxVoin(r) {
     val name = "imitator"
-    val extVoin = ExtVoin(r, name)
+    val tlsVoin = r.tlsVoin(name)
 
-    override fun createRules(land: Land, g: Game) = rules {
-        val voins = ExtVoin.std()
-        extVoin.createRules(this, g, voins)
+    override fun createRules(land: Land, g: Game) = RulesVoin {
+        val voins = Grid<VoinStd>()
+        ruleVoin(g,voins,resVoin,tlsVoin)
+
+        ruleTgglRaiseBySideTurn(g,voins)
 
         info<MsgSpot>(0) {
-            val imitator = voins[pgSpot]
-            if (imitator != null) {
+            voins[pgSrc]?.let {imitator ->
                 for (pgNear in pgSpot.near) {
-                    g.voins(pgNear,side).forEach {
-                        raise(pgSpot, imitator, it)
+                    g.voins(pgNear, side).forEach {
+                        val spot = g.info(MsgSpot(g,pgSpot,side,pgNear))
+                        raises.addAll(spot.raises)
                     }
                 }
             }

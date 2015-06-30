@@ -1,10 +1,11 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.ArrayList
 
-class ExtVoin(r: Resource, name: String) {
+class ExtVoin(r: Resource, name: String):Cdx(r) {
     val tlsVoin = r.tlsVoin(name)
     val tlsMove = r.tlsAktMove
     val tileHide = r.tileHide
@@ -14,6 +15,10 @@ class ExtVoin(r: Resource, name: String) {
 
     fun createRules(r: Rules, g: Game, voins: Voins) {
         r.addRules(initRules(g, voins))
+    }
+
+    override fun createRules(land: Land, g: Game): Rules {
+        throw UnsupportedOperationException()
     }
 
     interface Voins : Sequence<Pair<Pg, Voins.VoinMut>> {

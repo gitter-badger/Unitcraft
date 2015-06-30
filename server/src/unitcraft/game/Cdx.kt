@@ -10,9 +10,14 @@ import kotlin.reflect.jvm.kotlin
 
 abstract class Cdx(val r: Resource) {
     abstract fun createRules(land: Land, g: Game): Rules
+    fun rules(fn: Rules.() -> Unit):Rules{
+        val rules = Rules()
+        rules.fn()
+        return rules
+    }
 }
 
-class Rules() {
+open class Rules() {
     val rulesInfo = HashMap<KClass<out Msg>,MutableList<Rule>>()
     val rulesStop = HashMap<KClass<out Efk>,MutableList<Rule>>()
     val rulesMake = HashMap<KClass<out Efk>,MutableList<Rule>>()
@@ -60,12 +65,6 @@ class Rules() {
             }
         }
     }
-}
-
-fun rules(fn: Rules.() -> Unit):Rules{
-    val rules = Rules()
-    rules.fn()
-    return rules
 }
 
 class Rule(val prior:Int,appl: Any){
