@@ -122,16 +122,17 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
         ruleTgglRaiseBySideTurn(g,voins)
 
         info<MsgSpot>(0) {
-            voins[pgSrc]?.let { voinSpot ->
-                if (!g.info(MsgIsHided(voinSpot)).isHided){
+            if(voins[pgSrc]==null) return@info
+            g.info(MsgVoin(pgSpot)).voin?.let { voinSpot ->
+                if (!g.info(MsgIsHided(voinSpot)).isHided) {
                     val tggl = g.info(MsgTgglRaise(pgSpot, voinSpot))
                     if (g.sideTurn != side) tggl.isOn = false
-                    if(!tggl.isCanceled) {
+                    if (!tggl.isCanceled) {
                         val r = Raise(pgSpot, tggl.isOn)
-                        for (pgNear in pgSpot.near) aim(pgNear, pgSpot,voinSpot,side,r)
+                        for (pgNear in pgSpot.near) aim(pgNear, pgSpot, voinSpot, side, r)
                         for (pgNear in pgSpot.near) {
                             val efk = EfkMove(pgSpot, pgNear, voinSpot)
-                            if (!g.stop(efk)) r.add(pgNear, resVoin.tlsMove,efk)
+                            if (!g.stop(efk)) r.add(pgNear, resVoin.tlsMove, efk)
                         }
                         add(r)
                     }
