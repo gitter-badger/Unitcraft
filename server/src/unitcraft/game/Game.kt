@@ -94,7 +94,8 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
-        make(akt.efk)
+        akt.efk?.let{make(it)}
+        akt.fn?.invoke()
         println("akt " + side + " from " + prm.pg(0) + " index " + prm.int(2) + " to " + prm.pg(3))
     }
 
@@ -142,7 +143,9 @@ class Game(cdxs: List<Cdx>, land: Land, val canEdit: Boolean = false) : IGame {
      * Напололняет [msg] разными данными, передается всем подписавшимся правилам в порядке приоритета. Нельзя менять состояние правил.
      */
     fun <T : Msg> info(msg: T): T {
-        rulesInfo[msg.javaClass.kotlin]?.forEach { it.apply(msg) }
+        rulesInfo[msg.javaClass.kotlin]?.forEach {
+            if(!msg.isEated) it.apply(msg) else return msg
+        }
         return msg
     }
 
@@ -234,26 +237,9 @@ class Raise(val pgRaise: Pg, val isOn:Boolean) : Msg() {
     fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
         addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
     }
-    //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
-    private fun addAkt(akt: Akt) {
-        if (akt.pgAim == pgRaise) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
-        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
-        if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
-        listSloy[idx].akts.add(akt)
-    }
-
-    fun sloys(): List<Sloy> {
-        // заполнить пустоты сверху снизу
-        return listSloy
-    }
-}
-
-class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinRaise: Voin, val isOn:Boolean,val sideVid:Side) : Msg() {
-    private val listSloy = ArrayList<Sloy>()
-
-    fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
-        if (!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+    fun addFn(pgAkt:Pg, tlsAkt:TlsAkt, fn: ()->Unit){
+        addAkt(Akt(pgAkt, tlsAkt(isOn), null, null,fn))
     }
     //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
@@ -269,6 +255,27 @@ class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinRaise
         return listSloy
     }
 }
+
+//class MsgRaise(private val g: Game, val pgRaise: Pg, val src: Obj, val voinRaise: Voin, val isOn:Boolean,val sideVid:Side) : Msg() {
+//    private val listSloy = ArrayList<Sloy>()
+//
+//    fun add(pgAkt: Pg, tlsAkt: TlsAkt, efk: Efk) {
+//        if (!g.stop(efk)) addAkt(Akt(pgAkt, tlsAkt(isOn), efk, null))
+//    }
+//    //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
+//
+//    private fun addAkt(akt: Akt) {
+//        if (akt.pgAim == pgRaise) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
+//        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
+//        if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
+//        listSloy[idx].akts.add(akt)
+//    }
+//
+//    fun sloys(): List<Sloy> {
+//        // заполнить пустоты сверху снизу
+//        return listSloy
+//    }
+//}
 
 interface Obj
 

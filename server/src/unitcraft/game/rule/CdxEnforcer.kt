@@ -2,7 +2,9 @@ package unitcraft.game.rule
 
 import unitcraft.game.*
 import unitcraft.land.Land
+import unitcraft.server.Side
 import java.util.WeakHashMap
+import kotlin.reflect.jvm.kotlin
 
 class CdxEnforcer(r: Resource) : CdxVoin(r) {
     val name = "enforcer"
@@ -16,14 +18,13 @@ class CdxEnforcer(r: Resource) : CdxVoin(r) {
 
         ruleVoin(g,voins,resVoin,tlsVoin)
 
-        skilByHandWithMove(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
-            g.voin(pg,sideVid)?.let {
-                if(enforced[it] == null) r.add(pg, tlsAkt, EfkEnforce(pg, it))
+        aimByHand(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
+            if(g.info(CanGetEnforce(pg,sideVid)).can && g.info(StopSkil(pgRaise,pg)).isStoped) {
+                r.addFn(pg, tlsAkt){
+                    g.info(EfkEnforce(pg))
+                    voinRaise.tire()
+                }
             }
-        }
-
-        make<EfkEnforce>(0) {
-            enforced[voin] = true
         }
 
         info<MsgTgglRaise>(0) {
@@ -42,14 +43,30 @@ class CdxEnforcer(r: Resource) : CdxVoin(r) {
             enforced[voin]?.let { drawTile(pg, tlsEnforced(it)) }
         }
 
-        stop<EfkEnforce>(0) {
-            if(enforced[voin] != null) stop()
-        }
-
         endTurn(0) {
             enforced.clear()
         }
     }
 }
 
-class EfkEnforce(val pg: Pg, var voin: Voin) : Efk()
+class EfkEnforce(val pg: Pg) : Msg()
+
+class CanGetEnforce(val pg:Pg,val sideVid: Side) : Msg(){
+    var can:Boolean = false
+        private set
+
+    fun confirm(){
+        can = true
+        eat()
+    }
+}
+
+class StopSkil(val pgFrom:Pg,val pgTo:Pg) : Msg(){
+    var isStoped:Boolean = false
+        private set
+
+    fun confirm(){
+        isStoped = true
+        eat()
+    }
+}

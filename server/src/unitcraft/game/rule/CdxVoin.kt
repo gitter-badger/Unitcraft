@@ -2,6 +2,7 @@ package unitcraft.game.rule
 
 import unitcraft.game.*
 import unitcraft.server.Side
+import java.util.*
 
 abstract class CdxVoin(r: Resource) : Cdx(r) {
     val resVoin = r.resVoin
@@ -118,12 +119,12 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
         }
     }
 
-    fun skilByHandWithMove(g: Game,voins: Grid<VoinStd>,resVoin: ResVoin,aim:(Pg, Pg, Voin,Side, Raise)->Unit) {
+    fun aimByHand(g: Game,voins: Grid<VoinStd>,resVoin: ResVoin,aim:(Pg, Pg, VoinStd,Side, Raise)->Unit) {
         ruleTgglRaiseBySideTurn(g,voins)
 
         info<MsgSpot>(0) {
             if(voins[pgSrc]==null) return@info
-            g.info(MsgVoin(pgSpot)).voin?.let { voinSpot ->
+            voins[pgSpot]?.let { voinSpot ->
                 if (!g.info(MsgIsHided(voinSpot)).isHided) {
                     val tggl = g.info(MsgTgglRaise(pgSpot, voinSpot))
                     if (g.sideTurn != side) tggl.isOn = false
@@ -142,4 +143,62 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
     }
 }
 
-open class VoinStd(override var side: Side?, override var life: Int, var flip: Boolean) : Voin
+open class VoinStd(override var side: Side?, override var life: Int, var flip: Boolean) : Voin{
+    var isTired = true
+        private set
+
+    var enforced = true
+
+    fun tire(){
+        isTired = true
+    }
+
+    fun isReady(sideTurn:Side) =  sideTurn == side ||  enforced
+
+}
+
+class EfkMove(val pgFrom: Pg, val pgTo: Pg, val voin: Voin) : Efk()
+
+class EfkHide(val pg: Pg, val side: Side, val voin: Voin) : Efk()
+
+class EfkUnhide(val pg: List<Pg>, val voin: Voin) : Efk()
+
+class MsgDrawVoin(val ctx: MsgDraw, val pg: Pg, val voin: Voin) : Msg() {
+    fun drawTile(pg: Pg, tile: Int, hint: Int? = null) {
+        ctx.drawTile(pg, tile, hint)
+    }
+
+    fun drawText(pg: Pg, text: String, hint: Int? = null) {
+        ctx.drawText(pg, text, hint)
+    }
+}
+
+class EfkDmg(val pgAim: Pg, val voin: Voin, val dmg: Int = 1) : Efk()
+
+class MsgVoin(val pg: Pg) : Msg() {
+    val all = ArrayList<Voin>(1)
+
+    fun add(voin: Voin) {
+        all.add(voin)
+    }
+
+    val voin: Voin?
+        get() = all.firstOrNull()
+}
+
+class MsgIsHided(val voin: Voin) : Msg() {
+    var isHided: Boolean = false
+        private set
+
+    fun yes() {
+        isHided = true
+    }
+
+    fun isVid(side: Side) = !isHided || side == voin.side
+}
+
+class EfkRemove(val pg: Pg, val obj: Obj) : Efk()
+
+class EfkHeal(val pg: Pg, val voin: Voin, val value: Int = 1) : Efk()
+
+class EfkBuild(val pg: Pg) : Efk()

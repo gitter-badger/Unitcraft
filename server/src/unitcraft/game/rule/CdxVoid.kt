@@ -16,15 +16,13 @@ class CdxVoid(r: Resource) : CdxVoin(r) {
 
         ruleVoin(g,voins,resVoin,tlsVoin)
 
-        val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
-
-        info<MsgRaise>(0) {
-            if(voins.has(src)) for (pgNear in pgRaise.near) {
-                g.voin(pgNear,sideVid)?.let {
-                    add(pgNear, tlsAkt, EfkDmg(pgNear, it))
-                }
+        aimByHand(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
+            g.voin(pg,sideVid)?.let {
+                r.add(pg, tlsAkt, EfkDmg(pg, it))
             }
         }
+
+        val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
 
         make<EfkUnhide>(0) {
             voins[pg]?.let{hide.remove(it)}

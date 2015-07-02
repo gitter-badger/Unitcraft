@@ -22,12 +22,12 @@ class CdxCatapult(r:Resource): Cdx(r){
         })
 
         info<MsgSpot>(20) {
-            if (pgSpot in flats) g.voin(pgSpot,side)?.let {
-                val pgRaise = pgSpot
-                val tggl = g.info(MsgTgglRaise(pgRaise, it))
+            if (pgSrc in flats) g.voin(pgSpot,side)?.let {
+                val tggl = g.info(MsgTgglRaise(pgSpot, it))
                 if(!tggl.isCanceled) {
                     val r = Raise(pgSpot, tggl.isOn)
-                    for (pg in g.pgs) r.add(pg, tlsAkt, EfkMove(pgRaise, pg, it))
+                    for (pg in g.pgs) if(!g.stop(EfkMove(pgSpot, pg, it))) r.add(pg, tlsAkt, EfkMove(pgSpot, pg, it))
+                    add(r)
                 }
             }
         }

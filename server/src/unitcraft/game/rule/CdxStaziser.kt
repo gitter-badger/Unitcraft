@@ -3,16 +3,14 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.land.Land
 
-class CdxStaziser(r: Resource) : Cdx(r) {
+class CdxStaziser(r: Resource) : CdxVoin(r) {
     val name = "staziser"
-    val extVoin = ExtVoin(r, name)
     val tlsAkt = r.tlsAkt(name)
+    val tlsVoin = r.tlsVoin(name)
     val tlsStazis = r.tlsList(5, "stazis")
 
-    override fun createRules(land: Land, g: Game) = rules {
-        val voins = ExtVoin.std()
-        extVoin.createRules(this, g,voins)
-
+    override fun createRules(land: Land, g: Game) = RulesVoin {
+        val voins = Grid<VoinStd>()
         val stazis = Grid<Int>()
 
         fun plant(pg: Pg) {
@@ -25,17 +23,18 @@ class CdxStaziser(r: Resource) : Cdx(r) {
             else stazis.remove(pg)
         }
 
+        ruleVoin(g,voins,resVoin,tlsVoin)
+
+        aimByHand(g,voins,resVoin) { pg,pgRaise,voinRaise,sideVid,r ->
+            if (stazis[pg] == null) r.add(pg, tlsAkt, EfkStazisPlant(pg))
+        }
+
         info<MsgDraw>(30) {
             for ((pg, num) in stazis) drawTile(pg, tlsStazis[num - 1])
         }
 
         info<MsgTgglRaise>(0) {
             if (stazis[pgRaise] != null) cancel()
-        }
-
-        info<MsgRaise>(0) {
-            if (voins.has(src)) for (pgNear in pgRaise.near)
-                if (stazis[pgNear] == null) add(pgNear, tlsAkt, EfkStazisPlant(pgNear))
         }
 
         make<EfkStazisPlant>(0) {
@@ -46,11 +45,7 @@ class CdxStaziser(r: Resource) : Cdx(r) {
             if (stazis[pgFrom] != null || stazis[pgTo] != null) stop()
         }
 
-        stop<EfkEnforce>(1) {
-            if (stazis[pg] != null) stop()
-        }
-
-        stop<EfkHide>(1) {
+         stop<EfkHide>(1) {
             if (stazis[pg] != null) stop()
         }
 

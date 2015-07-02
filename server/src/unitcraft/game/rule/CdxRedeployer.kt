@@ -6,23 +6,22 @@ import unitcraft.server.Side
 import java.util.Collections
 import java.util.WeakHashMap
 
-class CdxRedeployer(r: Resource) : Cdx(r) {
+class CdxRedeployer(r: Resource) : CdxVoin(r) {
     val name = "redeployer"
-    val extVoin = ExtVoin(r, name)
+    val tlsVoin = r.tlsVoin(name)
     val tlsAkt = r.tlsAkt(name)
     val tlsBuild = r.tlsAkt(name,"build")
 
-    override fun createRules(land: Land, g: Game) = rules {
-        val voins = ExtVoin.std()
-        extVoin.createRules(this, g, voins)
+    override fun createRules(land: Land, g: Game) = RulesVoin {
+        val voins = Grid<VoinStd>()
 
-        info<MsgRaise>(0) {
-            if(voins.has(src)) for (pgNear in pgRaise.near) {
-                g.voin(pgNear,sideVid)?.let {
-                    if(it.side!=null && it.life>=3) add(pgNear, tlsAkt, EfkSell(pgNear, it))
-                }
-                add(pgNear, tlsBuild, EfkBuild(pgNear))
+        ruleVoin(g,voins,resVoin,tlsVoin)
+
+        aimByHand(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
+            g.voin(pg,sideVid)?.let {
+                if(it.side!=null && it.life>=3) r.add(pg, tlsAkt, EfkSell(pg, it))
             }
+            if(!g.stop(EfkBuild(pg))) r.add(pg, tlsBuild, EfkBuild(pg))
         }
 
         make<EfkSell>(0) {

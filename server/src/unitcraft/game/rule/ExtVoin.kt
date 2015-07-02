@@ -4,7 +4,7 @@ import unitcraft.game.*
 import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.ArrayList
-
+/*
 class ExtVoin(r: Resource, name: String):Cdx(r) {
     val tlsVoin = r.tlsVoin(name)
     val tlsMove = r.tlsAktMove
@@ -162,49 +162,4 @@ class ExtVoin(r: Resource, name: String):Cdx(r) {
         fun std() = fromGrid(Grid<VoinStd>(), ::VoinStd)
     }
 }
-
-class EfkMove(val pgFrom: Pg, val pgTo: Pg, val voin: Voin) : Efk()
-
-class EfkHide(val pg: Pg, val side: Side, val voin: Voin) : Efk()
-
-class EfkUnhide(val pg: List<Pg>, val voin: Voin) : Efk()
-
-class MsgDrawVoin(val ctx: MsgDraw, val pg: Pg, val voin: Voin) : Msg() {
-    fun drawTile(pg: Pg, tile: Int, hint: Int? = null) {
-        ctx.drawTile(pg, tile, hint)
-    }
-
-    fun drawText(pg: Pg, text: String, hint: Int? = null) {
-        ctx.drawText(pg, text, hint)
-    }
-}
-
-class EfkDmg(val pgAim: Pg, val voin: Voin, val dmg: Int = 1) : Efk()
-
-class MsgVoin(val pg: Pg) : Msg() {
-    val all = ArrayList<Voin>(1)
-
-    fun add(voin: Voin) {
-        all.add(voin)
-    }
-
-    val voin: Voin?
-        get() = all.firstOrNull()
-}
-
-class MsgIsHided(val voin: Voin) : Msg() {
-    var isHided: Boolean = false
-        private set
-
-    fun yes() {
-        isHided = true
-    }
-
-    fun isVid(side: Side) = !isHided || side == voin.side
-}
-
-class EfkRemove(val pg: Pg, val obj: Obj) : Efk()
-
-class EfkHeal(val pg: Pg, val voin: Voin, val value: Int = 1) : Efk()
-
-class EfkBuild(val pg: Pg) : Efk()
+*/

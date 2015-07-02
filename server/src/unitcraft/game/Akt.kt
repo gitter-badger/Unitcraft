@@ -8,9 +8,8 @@ import java.util.ArrayList
 import unitcraft.server.Violation
 import kotlin.properties.Delegates
 
-class Akt(val pgAim:Pg,val tile:Int,val efk: Efk,val opter: Opter?) : JSONAware{
-
-//    fun akt() = (fnAkt?:throw Violation("akt is opter"))()
+class Akt(val pgAim:Pg,val tile:Int,val efk: Efk?,val opter: Opter?, val fn:(()->Unit)?=null) : JSONAware{
+    fun akt() = (fn?:throw Violation("akt is opter"))()
 //    fun aktOpt(num:Int){
 //        if(opter==null) throw Violation("akt is simple")
 //        if(num<opter.opts.size()) opter.opts[num].fn() else throw Violation("idx of opter out of bound")

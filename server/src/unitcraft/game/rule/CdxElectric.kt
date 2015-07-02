@@ -15,14 +15,6 @@ class CdxElectric(r: Resource) : CdxVoin(r) {
     override fun createRules(land: Land, g: Game) = RulesVoin {
         val voins = Grid<VoinStd>()
 
-        ruleVoin(g,voins,resVoin,tlsVoin)
-
-        skilByHandWithMove(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
-            g.info(MsgVoin(pg)).voin?.let {
-                if (!g.stop(EfkDmg(pg,it))) r.add(pg, tlsAkt, EfkElectro(voinRaise, pg, pgRaise))
-            }
-        }
-
         fun wave(pgs: HashMap<Pg, List<Voin>>,que:ArrayList<Pg>) {
             que.firstOrNull()?.let { pg ->
                 que.remove(0)
@@ -32,7 +24,7 @@ class CdxElectric(r: Resource) : CdxVoin(r) {
             }
         }
 
-        make<EfkElectro>(0){
+        fun hitElectro(pgAim:Pg,pgFrom:Pg){
             val pgs = LinkedHashMap<Pg, List<Voin>>()
             pgs[pgFrom] = emptyList()
             val que = ArrayList<Pg>()
@@ -43,6 +35,15 @@ class CdxElectric(r: Resource) : CdxVoin(r) {
             g.traces.add(TraceElectric(pgs.map { it.key }))
         }
 
+        ruleVoin(g,voins,resVoin,tlsVoin)
+
+        aimByHand(g,voins,resVoin){ pg,pgRaise,voinRaise,sideVid,r ->
+            g.info(MsgVoin(pg)).voin?.let {
+                if (!g.stop(EfkDmg(pg,it))) r.addFn(pg, tlsAkt){
+                    hitElectro(pg,pgRaise)
+                }
+            }
+        }
     }
 
     inner class TraceElectric(val pgs:List<Pg>):Trace(){
@@ -51,5 +52,3 @@ class CdxElectric(r: Resource) : CdxVoin(r) {
 
     }
 }
-
-class EfkElectro(val src:Voin,val pgAim:Pg,val pgFrom:Pg):Efk()

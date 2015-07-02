@@ -83,7 +83,14 @@ class MsgDraw(val sideVid: Side):Msg() {
     }
 }
 
-abstract class Msg
+abstract class Msg{
+    var isEated:Boolean = false
+        private set
+
+    fun eat(){
+        isEated = true
+    }
+}
 
 abstract class Efk{
     var isEated:Boolean = false
