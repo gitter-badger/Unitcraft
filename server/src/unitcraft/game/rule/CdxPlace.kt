@@ -45,12 +45,12 @@ class CdxPlace(r:Resource) : Cdx(r){
 
         endTurn(5) {
             // скрыть врагов в лесу
-            for ((pg,place) in places) if (place == TpPlace.forest){
-                 g.info(MsgVoin(pg)).all.forEach{
-                    val efk = EfkHide(pg, g.sideTurn.vs, it)
-                    if (!g.stop(efk)) hide.add(it)
-                }
-            }
+//            for ((pg,place) in places) if (place == TpPlace.forest){
+//                 g.info(MsgVoin(pg)).all.forEach{
+//                    val efk = EfkHide(pg, g.sideTurn.vs, it)
+//                    if (!g.stop(efk)) hide.add(it)
+//                }
+//            }
         }
     }
 

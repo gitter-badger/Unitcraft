@@ -33,15 +33,27 @@ class Unitcraft(r:Resource = Resource()) : CreatorGame {
     )
     val stazis = Stazis(byGame{Grid<Int>()})
 
+    val endTurn = EndTurn(byGame{Score()})
+
+    val pgser = {gameCur.get()!!.pgser}
+
     val resDrawer = ResDrawer(r)
     val drawer = Drawer(
             r = resDrawer,
-            pgser = {gameCur.get()!!.pgser},
+            pgser = pgser,
             place = place,
             breeds = breeds,
             tpPiles = tpPiles,
             tpPointControls = tpPointControls,
             stazis = stazis
+    )
+    val raiser = Raiser(
+            r,
+            pgser = pgser,
+            endTurn = endTurn,
+            stazis = stazis,
+            breedElectric = breeds[0] as BreedElectric,
+            breedEnforcer = breeds[1] as BreedEnforcer
     )
 
     inner class CmderUnitcraft(mission:Int?) : CmderGame{
@@ -59,7 +71,9 @@ class Unitcraft(r:Resource = Resource()) : CreatorGame {
             game = Game(
                     pgser = pgser,
                     canEdit = true,
-                    drawer = drawer
+                    drawer = drawer,
+                    raiser = raiser,
+                    endTurn = endTurn
             )
             gameCur = WeakReference(game)
             for((pg,v) in land.grid()) drawer.place.grid().set(pg,v)

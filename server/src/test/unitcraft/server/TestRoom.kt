@@ -28,7 +28,6 @@ class TestRoom {
 
     // комната отсылает состояние игры
     Test fun sendState() {
-        cmder.assertCreated()
         assertEquals(send.idPrev,id)
         assertEquals(send.idLast,idVs)
         checkState(0L)
@@ -66,7 +65,6 @@ class TestRoom {
         roomRobot.cmd(id,Prm("1#cmd1"))
         roomRobot.cmd(id,Prm("2#errRobot"))
 
-        cmderRobot.assertCreated()
         assertEquals(4,cmderRobot.cmds.size())
         assertEquals(Side.b,cmderRobot.sides[3])
         assertEquals("e",cmderRobot.cmds[3])
@@ -76,10 +74,9 @@ class TestRoom {
     Test fun errCmd() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
-        cmder.assertCreated()
 
         room.cmd(id,Prm("2#errCmd"))
-        assertRecreation()
+        assertStateAfterReset()
     }
 
     // комната выбрасывает нарушение протокола при исполнении команды как есть
@@ -94,14 +91,13 @@ class TestRoom {
     Test fun errCmdJson() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
-        cmder.assertCreated()
 
         room.cmd(id,Prm("2#errState"))
-        assertRecreation()
+        assertStateAfterReset()
     }
 
-    fun assertRecreation(){
-        cmder.assertRecreated()
+    fun assertStateAfterReset(){
+        cmder.assertReseted()
         assertEquals(log.last,"error")
         assertEquals(2,cmder.cmds.size())
         assertEquals("cmd0",cmder.cmds[0])
@@ -111,13 +107,11 @@ class TestRoom {
     Test fun outSync() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
-
-        cmder.assertCreated()
         room.cmd(id,Prm("0#cmd"))
 
         assertEquals(log.last,"outSync")
         checkState(2L)
-        cmder.assertCreated()
+
         assertEquals(cmder.cmds.size(),2)
         assertEquals(cmder.cmds[0],"cmd0")
         assertEquals(cmder.cmds[1],"cmd1")
@@ -129,12 +123,13 @@ class TestRoom {
 }
 
 class CmderStub : CmderGame {
-    var timesCreated = 0
+    var timesReseted = 0
     val sides = ArrayList<Side>()
     val cmds = ArrayList<String>()
 
     override fun reset() {
-        throw UnsupportedOperationException()
+        timesReseted += 1
+        cmds.clear()
     }
 
     override fun cmd(side: Side, cmd: String) {
@@ -158,11 +153,7 @@ class CmderStub : CmderGame {
         return GameState(if(cmds.lastOrNull()=="win") Side.a else null,mapOf(Side.a to JSONObject(),Side.b to JSONObject()),null)
     }
 
-    fun assertRecreated(){
-        assertTrue(timesCreated > 1, "игра пересоздана")
-    }
-
-    fun assertCreated(){
-        assertTrue(timesCreated == 1, "игра создана")
+    fun assertReseted(){
+        assertTrue(timesReseted == 1, "игра не сброшена")
     }
 }

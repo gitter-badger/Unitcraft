@@ -16,7 +16,7 @@ class Pg(val pgser: Pgser,val x:Int, val y:Int){
     override fun toString() = "$x $y"
 }
 
-class Pgser(val xr:Int,val yr:Int){
+class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{
     val pgs:List<Pg> = ArrayList<Pg>(xr*yr).init{
         repeat(xr) {x -> repeat(yr) {y ->
             add(Pg(this@Pgser, x, y))
@@ -28,6 +28,8 @@ class Pgser(val xr:Int,val yr:Int){
     fun pgOrNull(x: Int, y: Int) = if (isIn(x, y)) pg(x, y) else null
 
     fun pg(x: Int, y: Int) = pgs[x * yr + y]
+
+    override fun iterator() = pgs.iterator()
 }
 
 class Grid<V:Any>:Sequence<Map.Entry<Pg, V>>{

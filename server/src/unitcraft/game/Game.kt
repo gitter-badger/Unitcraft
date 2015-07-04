@@ -5,13 +5,8 @@ import unitcraft.server.*
 import java.util.ArrayList
 import java.util.HashMap
 
-class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer) {
-
+class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer,val raiser:Raiser,val endTurn: EndTurn) {
     val pgs = pgser.pgs
-    var sideTurn = Side.a
-        private set
-    val bonus = HashMap<Side, Int>()
-
     val opterTest: Opter?
 
     init {
@@ -45,7 +40,7 @@ class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer) {
     }
 
     fun cmdRobot(): String? {
-        return if (sideTurn == Side.b) "e" else null
+        return if (endTurn.sideTurn() == Side.b) "e" else null
     }
 
     fun land(): String {
@@ -101,20 +96,17 @@ class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer) {
 
     private fun endTurn(side: Side, prm: Prm) {
         prm.ensureSize(0)
-        if (sideTurn != side) throw Violation("endTurn side($side) != sideTurn($sideTurn)")
-        after(EfkEndTurn)
-        sideTurn = sideTurn.vs
+        if (endTurn.sideTurn() != side) throw Violation("endTurn side($side) != sideTurn")
+        endTurn.endTurn()
     }
 
-    private fun snap(side: Side): Snap {
-        val spots = HashMap<Pg, List<Sloy>>()
-        for (pg in pgs) {
-            val sloys = spot(pg, side)
-            if (sloys.isNotEmpty()) spots[pg] = sloys
-        }
-        val snap = Snap(pgser.xr, pgser.yr, drawer.draw(side), spots, traces, side == sideTurn, Stage.turn, opterTest)
-        return snap
-    }
+    private fun snap(side: Side) = Snap(
+            pgser.xr,
+            pgser.yr,
+            drawer.draw(side),
+            raiser.spots(side),
+            traces, side == endTurn.sideTurn(), Stage.turn, opterTest
+    )
 
     private fun spot(pg: Pg, side: Side): List<Sloy> {
         return info(MsgSpot(this, pg, side)).sloys()
@@ -193,6 +185,19 @@ interface Voin {
     fun isAlly(side: Side) = this.side == side
 }
 
+class Spot {
+    val raises = ArrayList<Raise>()
+
+    fun add(r: Raise) {
+        raises.add(r)
+    }
+
+    fun sloys(): List<Sloy> {
+        // схлопнуть, если нет пересечений
+        return raises.flatMap { it.sloys() }
+    }
+}
+
 class MsgSpot(private val g: Game, val pgSpot: Pg, val side: Side, val pgSrc: Pg = pgSpot) : Msg() {
     val raises = ArrayList<Raise>()
 
@@ -242,7 +247,7 @@ class Raise(val pgRaise: Pg, val isOn: Boolean) : Msg() {
     }
 
     fun sloys(): List<Sloy> {
-        // заполнить пустоты сверху снизу
+        // TODO заполнить пустоты сверху снизу
         return listSloy
     }
 }
@@ -272,6 +277,15 @@ object EfkEndTurn : Efk()
 
 interface OnDraw {
     fun draw(ctx: MsgDraw)
-    fun editAdd(): List<Pair<Int, (Pg, Side) -> Unit>> = emptyList()
-    fun editRemove(pg: Pg) = false
+}
+
+interface OnEdit{
+    fun editAdd(pg:Pg, side:Side)
+    fun editRemove(pg: Pg)
+    fun editChange(pg:Pg, side:Side){}
+    fun editDestroy(pg:Pg){}
+}
+
+interface OnRaise{
+    fun raise(pg:Pg,pgSrc:Pg,side:Side)
 }

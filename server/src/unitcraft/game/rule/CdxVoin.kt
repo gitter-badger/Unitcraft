@@ -115,7 +115,7 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
 
     fun ruleTgglRaiseBySideTurn(g: Game,voins: Grid<VoinStd>){
         info<MsgTgglRaise>(0) {
-            if (voins[pgRaise] == voinRaise) isOn = voinRaise.side == g.sideTurn
+//            if (voins[pgRaise] == voinRaise) isOn = voinRaise.side == g.sideTurn
         }
     }
 
@@ -127,7 +127,7 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
             voins[pgSpot]?.let { voinSpot ->
                 if (!g.info(MsgIsHided(voinSpot)).isHided) {
                     val tggl = g.info(MsgTgglRaise(pgSpot, voinSpot))
-                    if (g.sideTurn != side) tggl.isOn = false
+//                    if (g.sideTurn != side) tggl.isOn = false
                     if (!tggl.isCanceled) {
                         val r = Raise(pgSpot, tggl.isOn)
                         for (pgNear in pgSpot.near) aim(pgNear, pgSpot, voinSpot, side, r)

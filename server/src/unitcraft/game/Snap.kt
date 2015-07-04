@@ -11,7 +11,7 @@ class Snap(
         val xr: Int,
         val yr: Int,
         val grid: List<DabOnGrid>,
-        val spots: HashMap<Pg, List<Sloy>>,
+        val spots: Map<Pg, List<Sloy>>,
         val traces: Traces,
         val canEndTurn: Boolean,
         val stage: Stage,

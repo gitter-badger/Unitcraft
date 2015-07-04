@@ -22,13 +22,13 @@ class CdxMine(r:Resource): Cdx(r){
         }
 
         endTurn(100){
-            for((pg,flat) in flats)
-                g.info(MsgVoin(pg)).voin?.let{
-                    flat.side = it.side!!
-                }
-            for((pg,flat) in flats) flat.side?.let{
-                if(it == g.sideTurn) g.make(EfkGold(1,it))
-            }
+//            for((pg,flat) in flats)
+//                g.info(MsgVoin(pg)).voin?.let{
+//                    flat.side = it.side!!
+//                }
+//            for((pg,flat) in flats) flat.side?.let{
+//                if(it == g.sideTurn) g.make(EfkGold(1,it))
+//            }
         }
     }
 }
