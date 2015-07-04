@@ -32,7 +32,7 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
             val v = voins[pg]
             if (v != null) {
                 when {
-                    v.isAlly(side) -> v.side = side.vs()
+                    v.isAlly(side) -> v.side = side.vs
                     v.isEnemy(side) -> v.side = null
                     v.side == null -> v.side = side
                 }
@@ -45,7 +45,7 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
         }
 
         make<EfkEditRemove>(-12) {
-            if (voins.remove(pgEdit)!=null) eat()
+            if (voins.remove(pgEdit)) eat()
         }
     }
 
@@ -94,7 +94,7 @@ class RulesVoin(fn:RulesVoin.()->Unit) : Rules(){
         make<EfkMove>(0) {
             voins[pgFrom]?.let {
                 if (it === voin) {
-                    voins[pgTo] = voins.remove(pgFrom)!!
+//                    voins[pgTo] = voins.remove(pgFrom)!!
                     val xd = pgFrom.x - pgTo.x
                     if (xd != 0) it.flip = xd > 0
                 }
@@ -197,7 +197,7 @@ class MsgIsHided(val voin: Voin) : Msg() {
     fun isVid(side: Side) = !isHided || side == voin.side
 }
 
-class EfkRemove(val pg: Pg, val obj: Obj) : Efk()
+class EfkRemove(val pg: Pg, val obj: Any) : Efk()
 
 class EfkHeal(val pg: Pg, val voin: Voin, val value: Int = 1) : Efk()
 

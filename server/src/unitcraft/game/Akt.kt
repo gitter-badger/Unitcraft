@@ -28,8 +28,11 @@ class Opter(val opts : List<Opt>) : JSONAware{
     override fun toJSONString() = opts.toJSONString()
 }
 
-// что рисовать и тип указывающий на выбор
+// что рисовать и что вызвать
 class Opt(val dabs:List<Dab>): JSONAware{
+
+    constructor(dab:Dab):this(listOf(dab))
+
     override fun toJSONString() = dabs.toJSONString()
 }
 

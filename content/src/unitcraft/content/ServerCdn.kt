@@ -38,7 +38,7 @@ class ServerCdn() : NanoHTTPD(8000) {
 
     init{
         if(listQdmnTile.any{it%2!=0}) throw Err("qdmnTile must be even")
-        res.createCdxs(Unitcraft.kCdxs)
+        Unitcraft(res)
         loadImgsTile()
         loadImgsPanel()
     }

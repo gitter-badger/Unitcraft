@@ -12,7 +12,7 @@ import unitcraft.server.*
 import unitcraft.land.Random
 import kotlin.reflect.jvm.java
 
-class Land(val mission: Int?,val cdxes:List<Cdx>){
+class Land(val mission: Int?){
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
     val sideFirst = if(r.nextBoolean()) Side.a else Side.b
@@ -27,16 +27,16 @@ class Land(val mission: Int?,val cdxes:List<Cdx>){
             for (yy in 0..yl) {
                 val pg = Pg(this@Land, xx, yy)
                 add(pg)
-                pg(Place.grass)
+                pg(TpPlace.grass)
             }
         }
     }
 
 
-    val fixs2 = HashMap<Pg, Map<Place, Int>>().init{
+    val fixs2 = HashMap<Pg, Map<TpPlace, Int>>().init{
         for(pg in pgs){
-            val map = HashMap<Place, Int>()
-            for(tp in Place.values()){
+            val map = HashMap<TpPlace, Int>()
+            for(tp in TpPlace.values()){
                 map[tp] = r.nextInt(CdxPlace.sizeFix[tp]!!)
             }
             this[pg] = map
@@ -53,7 +53,7 @@ class Land(val mission: Int?,val cdxes:List<Cdx>){
 
     fun pg(pg:unitcraft.game.Pg) = pg(pg.x,pg.y)
 
-    fun place(pg:unitcraft.game.Pg) = Place.valueOf(pg(pg.x,pg.y).place.name())
+    fun place(pg:unitcraft.game.Pg) = TpPlace.valueOf(pg(pg.x,pg.y).tpPlace.name())
     fun fixs(pg:unitcraft.game.Pg) = fixs2[pg(pg.x,pg.y)]
 
     fun isIn(x: Int, y: Int): Boolean {
@@ -79,7 +79,7 @@ class Land(val mission: Int?,val cdxes:List<Cdx>){
 }
 
 class Pg(val land:Land,val x:Int,val y:Int){
-    var place: Place = Place.grass
+    var tpPlace: TpPlace = TpPlace.grass
 //    var flat: TpFlat? = null
 //    var skil: TpSkil? = null
 
@@ -92,8 +92,8 @@ class Pg(val land:Land,val x:Int,val y:Int){
         }
     }
 
-    fun invoke(place:Place){
-        this.place = place
+    fun invoke(tpPlace: TpPlace){
+        this.tpPlace = tpPlace
     }
 
 //    fun invoke(flat:TpFlat){

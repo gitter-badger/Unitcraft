@@ -1,6 +1,6 @@
 package unitcraft.land
 
-import unitcraft.game.Place.*
+import unitcraft.game.TpPlace.*
 import java.util.HashMap
 import java.util.ArrayList
 import unitcraft.server.init
@@ -17,9 +17,9 @@ object Algs {
     }
 
     fun blur(land: Land) {
-        val bad = land.pgs.filterTo(ArrayList<Pg>()){pg -> pg.neardiag.any{pg.place==it.place} && pg.near.all{pg.place!=it.place}}
-        bad.addAll(land.pgs.filter{pg -> pg.near8.filter{pg.place==it.place}.size()<2})
-          bad.forEach{it(land.selRnd(it.near).place)}
+        val bad = land.pgs.filterTo(ArrayList<Pg>()){pg -> pg.neardiag.any{pg.tpPlace ==it.tpPlace } && pg.near.all{pg.tpPlace !=it.tpPlace }}
+        bad.addAll(land.pgs.filter{pg -> pg.near8.filter{pg.tpPlace ==it.tpPlace }.size()<2})
+          bad.forEach{it(land.selRnd(it.near).tpPlace)}
 //        bad.forEach{it(PlaceMount)}
 
     }
@@ -37,7 +37,7 @@ object Algs {
         while(!isEdge(river[river.size()-1])) {
             val last = river[river.size()-1]
             val nexts = last.near.filter{it !in river && it.near.filter{it in river}.size()==1 && it.neardiag.filter{it in river}.size()<=1 && (river.size()>6 || !isEdge(it))}
-            if (nexts.isEmpty() || nexts.last().place==water){break}
+            if (nexts.isEmpty() || nexts.last().tpPlace ==water){break}
             river.add(selRnd(nexts))
             repeat(3){wide.add(selRnd(selRnd(river).near))}
             //            wide.add(selRnd(selRnd(river).near))
@@ -58,7 +58,7 @@ object Algs {
         while(!isEdge(list[list.size()-1])) {
             val last = list[list.size()-1]
             val nexts = last.near.filter{it !in list && it.near.filter{it in list}.size()==1 && it.neardiag.filter{it in list}.size()<=1 && (list.size()>6 || !isEdge(it))}
-            if (nexts.isEmpty() || nexts.last().place==water){break}
+            if (nexts.isEmpty() || nexts.last().tpPlace ==water){break}
             list.add(selRnd(nexts))
         }
         for (pg in list) pg(water)
@@ -75,7 +75,7 @@ object Algs {
         while(!isEdge(list[list.size()-1])) {
             val last = list[list.size()-1]
             val nexts = last.near.filter{it !in list && it.near.filter{it in list}.size()==1 && it.neardiag.filter{it in list}.size()<=1 && (list.size()>6 || !isEdge(it))}
-            if (nexts.isEmpty() || nexts.last().near.any{it.place==water}){break}
+            if (nexts.isEmpty() || nexts.last().near.any{it.tpPlace ==water}){break}
             list.add(selRnd(nexts))
         }
         for (pg in list) pg(grass)
@@ -83,7 +83,7 @@ object Algs {
 
     val field = Alg(4) {
         val place = selRnd(listOf(grass,water,forest,sand,hill))
-        pgs.filter{it.place==grass}.forEach{it(place)}
+        pgs.filter{it.tpPlace ==grass}.forEach{it(place)}
     }
 
     val spotMount = Alg(1) {
@@ -117,7 +117,7 @@ object Algs {
     }
 
     val romb = Alg(4) {
-        val start = pgRnd{it.place!=water}
+        val start = pgRnd{it.tpPlace !=water}
         val place = selRnd(listOf(grass, forest,sand,hill))
         val area = 2+r.nextInt(3)
         val spot = ArrayList<Pg>().init{
@@ -137,14 +137,14 @@ object Algs {
 
 
     val waterFobSpot = Alg(10) {
-        val start = pgRnd{it.place!=water}
+        val start = pgRnd{it.tpPlace !=water}
         val place = selRnd(listOf(grass,forest,sand,hill))
         val area = 4+r.nextInt(25)
         ArrayList<Pg>().init{
             add(start)
             add(selRnd(start.near))
             for(i in 0..area-1){
-                val nexts = this.last().near8.filter{ it !in this && it.place!=water && it.near8.filter{it in this}.size()>1}
+                val nexts = this.last().near8.filter{ it !in this && it.tpPlace !=water && it.near8.filter{it in this}.size()>1}
                 if (nexts.isEmpty()){break}
                 add(selRnd(nexts))
             }
@@ -160,7 +160,7 @@ object Algs {
             add(start)
             add(selRnd(start.near))
             for(i in 0..area-1){
-                val nexts = this.last().near8.filter{ it !in this && it.place!=water && it.near8.filter{it in this}.size()>1}
+                val nexts = this.last().near8.filter{ it !in this && it.tpPlace !=water && it.near8.filter{it in this}.size()>1}
                 if (nexts.isEmpty()){break}
                 add(selRnd(nexts))
             }

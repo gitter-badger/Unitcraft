@@ -155,6 +155,13 @@ interface IGame {
 class GameState(val sideWin:Side?,val json:Map<Side,JSONObject>, val sideClockOn:Side?)
 
 enum class Side {
-    a, b;
-    fun vs() = if(this==a) b else a
+    a, b, n;
+
+    val vs = when (this) {
+        a -> b
+        b -> a
+        n -> n
+    }
+
+    val isN = this==n
 }

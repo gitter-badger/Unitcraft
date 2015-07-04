@@ -25,7 +25,7 @@ class CdxVoid(r: Resource) : CdxVoin(r) {
         val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
 
         make<EfkUnhide>(0) {
-            voins[pg]?.let{hide.remove(it)}
+            //voins[pg]?.let{hide.remove(it)}
         }
 
         info<MsgIsHided>(0){

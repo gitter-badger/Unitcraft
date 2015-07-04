@@ -25,20 +25,20 @@ class CdxFlag(r:Resource): Cdx(r){
         }
 
         make<EfkEditRemove>(5){
-            if(flats.remove(pgEdit)!=null) eat()
+            if(flats.remove(pgEdit)) eat()
         }
 
         endTurn(100){
             for((pg,flat) in flats)
                 g.info(MsgVoin(pg)).voin?.let{
-                    flat.side = it.side
+                    flat.side = it.side!!
                 }
         }
     }
 }
 
 class FlatControl: Flat(){
-    var side:Side? = null
+    var side=Side.n
 }
 
 

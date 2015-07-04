@@ -17,14 +17,14 @@ class CdxMine(r:Resource): Cdx(r){
 
         info<MsgDraw>(10) {
             for ((pg, flat) in flats) {
-                drawTile(pg, tls(sideVid,flat.side))
+//                drawTile(pg, tls(sideVid,flat.side))
             }
         }
 
         endTurn(100){
             for((pg,flat) in flats)
                 g.info(MsgVoin(pg)).voin?.let{
-                    flat.side = it.side
+                    flat.side = it.side!!
                 }
             for((pg,flat) in flats) flat.side?.let{
                 if(it == g.sideTurn) g.make(EfkGold(1,it))

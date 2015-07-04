@@ -25,8 +25,8 @@ class CdxRedeployer(r: Resource) : CdxVoin(r) {
         }
 
         make<EfkSell>(0) {
-            g.make(EfkRemove(pg, voinAim))
-            g.make(EfkGold(5, voinAim.side!!))
+//            g.make(EfkRemove(pg, voinAim))
+//            g.make(EfkGold(5, voinAim.side!!))
         }
 
         make<EfkGold>(0){

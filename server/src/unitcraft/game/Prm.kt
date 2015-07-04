@@ -39,6 +39,6 @@ class Prm(private val pgser: Pgser, private val s: String) {
     }
 }
 
-enum class Place{
+enum class TpPlace {
     grass, mount, forest, sand, hill, water
 }

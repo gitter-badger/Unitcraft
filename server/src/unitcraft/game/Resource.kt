@@ -43,7 +43,7 @@ class Resource {
     fun tlsFlatControl(name:String) = TlsFlatControl(tile(name),tile(name+".ally"),tile(name+".enemy"))
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
     fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
-    fun tlsList(qnt: Int, name: String,effect: Effect =effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
+    fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
     fun tile(tile: String, effect: Effect = effectStandard):Int {
@@ -129,8 +129,8 @@ class Resource {
 }
 
 class TlsFlatControl(val neut:Int,val ally:Int,val enemy:Int){
-    fun invoke(side:Side,sideFlat: Side?) =
-            if(sideFlat==null) neut else if(sideFlat==side) ally else enemy
+    fun invoke(side:Side,sideFlat: Side) =
+            if(sideFlat.isN) neut else if(sideFlat==side) ally else enemy
 }
 
 class TlsVoin(val ally:Int,val enemy:Int,val neut:Int){

@@ -6,7 +6,8 @@ import unitcraft.server.Side
 import unitcraft.server.init
 import unitcraft.game.Game
 
-/** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
+
+
 class CdxCatapult(r:Resource): Cdx(r){
     val name = "catapult"
     val tile:Int = r.tile(name)
@@ -42,6 +43,6 @@ class CdxCatapult(r:Resource): Cdx(r){
     }
 }
 
-abstract class Flat : Obj
+abstract class Flat
 
 object Catapult : Flat()

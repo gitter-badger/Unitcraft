@@ -3,7 +3,38 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.land.Land
 import unitcraft.server.Side
-import java.util.ArrayList
+import java.util.*
+
+class Herd(val tp: Breed){
+    val grid = Grid<VoinSimple>()
+}
+
+class VoinSimple(val life:Life,var side:Side,var flip: Boolean){
+    var isHided:Boolean = false
+}
+
+open class Breed(r:Resource,val name:String){
+    val tlsVoin = r.tlsVoin(name)
+//    val tlsMove = r.tlsAktMove
+//    val tileHide = r.tileHide
+//    val hintTileFlip = r.hintTileFlip
+//    val hintTextLife = r.hintTextLife
+}
+
+class Life(valueInit:Int){
+    var value:Int = valueInit
+        private set
+
+    fun alter(d:Int){
+        value += d
+    }
+
+    override fun toString() = "Life($value)"
+}
+
+class BreedElectric(r:Resource) : Breed(r,"electric")
+class BreedEnforcer(r:Resource) : Breed(r,"enforcer")
+
 /*
 class ExtVoin(r: Resource, name: String):Cdx(r) {
     val tlsVoin = r.tlsVoin(name)

@@ -81,6 +81,10 @@ class MsgDraw(val sideVid: Side):Msg() {
     fun drawText(pg: Pg, text: String, hint: Int? = null) {
         dabOnGrids.add(DabOnGrid(pg, DabText(text, hint)))
     }
+
+    fun drawText(pg: Pg, value: Int, hint: Int? = null) {
+        drawText(pg,value.toString(),hint)
+    }
 }
 
 abstract class Msg{
