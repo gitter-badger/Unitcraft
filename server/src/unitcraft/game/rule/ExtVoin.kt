@@ -5,15 +5,11 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.*
 
-class Herd(val tp: Breed){
-    val grid = Grid<VoinSimple>()
-}
-
 class VoinSimple(val life:Life,var side:Side,var flip: Boolean){
     var isHided:Boolean = false
 }
 
-open class Breed(r:Resource,val name:String){
+open class Breed(r:Resource,val name:String,val grid:()->Grid<VoinSimple>){
     val tlsVoin = r.tlsVoin(name)
 //    val tlsMove = r.tlsAktMove
 //    val tileHide = r.tileHide
@@ -32,8 +28,8 @@ class Life(valueInit:Int){
     override fun toString() = "Life($value)"
 }
 
-class BreedElectric(r:Resource) : Breed(r,"electric")
-class BreedEnforcer(r:Resource) : Breed(r,"enforcer")
+class BreedElectric(r:Resource,grid:()->Grid<VoinSimple>) : Breed(r,"electric",grid)
+class BreedEnforcer(r:Resource,grid:()->Grid<VoinSimple>) : Breed(r,"enforcer",grid)
 
 /*
 class ExtVoin(r: Resource, name: String):Cdx(r) {

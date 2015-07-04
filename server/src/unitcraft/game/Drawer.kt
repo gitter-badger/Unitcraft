@@ -1,9 +1,6 @@
 package unitcraft.game
 
-import unitcraft.game.rule.Herd
-import unitcraft.game.rule.Life
-import unitcraft.game.rule.Place
-import unitcraft.game.rule.VoinSimple
+import unitcraft.game.rule.*
 import unitcraft.server.Side
 import unitcraft.server.idxOfFirst
 import unitcraft.server.init
@@ -11,40 +8,40 @@ import java.util.ArrayList
 
 class Drawer(
         val r: ResDrawer,
-        val pgser: Pgser,
+        val pgser: () -> Pgser,
         val place: Place,
-        val herds: List<Herd>,
-        val piles: List<Pile>,
-        val pilePointControls: List<PilePointControl>,
+        val breeds: List<Breed>,
+        val tpPiles: List<TpPile>,
+        val tpPointControls: List<TpPointControl>,
         val stazis: Stazis
 ) {
     fun draw(side:Side): List<DabOnGrid> {
         val ctx = MsgDraw(Side.a)
-        for (pg in pgser.pgs) {
-            val tp = place.places[pg]
-            ctx.drawTile(pg, r.tilesPlace[tp]!![place.fixs[pg]!![tp]!!])
+        for (pg in pgser().pgs) {
+            val tp = place.grid()[pg]
+            ctx.drawTile(pg, r.tilesPlace[tp]!![place.fixs()[pg][tp]!!])
         }
-        for (herd in herds) for ((pg, v) in herd.grid) {
-            ctx.drawTile(pg, herd.tp.tlsVoin(ctx.sideVid, v.side), if (v.flip) r.hintTileFlip else null)
+        for (breed in breeds) for ((pg, v) in breed.grid()) {
+            ctx.drawTile(pg, breed.tlsVoin(ctx.sideVid, v.side), if (v.flip) r.hintTileFlip else null)
             ctx.drawText(pg, v.life.value, r.hintTextLife)
             if (v.isHided) ctx.drawTile(pg, r.tileHide)
         }
-        for (pile in pilePointControls) for ((pg, p) in pile.grid) ctx.drawTile(pg, pile.tp.tls(side,p.side))
-        for (pile in piles) for ((pg, _) in pile.grid) ctx.drawTile(pg, pile.tp.tile)
-        for ((pg, num) in stazis.grid) ctx.drawTile(pg, r.tilesStazis[num - 1])
+        for (tp in tpPointControls) for ((pg, p) in tp.grid()) ctx.drawTile(pg,tp.tls(side,p.side))
+        for (pile in tpPiles) for ((pg, _) in pile.grid()) ctx.drawTile(pg, pile.tile)
+        for ((pg, num) in stazis.grid()) ctx.drawTile(pg, r.tilesStazis[num - 1])
         return ctx.dabOnGrids
     }
 
     fun opterTest() = Opter((TpPlace.values().map {
         r.tilesPlace[it]!!.first() } +
-            herds.map { it.tp.tlsVoin.neut } +
-            pilePointControls.map { it.tp.tls.neut } +
-            piles.map { it.tp.tile } +
+            breeds.map { it.tlsVoin.neut } +
+            tpPointControls.map { it.tls.neut } +
+            tpPiles.map { it.tile } +
             r.tilesStazis.last()).map { Opt(DabTile(it))
     })
 
     private val ranges = ArrayList<Range<Int>>().init {
-        val lst = listOf(TpPlace.values().size(), herds.size(), piles.size(), 1)
+        val lst = listOf(TpPlace.values().size(), breeds.size(), tpPointControls.size(),tpPiles.size(), 1)
         var sum = 0
         for (chance in lst) {
             add((sum..sum + chance - 1))
@@ -58,23 +55,23 @@ class Drawer(
     fun editAdd(pg: Pg, side: Side, num: Int) {
         val idx = idxRel(num)
         when (select(num)) {
-            0 -> place.places[pg] = TpPlace.values()[num]
-            1 -> herds[idx].grid[pg] = VoinSimple(Life(5), side, pg.x > pg.pgser.xr / 2)
-            2 -> pilePointControls[idx].grid[pg] = PointControl()
-            3 -> piles[idx].grid[pg] = Pile.obj
+            0 -> place.grid()[pg] = TpPlace.values()[num]
+            1 -> breeds[idx].grid()[pg] = VoinSimple(Life(5), side, pg.x > pg.pgser.xr / 2)
+            2 -> tpPointControls[idx].grid()[pg] = PointControl()
+            3 -> tpPiles[idx].grid()[pg] = TpPile.obj
             4 -> stazis.plant(pg)
         }
     }
 
     fun editRemove(pg: Pg) {
-        if (stazis.grid.remove(pg)) return
-        for (herd in herds) if (herd.grid.remove(pg)) return
-        for (pilePC in pilePointControls) if (pilePC.grid.remove(pg)) return
-        for (pile in piles) if (pile.grid.remove(pg)) return
+        if (stazis.grid().remove(pg)) return
+        for (herd in breeds) if (herd.grid().remove(pg)) return
+        for (pilePC in tpPointControls) if (pilePC.grid().remove(pg)) return
+        for (pile in tpPiles) if (pile.grid().remove(pg)) return
     }
 
     fun editChange(pg: Pg, side: Side) {
-        for (herd in herds) herd.grid[pg]?.let { v ->
+        for (herd in breeds) herd.grid()[pg]?.let { v ->
             when {
                 v.side == Side.n -> v.side = side
                 v.side == side -> v.side = side.vs

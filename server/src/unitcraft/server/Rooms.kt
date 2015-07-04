@@ -192,5 +192,5 @@ data class Invite(val id: Id, val idVs: Id, val bet: Int) {init {
 data class Match(val id: Id, val playVs: Play, val bet: Int, var accepted: Boolean = false)
 
 interface CreatorGame {
-    fun createGame(mission:Int?=null):()->IGame
+    fun createGame(mission:Int?=null):CmderGame
 }

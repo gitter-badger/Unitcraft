@@ -8,8 +8,7 @@ import java.time.Instant
 
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
 // нужен контроль времени
-class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: Int = 0, private val startGame: ()->IGame ) {
-    var game: IGame
+class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: Int = 0, private val cmder: CmderGame) {
     val sides = if (idB != null) mapOf(idA to Side.a, idB to Side.b) else mapOf(idA to Side.a)
     val ids = if (idB != null) mapOf(Side.a to idA, Side.b to idB) else mapOf(Side.a to idA)
     val cmds = ArrayList<Pair<Side, String>>()
@@ -17,8 +16,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
     private var state:GameState
 
     init {
-        game = startGame()
-        state = game.state()
+        state = cmder.state()
         sendGame(false)
     }
 
@@ -36,12 +34,11 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
         if (isVsRobot && state.sideWin == null) {
             while (true) {
                 val cmdRobot = try{
-                    game.cmdRobot()
+                    cmder.cmdRobot()
                 }catch(e:Throwable){
                     log.error(e)
                     "e"
-                }
-                if (cmdRobot == null) break
+                } ?: break
                 aktAndSend(Side.b, cmdRobot)
                 if (state.sideWin != null) break
             }
@@ -58,29 +55,29 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
     }
 
     fun land(id: Id) {
-        game.land()
+        cmder.land()
     }
 
     private fun aktAndSend(side: Side, akt: String) {
         try {
-            game.cmd(side, akt)
-            state = game.state()
+            cmder.cmd(side, akt)
+            state = cmder.state()
             cmds.add(Pair(side, akt))
             sendGame(false)
         } catch (ex: Violation) {
             throw ex
         } catch(ex: Throwable) {
             log.error(ex)
-            recreateGame()
+            resetGame()
             sendGame(true)
         }
 
     }
 
-    private fun recreateGame() {
-        game = startGame()
+    private fun resetGame() {
+        cmder.reset()
         for ((side, akt) in cmds) {
-            game.cmd(side, akt)
+            cmder.cmd(side, akt)
         }
     }
 
@@ -133,7 +130,10 @@ class Clock(private var left: Duration) {
     }
 }
 
-interface IGame {
+interface CmderGame {
+    // сбрасывает состояние игры до исходного
+    fun reset()
+
     // возвращает сторону победителя
     // если null, значит игра еще не окончена
     fun cmd(side: Side, cmd: String)
@@ -157,11 +157,13 @@ class GameState(val sideWin:Side?,val json:Map<Side,JSONObject>, val sideClockOn
 enum class Side {
     a, b, n;
 
-    val vs = when (this) {
+    val vs:Side
+       get() = when (this) {
         a -> b
         b -> a
         n -> n
     }
 
-    val isN = this==n
+    val isN:Boolean
+        get() = this==n
 }

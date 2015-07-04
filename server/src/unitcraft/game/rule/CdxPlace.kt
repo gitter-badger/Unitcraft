@@ -8,18 +8,7 @@ import unitcraft.server.init
 import unitcraft.game.Game
 import java.util.*
 
-class Place(land:Land){
-    val pgser = land.pgser
-    val places = Grid<TpPlace>()
-    val fixs = Grid<Map<TpPlace, Int>>()
-
-    init{
-        for (pg in pgser.pgs) {
-            places[pg] = land.place(pg)
-            fixs[pg] = land.fixs(pg)
-        }
-    }
-}
+class Place(val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>)
 
 class CdxPlace(r:Resource) : Cdx(r){
     val tiles = values().map{it to r.tlsList(sizeFix[it]!!, it.name(),Resource.effectPlace)}.toMap()

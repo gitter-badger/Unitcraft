@@ -15,7 +15,7 @@ class TestRooms {
     Before fun before(){
         log = LogTest()
         send = SenderTest()
-        rooms = Rooms(log, send,CreatorGameTest())
+        rooms = Rooms(log, send,CreatorGameStub())
         id = Id("0000")
         idVs = Id("0001")
     }

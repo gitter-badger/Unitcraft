@@ -8,26 +8,27 @@ import org.json.simple.parser.JSONParser
 import kotlin.test.assertEquals
 import java.util.ArrayList
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 
 class TestRoom {
     val parser = JSONParser()
     var log = LogTest()
     var send = SenderTest()
-    var game: GameMock by Delegates.notNull()
+    var game: CmderStub by Delegates.notNull()
     var room: Room by Delegates.notNull()
     val id = Id("0000")
     val idVs = Id("0001")
-    val cg = CreatorGameTest()
+    val cmder = CmderStub()
 
     Before fun before() {
-        game = GameMock()
-        room = Room(log, send,id,idVs,5, cg.createGame())
+        game = CmderStub()
+        room = Room(log, send,id,idVs,5, cmder)
     }
 
     // комната отсылает состояние игры
     Test fun sendState() {
-        cg.assertCreated()
+        cmder.assertCreated()
         assertEquals(send.idPrev,id)
         assertEquals(send.idLast,idVs)
         checkState(0L)
@@ -48,34 +49,34 @@ class TestRoom {
 
     // комната добавляет команды от AI
     Test fun cmdRobot() {
-        val cgRobot = CreatorGameTest()
-        val roomRobot = Room(log, send,id,null,0, cgRobot.createGame())
+        val cmderRobot = CmderStub()
+        val roomRobot = Room(log, send,id,null,0, cmderRobot)
         roomRobot.cmd(id,Prm("0#cmd0"))
         roomRobot.cmd(id,Prm("1#cmd1"))
         roomRobot.cmd(id,Prm("2#robot"))
 
-        assertEquals("robotAnswer",cgRobot.game.cmds[3])
+        assertEquals("robotAnswer",cmderRobot.cmds[3])
     }
 
     // после ошибки из-за AI комната заканчивает ход AI
     Test fun errCmdRobot() {
-        val cgRobot = CreatorGameTest()
-        val roomRobot = Room(log, send,id,null,0, cgRobot.createGame())
+        val cmderRobot = CmderStub()
+        val roomRobot = Room(log, send,id,null,0, cmderRobot)
         roomRobot.cmd(id,Prm("0#cmd0"))
         roomRobot.cmd(id,Prm("1#cmd1"))
         roomRobot.cmd(id,Prm("2#errRobot"))
 
-        cg.assertCreated()
-        assertEquals(4,cgRobot.game.cmds.size())
-        assertEquals(Side.b,cgRobot.game.sides[3])
-        assertEquals("e",cgRobot.game.cmds[3])
+        cmderRobot.assertCreated()
+        assertEquals(4,cmderRobot.cmds.size())
+        assertEquals(Side.b,cmderRobot.sides[3])
+        assertEquals("e",cmderRobot.cmds[3])
     }
 
     // после ошибки при исполнении команды комната создает игру заново и повторяет команды
     Test fun errCmd() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
-        cg.assertCreated()
+        cmder.assertCreated()
 
         room.cmd(id,Prm("2#errCmd"))
         assertRecreation()
@@ -93,33 +94,33 @@ class TestRoom {
     Test fun errCmdJson() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
-        cg.assertCreated()
+        cmder.assertCreated()
 
         room.cmd(id,Prm("2#errState"))
         assertRecreation()
     }
 
     fun assertRecreation(){
-        cg.assertRecreated()
+        cmder.assertRecreated()
         assertEquals(log.last,"error")
-        assertEquals(2,cg.game.cmds.size())
-        assertEquals("cmd0",cg.game.cmds[0])
-        assertEquals("cmd1",cg.game.cmds[1])
+        assertEquals(2,cmder.cmds.size())
+        assertEquals("cmd0",cmder.cmds[0])
+        assertEquals("cmd1",cmder.cmds[1])
     }
 
     Test fun outSync() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
 
-        cg.assertCreated()
+        cmder.assertCreated()
         room.cmd(id,Prm("0#cmd"))
 
         assertEquals(log.last,"outSync")
         checkState(2L)
-        cg.assertCreated()
-        assertEquals(cg.game.cmds.size(),2)
-        assertEquals(cg.game.cmds[0],"cmd0")
-        assertEquals(cg.game.cmds[1],"cmd1")
+        cmder.assertCreated()
+        assertEquals(cmder.cmds.size(),2)
+        assertEquals(cmder.cmds[0],"cmd0")
+        assertEquals(cmder.cmds[1],"cmd1")
     }
 
     Test fun idWin() {
@@ -127,9 +128,14 @@ class TestRoom {
     }
 }
 
-class GameMock:IGame{
+class CmderStub : CmderGame {
+    var timesCreated = 0
     val sides = ArrayList<Side>()
     val cmds = ArrayList<String>()
+
+    override fun reset() {
+        throw UnsupportedOperationException()
+    }
 
     override fun cmd(side: Side, cmd: String) {
         sides.add(side)
@@ -150,5 +156,13 @@ class GameMock:IGame{
     override fun state(): GameState {
         if(cmds.lastOrNull()=="errState") throw Err("errState")
         return GameState(if(cmds.lastOrNull()=="win") Side.a else null,mapOf(Side.a to JSONObject(),Side.b to JSONObject()),null)
+    }
+
+    fun assertRecreated(){
+        assertTrue(timesCreated > 1, "игра пересоздана")
+    }
+
+    fun assertCreated(){
+        assertTrue(timesCreated == 1, "игра создана")
     }
 }

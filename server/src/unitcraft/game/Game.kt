@@ -5,7 +5,7 @@ import unitcraft.server.*
 import java.util.ArrayList
 import java.util.HashMap
 
-class Game(val pgser: Pgser, canEdit: Boolean = false, stazis: Stazis, place: Place,val herds: List<Herd>,val drawer:Drawer) : IGame {
+class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer) {
 
     val pgs = pgser.pgs
     var sideTurn = Side.a
@@ -24,7 +24,7 @@ class Game(val pgser: Pgser, canEdit: Boolean = false, stazis: Stazis, place: Pl
 
     val traces = Traces()
 
-    override fun cmd(side: Side, cmd: String) {
+    fun cmd(side: Side, cmd: String) {
         if(side.isN) throw throw Err("side is neutral")
         if (cmd.isEmpty()) throw Violation("cmd is empty")
         val prm = Prm(pgser, cmd[1, cmd.length()].toString())
@@ -40,15 +40,15 @@ class Game(val pgser: Pgser, canEdit: Boolean = false, stazis: Stazis, place: Pl
         }
     }
 
-    override fun state(): GameState {
+    fun state(): GameState {
         return GameState(null, Side.values().map { it to snap(it).toJson() }.toMap(), null)
     }
 
-    override fun cmdRobot(): String? {
+    fun cmdRobot(): String? {
         return if (sideTurn == Side.b) "e" else null
     }
 
-    override fun land(): String {
+    fun land(): String {
         throw UnsupportedOperationException()
     }
 

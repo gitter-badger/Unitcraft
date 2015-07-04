@@ -68,25 +68,8 @@ class SenderTest():Sender{
     }
 }
 
-class CreatorGameTest():CreatorGame{
-    var timesCreated = 0
-    var game = GameMock()
-
-    override fun createGame(mission: Int?): () -> IGame {
-        return {newGame()}
-    }
-
-    fun newGame():IGame{
-        timesCreated+=1
-        game = GameMock()
-        return game
-    }
-
-    fun assertRecreated(){
-        assertTrue(timesCreated>1,"игра пересоздана")
-    }
-
-    fun assertCreated(){
-        assertTrue(timesCreated==1,"игра создана")
+class CreatorGameStub : CreatorGame{
+    override fun createGame(mission: Int?): CmderGame {
+        return CmderStub()
     }
 }

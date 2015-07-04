@@ -74,7 +74,17 @@ class Land(val mission: Int?){
 
     fun isCorner(pg:Pg) = pg.x==0 && pg.y==0 || pg.x==xl && pg.y==0 || pg.x==xl && pg.y==yl || pg.x==0 && pg.y==yl
 
+    fun grid():Grid<TpPlace> {
+        val grid = Grid<TpPlace>()
+        for (pg in pgser.pgs) grid[pg] = place(pg)
+        return grid
+    }
 
+    fun fixs():Grid<Map<TpPlace, Int>>{
+        val fixs = Grid<Map<TpPlace, Int>>()
+        for (pg in pgser.pgs) fixs[pg] = fixs(pg)
+        return fixs
+    }
 
 }
 
