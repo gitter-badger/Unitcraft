@@ -8,8 +8,9 @@ import unitcraft.server.init
 import unitcraft.game.Game
 import java.util.*
 
-class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>):OnDraw{
+class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>):OnDraw,OnEdit{
     override val prior = OnDraw.Prior.place
+    override val tilesEditAdd = TpPlace.values().map{tiles[it]!!.first()}
 
     override fun draw(side: Side, ctx: CtxDraw) {
         for (pg in pgser()) {
@@ -17,14 +18,9 @@ class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -
             ctx.drawTile(pg, tiles[tp]!![fixs()[pg][tp]!!])
         }
     }
-}
 
-class PlaceEdit(val tp:TpPlace,override val tileEditAdd:Int,val grid:() -> Grid<TpPlace>):OnEdit{
-
-    override val prior = OnDraw.Prior.place
-
-    override fun editAdd(pg: Pg, side: Side) {
-        grid()[pg] = tp
+    override fun editAdd(pg: Pg, side: Side,num:Int) {
+        grid()[pg] = TpPlace.values()[num]
     }
 
     override fun editRemove(pg: Pg) = false

@@ -1,8 +1,9 @@
 package unitcraft.game
 
-class Aimer(val exts:List<OnStopAim>):Aim{
+class Aimer(val exts:List<Ext>):Aim{
+    val stopAim = exts.filterIsInstance<OnStopAim>()
     override fun canMove(pgFrom: Pg, pgTo: Pg):Boolean {
-        return exts.all{!it.stopMove(pgFrom, pgTo)}
+        return stopAim.all{!it.stopMove(pgFrom, pgTo)}
     }
 
     override fun canMoveForce(pgFrom: Pg, pgTo: Pg): Boolean {
@@ -10,7 +11,7 @@ class Aimer(val exts:List<OnStopAim>):Aim{
     }
 
     override fun canSell(pgFrom: Pg, pgTo: Pg): Boolean {
-        return exts.all{!it.stopSkil(pgFrom, pgTo)}
+        return stopAim.all{!it.stopSkil(pgFrom, pgTo)}
     }
 
     override fun canEnforce(pgFrom:Pg,pgTo:Pg): Boolean {

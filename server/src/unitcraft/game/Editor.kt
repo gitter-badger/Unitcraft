@@ -10,10 +10,21 @@ class Editor(exts:List<Ext>){
     val edits = exts.filterIsInstance<OnEdit>().sortBy{ it.prior }
     val editsReverse = exts.filterIsInstance<OnEdit>().sortDescendingBy{ it.prior }
 
-    val opterTest = Opter(edits.map { it.tileEditAdd }.map { Opt(DabTile(it))})
+    val opterTest = Opter(edits.flatMap { it.tilesEditAdd }.map { Opt(DabTile(it))})
+
+    private val ranges = ArrayList<Range<Int>>().init {
+        var sum = 0
+        for (chance in edits.map { it.tilesEditAdd.size() }) {
+            add((sum..sum + chance - 1))
+            sum += chance
+        }
+    }
+
+    private fun select(num: Int) = ranges.idxOfFirst { num in it }!!
+    private fun idxRel(num: Int) = num - ranges[select(num)].start
 
     fun editAdd(pg: Pg, side: Side, num: Int) {
-        edits[num].editAdd(pg,side)
+        edits[select(num)].editAdd(pg,side,idxRel(num))
     }
 
     fun editRemove(pg: Pg) {
@@ -31,8 +42,8 @@ class Editor(exts:List<Ext>){
 
 interface OnEdit:Ext{
     val prior: OnDraw.Prior
-    val tileEditAdd:Int
-    fun editAdd(pg:Pg, side:Side)
+    val tilesEditAdd:List<Int>
+    fun editAdd(pg:Pg, side:Side, num: Int)
     fun editRemove(pg: Pg):Boolean
     fun editChange(pg:Pg, side:Side){}
     fun editDestroy(pg:Pg){}

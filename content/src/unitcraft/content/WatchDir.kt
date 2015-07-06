@@ -11,6 +11,7 @@ import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import java.nio.file.WatchService
 import java.util.*
+import kotlin.concurrent.thread
 import kotlin.platform.platformStatic
 
 class WatchDir(dirs:List<File>,val onModify:(File) -> Unit) {
@@ -21,7 +22,7 @@ class WatchDir(dirs:List<File>,val onModify:(File) -> Unit) {
             val key = dir.register(watcher, ENTRY_MODIFY)
             dirByKey[key] = dir
         }
-        Thread{
+        thread{
             while (true) {
                 val key = watcher.take()
                 for (event in key.pollEvents()) {
@@ -30,6 +31,6 @@ class WatchDir(dirs:List<File>,val onModify:(File) -> Unit) {
                 }
                 key.reset()
             }
-        }.start()
+        }
     }
 }

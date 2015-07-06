@@ -6,8 +6,8 @@ import unitcraft.server.Side
 import java.util.Collections
 import java.util.WeakHashMap
 
-class Void(r:Resource,resDrawSimple:ResDrawSimple,grid:()->Grid<VoinSimple>):
-        HelpVoin(r,resDrawSimple,"void",grid){
+class Inviser(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd{
+    override val tlsVoin = r.tlsVoin("inviser")
 //    val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
 
 //    make<EfkUnhide>(0) {

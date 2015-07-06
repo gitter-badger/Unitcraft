@@ -12,7 +12,7 @@ class Drawer(
 ) {
     val draws = exts.filterIsInstance<OnDraw>().sortBy{it.prior}
     fun draw(side:Side): List<DabOnGrid> {
-        val ctx = CtxDraw(Side.a)
+        val ctx = CtxDraw(side)
         draws.forEach { it.draw(side,ctx) }
         return ctx.dabOnGrids
     }

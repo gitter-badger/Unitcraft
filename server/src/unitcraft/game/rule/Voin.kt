@@ -2,45 +2,47 @@ package unitcraft.game.rule
 
 import sideAfterChange
 import unitcraft.game.*
-import unitcraft.land.Land
-import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.*
 
-class VoinSimple(val life:Life,var side:Side,var flip: Boolean){
-    var isHided:Boolean = false
+class VoinSimple(val life: Life, var side: Side, var flip: Boolean) {
+    var isHided: Boolean = false
     var energy = 3
 }
 
-open class HelpVoin(rr:Resource,val r:ResDrawSimple,name:String,val grid:()->Grid<VoinSimple>):OnDraw,OnEdit,OnStopAim{
+class DrawerVoin(r: Resource, exts: List<Ext>) : OnDraw, OnEdit {
+    val hintTileFlip = r.hintTileFlip
+    val hintTextLife = r.hintTextLife
+    val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
+    val tileHide = r.tile("hide")
 
-    val tlsVoin = rr.tlsVoin(name)
+    val onHerds = exts.filterIsInstance<OnHerd>()
 
     override val prior = OnDraw.Prior.voin
 
     override fun draw(side: Side, ctx: CtxDraw) {
-        for((pg,v) in grid()){
-            ctx.drawTile(pg,tlsVoin(side,v.side))
-            ctx.drawText(pg,v.life.value,r.hintTextLife)
-            ctx.drawText(pg,v.energy,r.hintTextEnergy)
-            if(v.isHided) ctx.drawTile(pg,r.tileHide)
+        for (herd in onHerds) {
+            for ((pg, v) in herd.grid()) {
+                ctx.drawTile(pg, herd.tlsVoin(side, v.side), if (v.flip) hintTileFlip else null)
+                ctx.drawText(pg, v.life.value, hintTextLife)
+                ctx.drawText(pg, v.energy, hintTextEnergy)
+                if (v.isHided) ctx.drawTile(pg, tileHide)
+            }
         }
     }
 
-    override val tileEditAdd = tlsVoin.neut
+    override val tilesEditAdd = onHerds.map { it.tlsVoin.neut }
 
-    override fun editAdd(pg: Pg, side: Side) {
-        grid()[pg] = VoinSimple(Life(5),side,pg.x > pg.pgser.xr / 2)
+    override fun editAdd(pg: Pg, side: Side, num: Int) {
+        onHerds[num].grid()[pg] = VoinSimple(Life(5), side, pg.x > pg.pgser.xr / 2)
     }
 
-    override fun editRemove(pg: Pg) = grid().remove(pg)
-
-    override fun stopMove(pgFrom: Pg, pgTo: Pg): Boolean {
-        return pgTo in grid()
+    override fun editRemove(pg: Pg): Boolean {
+        onHerds.forEach { if (it.grid().remove(pg)) return true }
+        return false
     }
 
     override fun editChange(pg: Pg, side: Side) {
-        grid()[pg]?.let{ v -> v.side = sideAfterChange(v.side,side)}
+        onHerds.forEach { it.grid()[pg]?.let { v -> v.side = sideAfterChange(v.side, side) } }
     }
 
     override fun editDestroy(pg: Pg) {
@@ -48,19 +50,23 @@ open class HelpVoin(rr:Resource,val r:ResDrawSimple,name:String,val grid:()->Gri
     }
 }
 
-class ResDrawSimple(r: Resource) {
-    val tlsMove = r.tlsAktMove
-    val tileHide = r.tile("hide")
-    val hintTileFlip = r.hintTileFlip
-    val hintTextLife = r.hintTextLife
-    val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
+interface OnHerd:Ext {
+    val tlsVoin: TlsVoin
+    val grid: () -> Grid<VoinSimple>
 }
 
-class Life(valueInit:Int){
-    var value:Int = valueInit
+class AimerVoin(r: Resource) : OnStopAim {
+    val tlsMove = r.tlsAktMove
+//    override fun stopMove(pgFrom: Pg, pgTo: Pg): Boolean {
+//        return pgTo in grid()
+//    }
+}
+
+class Life(valueInit: Int) {
+    var value: Int = valueInit
         private set
 
-    fun alter(d:Int){
+    fun alter(d: Int) {
         value += d
     }
 

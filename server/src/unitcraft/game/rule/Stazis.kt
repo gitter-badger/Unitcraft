@@ -23,9 +23,9 @@ class Stazis(r:Resource,val grid:() -> Grid<Int>):OnDraw,OnEdit{
         for ((pg, num) in grid()) ctx.drawTile(pg, tiles[num - 1])
     }
 
-    override val tileEditAdd = tiles.last()
+    override val tilesEditAdd = listOf(tiles.last())
 
-    override fun editAdd(pg: Pg, side: Side) {
+    override fun editAdd(pg: Pg, side: Side,num:Int) {
         plant(pg)
     }
 

@@ -15,9 +15,9 @@ class Catapult(r: Resource,val grid :() -> Grid<Catapult.obj>) : OnDraw, OnEdit 
         for ((pg, _) in grid()) ctx.drawTile(pg, tile)
     }
 
-    override val tileEditAdd = tile
+    override val tilesEditAdd = listOf(tile)
 
-    override fun editAdd(pg: Pg, side: Side) {
+    override fun editAdd(pg: Pg, side: Side,num:Int) {
         grid()[pg] = obj
     }
 

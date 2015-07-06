@@ -8,7 +8,8 @@ class PointControl {
     var side = Side.n
 }
 
-class Flag(r: Resource, grid: () -> Grid<PointControl>) : OnEditDraw by HelpOnEditDrawPointControl(r, "flag", grid){
+class Flag(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPointControl{
+    override val tlsFlatControl = r.tlsFlatControl("flag")
 //    endTurn(100){
 //        for((pg,flat) in flats)
 //            g.info(MsgVoin(pg)).voin?.let{
@@ -17,7 +18,8 @@ class Flag(r: Resource, grid: () -> Grid<PointControl>) : OnEditDraw by HelpOnEd
 //    }
 }
 
-class Mine(r: Resource, grid: () -> Grid<PointControl>) : OnEditDraw by HelpOnEditDrawPointControl(r, "mine", grid){
+class Mine(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPointControl{
+    override val tlsFlatControl = r.tlsFlatControl("mine")
     //        endTurn(100){
     //            for((pg,flat) in flats)
     //                g.info(MsgVoin(pg)).voin?.let{
@@ -29,28 +31,36 @@ class Mine(r: Resource, grid: () -> Grid<PointControl>) : OnEditDraw by HelpOnEd
     //        }
 }
 
-class Hospital(r: Resource, grid: () -> Grid<PointControl>) : OnEditDraw by HelpOnEditDrawPointControl(r, "hospital", grid)
+class Hospital(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPointControl{
+    override val tlsFlatControl = r.tlsFlatControl("hospital")
+}
 
-class HelpOnEditDrawPointControl(r:Resource,name:String,val grid: () -> Grid<PointControl>): OnEditDraw {
-    val tls = r.tlsFlatControl(name)
+class DrawerPointControl(exts:List<Ext>): OnEdit,OnDraw {
+    val herds = exts.filterIsInstance<OnHerdPointControl>()
 
-    override val tileEditAdd = tls.neut
+    override val tilesEditAdd = herds.map{it.tlsFlatControl.neut}
 
-    override fun editAdd(pg: Pg, side: Side) {
-        grid()[pg] = PointControl()
+    override fun editAdd(pg: Pg, side: Side,num:Int) {
+        herds[num].grid()[pg] = PointControl()
     }
 
-    override fun editRemove(pg: Pg) = grid().remove(pg)
+    override fun editRemove(pg: Pg): Boolean {
+        herds.forEach { if (it.grid().remove(pg)) return true }
+        return false
+    }
 
     override fun editChange(pg: Pg, side: Side) {
-        grid()[pg]?.let { it.side = sideAfterChange(it.side,side) }
+        herds.forEach { it.grid()[pg]?.let { v -> v.side = sideAfterChange(v.side, side) } }
     }
 
     override val prior = OnDraw.Prior.flat
 
     override fun draw(side: Side, ctx: CtxDraw) {
-        for ((pg, p) in grid()) ctx.drawTile(pg,tls(side,p.side))
+        for(herd in herds) for ((pg, p) in herd.grid()) ctx.drawTile(pg,herd.tlsFlatControl(side,p.side))
     }
 }
 
-interface OnEditDraw: OnDraw, OnEdit
+interface OnHerdPointControl:Ext{
+    val tlsFlatControl: TlsFlatControl
+    val grid: () -> Grid<PointControl>
+}

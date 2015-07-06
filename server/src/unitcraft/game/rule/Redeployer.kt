@@ -6,7 +6,6 @@ import unitcraft.server.Side
 import java.util.Collections
 import java.util.WeakHashMap
 
-class Redeployer(r:Resource,resDrawSimple:ResDrawSimple,grid:()->Grid<VoinSimple>):
-        HelpVoin(r,resDrawSimple,"redeployer",grid){
-
+class Redeployer(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd{
+        override val tlsVoin = r.tlsVoin("redeployer")
 }

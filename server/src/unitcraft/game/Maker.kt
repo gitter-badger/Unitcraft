@@ -1,11 +1,12 @@
 package unitcraft.game
 
-class Maker(
-        val makes:List<OnMake>,
-        val makeAfters:List<OnMakeAfter>,
-        val makeBefores:List<OnMakeBefore>
-):Make{
+class Maker(val exts: List<Ext>):Make{
+    val makes = exts.filterIsInstance<OnMake>()
+    val makeAfters = exts.filterIsInstance<OnMakeAfter>()
+    val makeBefores = exts.filterIsInstance<OnMakeBefore>()
+
     override fun move(pgFrom: Pg, pgTo: Pg) {
+
         if(makeBefores.any{it.beforeMove(pgFrom,pgTo)}) return
         makes.forEach { it.move(pgFrom, pgTo) }
         makeAfters.forEach { it.afterMove(pgFrom, pgTo) }
