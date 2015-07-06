@@ -1,6 +1,5 @@
 package unitcraft.game
 
-import unitcraft.game.rule.CdxStaziser
 import java.util.ArrayList
 import java.util.HashMap
 import unitcraft.server.Err
@@ -37,8 +36,6 @@ class Resource {
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
     val resVoin = ResVoin(this)
-
-    fun createCdxs(rules:List<KClass<out Cdx>>) = rules.map{(it.java as Class<out Cdx>).getConstructor(javaClass<Resource>()).newInstance(this)}
 
     fun tlsFlatControl(name:String) = TlsFlatControl(tile(name),tile(name+".ally"),tile(name+".enemy"))
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
@@ -134,9 +131,8 @@ class TlsFlatControl(val neut:Int,val ally:Int,val enemy:Int){
 }
 
 class TlsVoin(val ally:Int,val enemy:Int,val neut:Int){
-    fun invoke(side:Side,sideVoin: Side?) =
-            if(sideVoin==null) neut
-            else if(sideVoin==side) ally else enemy
+    fun invoke(side:Side,sideVoin: Side) =
+            if(sideVoin.isN) neut else if(sideVoin==side) ally else enemy
 }
 
 class TlsAkt(val aktOn:Int,val aktOff:Int){

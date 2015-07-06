@@ -4,15 +4,11 @@ import java.util.ArrayList
 import kotlin.properties.Delegates
 import java.util.HashMap
 import unitcraft.game.*
-import unitcraft.game.rule.CdxCatapult
-import unitcraft.game.rule.CdxEnforcer
-import unitcraft.game.rule.CdxPlace
-import unitcraft.game.rule.CdxStaziser
 import unitcraft.server.*
 import unitcraft.land.Random
 import kotlin.reflect.jvm.java
 
-class Land(val mission: Int?){
+class Land(val mission: Int?,sizeFix:Map<TpPlace, Int>){
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
     val sideFirst = if(r.nextBoolean()) Side.a else Side.b
@@ -37,7 +33,7 @@ class Land(val mission: Int?){
         for(pg in pgs){
             val map = HashMap<TpPlace, Int>()
             for(tp in TpPlace.values()){
-                map[tp] = r.nextInt(CdxPlace.sizeFix[tp]!!)
+                map[tp] = r.nextInt(sizeFix[tp]!!)
             }
             this[pg] = map
         }
@@ -114,12 +110,6 @@ class Pg(val land:Land,val x:Int,val y:Int){
 //        this.skil = skil
 //    }
 }
-
-//class CreatorGameUc(val cdxes:List<Cdx>,val canEdit:Boolean,mission:Int?=null):CreatorGame{
-//    val land = Land(mission, cdxes)
-//
-//    override fun createGame()=Game(cdxes.map{it.rule(land)},land.pgser,canEdit)
-//}
 
 
 

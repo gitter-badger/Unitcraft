@@ -2,7 +2,6 @@ package unitcraft.content
 
 import fi.iki.elonen.NanoHTTPD
 import unitcraft.game.*
-import unitcraft.game.rule.CdxPlace
 import unitcraft.server.Err
 import org.json.simple.JSONValue
 import org.omg.CORBA.portable.Delegate

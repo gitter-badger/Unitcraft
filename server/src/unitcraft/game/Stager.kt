@@ -4,7 +4,7 @@ import unitcraft.server.Side
 import unitcraft.server.Violation
 import java.util.*
 
-class EndTurn(val score:()->Score){
+class Stager(val score:()->Score){
     fun sideTurn() = score().sideTurn
 
     fun endTurn(){

@@ -21,43 +21,51 @@ class Unitcraft(r:Resource = Resource()) : CreatorGame {
         return {map.getOrPut(gameCur.get(),obj)}
     }
 
-    val place = Place(byGame{Grid<TpPlace>()},byGame{Grid<Map<TpPlace,Int>>()})
-    val breeds = listOf(
-            BreedElectric(r,byGame{Grid<VoinSimple>()}),
-            BreedEnforcer(r,byGame{Grid<VoinSimple>()})
+    val sizeFix: Map<TpPlace, Int> = mapOf(
+            TpPlace.forest to 4,
+            TpPlace.grass to 5,
+            TpPlace.hill to 1,
+            TpPlace.mount to 1,
+            TpPlace.sand to 4,
+            TpPlace.water to 1
     )
-    val tpPiles = listOf(TpCatapult(r,byGame{Grid<TpPile.obj>()}))
-    val tpPointControls = listOf(
-            TpMine(r,byGame{Grid<PointControl>()}),
-            TpHospital(r,byGame{Grid<PointControl>()})
-    )
-    val stazis = Stazis(byGame{Grid<Int>()})
-
-    val endTurn = EndTurn(byGame{Score()})
 
     val pgser = {gameCur.get()!!.pgser}
+    val gridPlace = byGame{Grid<TpPlace>()}
 
-    val resDrawer = ResDrawer(r)
-    val drawer = Drawer(
-            r = resDrawer,
-            pgser = pgser,
-            place = place,
-            breeds = breeds,
-            tpPiles = tpPiles,
-            tpPointControls = tpPointControls,
-            stazis = stazis
+    val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
+    val placeEdits = TpPlace.values().map{PlaceEdit(it,tilesPlace[it]!!.last(),gridPlace)}
+    val place = Place(pgser,tilesPlace,gridPlace,byGame{Grid<Map<TpPlace,Int>>()})
+
+    val resDrawSimple = ResDrawSimple(r)
+
+    val exts:List<Ext> = placeEdits + listOf(
+            place,
+            Electric(r,resDrawSimple,byGame{Grid<VoinSimple>()}),
+            Enforcer(r,resDrawSimple,byGame{Grid<VoinSimple>()}),
+            Staziser(r,resDrawSimple,byGame{Grid<VoinSimple>()}),
+            Catapult(r,byGame{Grid<Catapult.obj>()}),
+            Mine(r,byGame{Grid<PointControl>()}),
+            Hospital(r,byGame{Grid<PointControl>()}),
+            Stazis(r,byGame { Grid<Int>() })
     )
+
+    val stager = Stager(byGame{Score()})
+
+    val drawer = Drawer(pgser,exts.filterIsInstance<OnDraw>())
+    val aimer = Aimer(exts.filterIsInstance<OnStopAim>())
+    val maker = Maker(exts.filterIsInstance<OnMake>(),exts.filterIsInstance<OnMakeAfter>(),exts.filterIsInstance<OnMakeBefore>())
     val raiser = Raiser(
-            r,
             pgser = pgser,
-            endTurn = endTurn,
-            stazis = stazis,
-            breedElectric = breeds[0] as BreedElectric,
-            breedEnforcer = breeds[1] as BreedEnforcer
+            stager = stager,
+            exts = exts.filterIsInstance<OnRaise>(),
+            aimer = aimer
     )
+
+    val editor = Editor(exts)
 
     inner class CmderUnitcraft(mission:Int?) : CmderGame{
-        val land = Land(mission)
+        val land = Land(mission,sizeFix)
         val pgser = land.pgser
 
         var game:Game by Delegates.notNull()
@@ -73,11 +81,13 @@ class Unitcraft(r:Resource = Resource()) : CreatorGame {
                     canEdit = true,
                     drawer = drawer,
                     raiser = raiser,
-                    endTurn = endTurn
+                    editor = editor,
+                    stager = stager,
+                    maker = maker
             )
             gameCur = WeakReference(game)
-            for((pg,v) in land.grid()) drawer.place.grid().set(pg,v)
-            for((pg,v) in land.fixs()) drawer.place.fixs().set(pg,v)
+            for((pg,v) in land.grid()) place.grid().set(pg,v)
+            for((pg,v) in land.fixs()) place.fixs().set(pg,v)
         }
 
         override fun cmd(side: Side, cmd: String) {
