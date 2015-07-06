@@ -41,5 +41,7 @@ class Grid<V:Any>:Sequence<Map.Entry<Pg, V>>{
 
     fun remove(pg: Pg) = objs.remove(pg)!=null
 
+    fun contains(pg:Pg) = objs.contains(pg)
+
     override fun iterator() = objs.iterator()
 }

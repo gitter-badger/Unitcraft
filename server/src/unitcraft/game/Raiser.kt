@@ -11,7 +11,7 @@ class Raiser(val pgser: () -> Pgser,
              val exts: List<Ext>
 ) {
     val onRaises = exts.filterIsInstance<OnRaise>()
-    fun spots(side: Side): Map<Pg,List<Sloy>> {
+//    fun spots(side: Side): Map<Pg,List<Sloy>> {
 //        val isOn = stager.sideTurn() == side
 //        return onRaises.flatMap{ ext -> ext.focus().map{
 //            it.first to Rais(ext.raise(aimer,it.first,it.first,it.second),it.first,isOn).sloys()
@@ -33,7 +33,22 @@ class Raiser(val pgser: () -> Pgser,
 //                }
 //            }
 //        }
-        return emptyMap()
+//        return emptyMap()
+//    }
+
+    fun spot(pgSpot:Pg,side:Side):List<Sloy>{
+        val sloys = ArrayList<Sloy>()
+        for(onRaise in onRaises) {
+            val sideSpot = onRaise.sideSpot(pgSpot)
+            if(sideSpot!=null) {
+                val isOn = stager.sideTurn() == side && (side == sideSpot || false/*enforced*/)
+                val spot = Spot(pgSpot, isOn)
+                spot.addRaise()
+                onRaise.spot(aimer, pgSpot, pgSpot, side, spot)
+                sloys.addAll(spot.sloys())
+            }
+        }
+        return sloys
     }
 
     private fun canMove(pgFrom: Pg, pgTo: Pg, voinSpot: VoinSimple): Boolean {
@@ -50,15 +65,12 @@ class Raiser(val pgser: () -> Pgser,
         }
     }
 
-    fun sloys(raises:List<Raise>): List<Sloy> {
-        // TODO схлопнуть, если нет пересечений
-        return raises.flatMap { it.sloys() }
-    }
+
 }
 
 interface OnRaise:Ext{
-    fun focus():List<Pair<Pg,Side>>
-    fun raise(aim:Aim,pg:Pg,pgSrc:Pg,side:Side,r:Raise)
+    fun sideSpot(pg:Pg):Side?
+    fun spot(aim:Aim,pgRaise:Pg,pgSrc:Pg,side:Side,s:Spot)
 }
 
 interface Aim{
@@ -74,6 +86,23 @@ interface Make{
     fun move(pgFrom:Pg,pgTo:Pg)
     fun minusEnergy(pg:Pg,value:Int = 1)
     //fun moveForce()
+}
+
+class Spot(val pgSpot:Pg,val isOn:Boolean){
+    val raises = ArrayList<Raise>()
+
+    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: (Make) -> Unit){
+        raises.last().add(pgAkt, tlsAkt, fn)
+    }
+
+    fun addRaise(){
+        raises.add(Raise(pgSpot,isOn))
+    }
+
+    fun sloys(): List<Sloy> {
+        // TODO схлопнуть, если нет пересечений
+        return raises.flatMap { it.sloys() }
+    }
 }
 
 class Raise(val pgRaise:Pg,val isOn:Boolean) {

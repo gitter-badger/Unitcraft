@@ -9,13 +9,17 @@ class Staziser(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd,OnRaise
     override val tlsVoin = r.tlsVoin("staziser")
     val tlsMove = r.tlsAktMove
 
-    override fun focus() = grid().map{it.key to it.value.side}.toList()
+    override fun sideSpot(pg:Pg) = grid()[pg]?.side
 
-    override fun raise(aim: Aim, pgSpot: Pg, pgSrc: Pg, side: Side,r:Raise) {
-        if(pgSrc in grid()) for (pgNear in pgSpot.near) {
-            if (aim.canMove(pgSpot, pgNear)) r.add(pgNear, tlsMove){ make ->
-                make.move(pgSpot,pgNear)
-                make.minusEnergy(pgSpot)
+    override fun spot(aim: Aim, pgSpot: Pg, pgSrc: Pg, side: Side,s:Spot) {
+        grid()[pgSrc]?.let { voin ->
+            for (pgNear in pgSpot.near) {
+//            if (aim.canMove(pgSpot, pgNear))
+
+                s.add(pgNear, tlsMove){ make ->
+                    //make.move(pgSpot,pgNear)
+                    voin.energy -= 1
+                }
             }
         }
     }

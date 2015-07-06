@@ -5,17 +5,17 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.*
 
-class Electric(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd,OnRaise{
+class Electric(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd{
     override val tlsVoin = r.tlsVoin("electric")
     val hintTrace = r.hintTileTouch
     val tileTrace = r.tile("electric.akt")
 
-    override fun focus() = grid().map{it.key to it.value.side}.toList()
-
-
-    override fun raise(aim: Aim, pg: Pg, pgSrc: Pg, side: Side,r:Raise) {
-        return
-    }
+//    override fun focus() = grid().map{it.key to it.value.side}.toList()
+//
+//
+//    override fun raise(aim: Aim, pg: Pg, pgSrc: Pg, side: Side,r:Raise) {
+//        return
+//    }
 
 //    fun wave(pgs: HashMap<Pg, List<Voin>>,que:ArrayList<Pg>) {
 //        que.firstOrNull()?.let { pg ->

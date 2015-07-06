@@ -115,4 +115,3 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         }
     }
 }
-
