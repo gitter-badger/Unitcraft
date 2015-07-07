@@ -1,18 +1,18 @@
 package unitcraft.game
 
-class Maker(val exts: List<Ext>):Make{
+class Maker(val exts: List<Ext>){
     val makes = exts.filterIsInstance<OnMake>()
     val makeAfters = exts.filterIsInstance<OnMakeAfter>()
     val makeBefores = exts.filterIsInstance<OnMakeBefore>()
 
-    override fun move(pgFrom: Pg, pgTo: Pg) {
+    fun move(pgFrom: Pg, pgTo: Pg) {
 
         if(makeBefores.any{it.beforeMove(pgFrom,pgTo)}) return
         makes.forEach { it.move(pgFrom, pgTo) }
         makeAfters.forEach { it.afterMove(pgFrom, pgTo) }
     }
 
-    override fun minusEnergy(pg: Pg, value: Int) {
+    fun minusEnergy(pg: Pg, value: Int) {
         throw UnsupportedOperationException()
     }
 }

@@ -39,6 +39,11 @@ class Grid<V:Any>:Sequence<Map.Entry<Pg, V>>{
 
     fun set(pg:Pg,value:V){ objs[pg] = value }
 
+    fun move(pgFrom:Pg,pgTo:Pg):V{
+        objs[pgTo] = objs.remove(pgFrom)!!
+        return objs[pgTo]
+    }
+
     fun remove(pg: Pg) = objs.remove(pg)!=null
 
     fun contains(pg:Pg) = objs.contains(pg)

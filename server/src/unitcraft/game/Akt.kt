@@ -8,7 +8,7 @@ import java.util.ArrayList
 import unitcraft.server.Violation
 import kotlin.properties.Delegates
 
-class Akt(val pgAim:Pg,val tile:Int,val opter: Opter?, val fn:((Make)->Unit)?=null) : JSONAware{
+class Akt(val pgAim:Pg,val tile:Int,val opter: Opter?, val fn:(()->Unit)?=null) : JSONAware{
     override fun toJSONString() = jsonObj {
         put("x", pgAim.x)
         put("y", pgAim.y)

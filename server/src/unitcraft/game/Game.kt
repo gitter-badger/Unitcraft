@@ -70,7 +70,7 @@ class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer,val edi
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
-        akt.fn?.invoke(maker)
+        akt.fn?.invoke()
         println("akt " + side + " from " + prm.pg(0) + " index " + prm.int(2) + " to " + prm.pg(3))
     }
 

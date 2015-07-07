@@ -37,34 +37,36 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     val place = Place(pgser, tilesPlace, gridPlace, byGame { Grid<Map<TpPlace, Int>>() })
 
+    val stazis = Stazis(r, byGame { Grid<Int>() })
 
     val exts1: List<Ext> = listOf(
             place,
             Electric(r, byGame { Grid<VoinSimple>() }),
             Enforcer(r, byGame { Grid<VoinSimple>() }),
-            Staziser(r, byGame { Grid<VoinSimple>() }),
+            Staziser(r, stazis, byGame { Grid<VoinSimple>() }),
             Inviser(r, byGame { Grid<VoinSimple>() }),
             Redeployer(r, byGame { Grid<VoinSimple>() }),
+            Imitator(r, byGame { Grid<VoinSimple>() }),
             Catapult(r, byGame { Grid<Catapult.obj>() }),
             Mine(r, byGame { Grid<PointControl>() }),
             Hospital(r, byGame { Grid<PointControl>() }),
             Flag(r, byGame { Grid<PointControl>() }),
-            Stazis(r, byGame { Grid<Int>() })
+            stazis
     )
 
     val exts2: List<Ext> = listOf(DrawerVoin(r, exts1),DrawerPointControl(exts1))
 
     val exts = exts1 + exts2
 
-    val stager = Stager(byGame { Score() })
+    val stager = Stager(exts,byGame { Score() })
     val drawer = Drawer(pgser, exts)
-    val aimer = Aimer(exts)
+    val aimer = Armer(exts)
     val maker = Maker(exts)
     val raiser = Raiser(
             pgser = pgser,
             stager = stager,
             exts = exts,
-            aimer = aimer
+            armer = aimer
     )
 
     val editor = Editor(exts)

@@ -4,14 +4,18 @@ import unitcraft.game.*
 import unitcraft.server.Side
 import unitcraft.server.idxsMap
 
-class Stazis(r:Resource,val grid:() -> Grid<Int>):OnDraw,OnEdit{
+class Stazis(r:Resource,val grid:() -> Grid<Int>):OnDraw,OnEdit, OnEndTurn{
     val tiles = r.tlsList(5,"stazis")
 
     fun plant(pg: Pg) {
         grid()[pg] = 5
     }
 
-    fun decoy(pg: Pg) {
+    fun addStopStazis(stop:(Pg)->Boolean){
+
+    }
+
+    private fun decoy(pg: Pg) {
         val num = grid()[pg]!!
         if (num > 1) grid()[pg] = num - 1
         else grid().remove(pg)
@@ -31,7 +35,7 @@ class Stazis(r:Resource,val grid:() -> Grid<Int>):OnDraw,OnEdit{
 
     override fun editRemove(pg: Pg) = grid().remove(pg)
 
-    //        r.after<EfkEndTurn>(0){
-    //            grid().forEach { decoy(it.key) }
-    //        }
+    override fun onEndTurn(side:Side){
+        grid().forEach { decoy(it.key) }
+    }
 }
