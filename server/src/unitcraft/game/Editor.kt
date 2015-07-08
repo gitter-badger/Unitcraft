@@ -4,47 +4,28 @@ import unitcraft.server.Side
 import unitcraft.server.idxOfFirst
 import unitcraft.server.init
 import java.util.*
-import kotlin.reflect.jvm.kotlin
+import kotlin.properties.Delegates
 
-class Editor(exts:List<Ext>){
-    val edits = exts.filterIsInstance<OnEdit>().sortBy{ it.prior }
-    val editsReverse = exts.filterIsInstance<OnEdit>().sortDescendingBy{ it.prior }
 
-    val opterTest = Opter(edits.flatMap { it.tilesEditAdd }.map { Opt(DabTile(it))})
+class Editor{
+    val edits = ArrayList<Triple<Int, (Pg, Side) -> Unit,(Pg) ->Boolean>>()
+    val editsReverse by Delegates.lazy{ edits.map{it.third}.reverse()}
 
-    private val ranges = ArrayList<Range<Int>>().init {
-        var sum = 0
-        for (chance in edits.map { it.tilesEditAdd.size() }) {
-            add((sum..sum + chance - 1))
-            sum += chance
-        }
-    }
-
-    private fun select(num: Int) = ranges.idxOfFirst { num in it }!!
-    private fun idxRel(num: Int) = num - ranges[select(num)].start
+    val opterTest by Delegates.lazy{ Opter(edits.map { Opt(DabTile(it.first))})}
 
     fun editAdd(pg: Pg, side: Side, num: Int) {
-        edits[select(num)].editAdd(pg,side,idxRel(num))
+        edits[num].second(pg,side)
     }
 
     fun editRemove(pg: Pg) {
-        editsReverse.forEach { if(it.editRemove(pg)) return }
-    }
-
-    fun editChange(pg: Pg, side: Side) {
-        edits.forEach { it.editChange(pg,side) }
+        editsReverse.forEach { if(it(pg)) return }
     }
 
     fun editDestroy(pg: Pg) {
 
     }
-}
 
-interface OnEdit:Ext{
-    val prior: OnDraw.Prior
-    val tilesEditAdd:List<Int>
-    fun editAdd(pg:Pg, side:Side, num: Int)
-    fun editRemove(pg: Pg):Boolean
-    fun editChange(pg:Pg, side:Side){}
-    fun editDestroy(pg:Pg){}
+    fun onEdit(tile: Int, editAdd: (Pg, Side) ->Unit, editRemove: (Pg) ->Boolean) {
+        edits.add(Triple(tile, editAdd,editRemove))
+    }
 }

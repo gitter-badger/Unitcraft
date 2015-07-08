@@ -1,79 +1,62 @@
 package unitcraft.game.rule
 
-import sideAfterChange
 import unitcraft.game.*
-import unitcraft.server.Side
+import unitcraft.server.Err
+import java.util.HashMap
 
-class VoinSimple(val life: Life, var side: Side, var flip: Boolean) {
-    var isHided: Boolean = false
-    var energy = 3
-}
-
-class DrawerVoin(r: Resource, drawer: Drawer,) {
+class DrawerVoin(r: Resource, drawer: Drawer, val objs: () -> Objs) {
     val hintTileFlip = r.hintTileFlip
     val hintTextLife = r.hintTextLife
     val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
     val tileHide = r.tile("hide")
-    
-    init{
-        drawer.regTile{obj -> if (obj is Voin) }
-        drawer.onDrawObj{ obj,side ->
+    val tlsVoins = HashMap<Kind, TlsVoin>()
+
+    init {
+        drawer.regTile { obj, side -> if (obj is Voin) tlsVoins[obj.kind]?.invoke(side, obj.side) else null }
+        drawer.onDrawObj { obj, side, ctx ->
             if (obj is Voin) {
-                ctx.drawTile(pg, herd.tlsVoin(side, v.side), if (v.flip) hintTileFlip else null)
+                val pg = pgLife(obj)
                 ctx.drawText(pg, obj.life.value, hintTextLife)
                 ctx.drawText(pg, obj.energy, hintTextEnergy)
-                if (v.isHided) ctx.drawTile(pg, tileHide)
+                if (obj.hided) ctx.drawTile(pg, tileHide)
             }
         }
     }
 
-    fun regTileStt(tile: (Voin)->Int) {
+    private fun pgLife(obj: Voin): Pg {
+        val shape = obj.shape
+        return when (shape) {
+            is Singl -> shape.pg
+            else -> throw Err("unknown shape=$shape")
+        }
+    }
+
+    fun regKind(kind: Kind, tls: TlsVoin) {
+        tlsVoins[kind] = tls
+    }
+
+    fun regTlsVoin(tls: (Voin) -> TlsVoin) {
+
+    }
+
+    fun regTileStt(tile: (Voin) -> Int) {
 
     }
 }
 
-class EditorVoin{
-    override val tilesEditAdd = onHerds.map { it.tlsVoin.neut }
+class EditorVoin(val editor: Editor, val shaper: Shaper, val sider: Sider, val hider: Hider, val enforcer: Enforcer, val lifer: Lifer, val objs: () -> Objs) {
 
-    override fun editAdd(pg: Pg, side: Side, num: Int) {
-        onHerds[num].grid()[pg] = VoinSimple(Life(5), side, pg.x > pg.pgser.xr / 2)
+    fun regKindVoin(kind: Kind, tlsVoin: TlsVoin) {
+        editor.onEdit(tlsVoin.neut, { pg, side ->
+            val voin = Voin(kind, shaper, sider, hider, enforcer, lifer)
+            voin.shape = Singl(pg)
+            voin.side = side
+            voin.flip = pg.x > pg.pgser.xr / 2
+            objs().add(voin)
+        }, { pg ->
+            objs().byPg(pg).filterIsInstance<Voin>().firstOrNull()?.let {
+                objs().remove(it)
+            } ?: false
+        })
     }
-
-    override fun editRemove(pg: Pg): Boolean {
-        onHerds.forEach { if (it.grid().remove(pg)) return true }
-        return false
-    }
-
-    override fun editChange(pg: Pg, side: Side) {
-        onHerds.forEach { it.grid()[pg]?.let { v -> v.side = sideAfterChange(v.side, side) } }
-    }
-
-    override fun editDestroy(pg: Pg) {
-
-    }
-}
-
-
-
-interface OnHerd:Ext {
-    val tlsVoin: TlsVoin
-    val grid: () -> Grid<VoinSimple>
-}
-
-class AimerVoin(r: Resource) : OnStopAim {
-    val tlsMove = r.tlsAktMove
-//    override fun stopMove(pgFrom: Pg, pgTo: Pg): Boolean {
-//        return pgTo in grid()
-//    }
-}
-
-class Life(valueInit: Int) {
-    var value: Int = valueInit
-        private set
-
-    fun alter(d: Int) {
-        value += d
-    }
-
-    override fun toString() = "Life($value)"
 }

@@ -2,6 +2,7 @@ package unitcraft.game.rule
 
 import unitcraft.game.Stager
 import unitcraft.game.rule.Kind.inviser
+import unitcraft.server.Side
 
 class Inviser(voiner: Voiner, val stager: Stager, val hider: Hider, val objs: () -> Objs) {
 
@@ -24,15 +25,7 @@ class Inviser(voiner: Voiner, val stager: Stager, val hider: Hider, val objs: ()
     //        if(voin in hide) yes()
     //    }
     //
-    //    fun getBusy(pg: Pg, tpMove: TpMove, side: Side): Busy? {
-    //        if(tpMove!=TpMove.unit)  return null
-    //        return grid()[pg]?.let{ if(it.isHided) Busy{ it.isHided = false } else Busy() }
-    //    }
+
 
 }
 
-class Hider {
-    fun hide(obj: Obj) {
-
-    }
-}

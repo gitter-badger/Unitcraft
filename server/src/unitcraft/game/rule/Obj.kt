@@ -13,6 +13,7 @@ open class Obj(var kind:Kind,shaper: Shaper){
     fun get(key:String):Any? = props[key]
     fun set(key:String,value:Any){ props[key] = value }
     fun remove(key:String) = props.remove(key)
+    fun getOrPut(key:String,def:()->Any) = props.getOrPut(key,def)
 
     override fun toString(): String {
         return "Obj "+props
@@ -23,19 +24,18 @@ open class ObjOwn(kind:Kind,shaper: Shaper,sider:Sider):Obj(kind,shaper){
     var side: Side by sider
 }
 
-class Voin(kind:Kind,shaper: Shaper,sider:Sider,hider:Hider, enforcer: Enforcer):ObjOwn(kind,shaper,sider){
-    var enforced: Boolean? by enforcer
-    val hided:Boolean by hider
+class Voin(kind:Kind,shaper: Shaper,sider:Sider,hider:Hider,enforcer: Enforcer,lifer:Lifer):ObjOwn(kind,shaper,sider){
+    var enforced by enforcer
+    var hided by hider
+    var flip = false
+    var life by lifer
 }
 
-class Objs:Sequence<Obj>{
-    val objs = ArrayList<Obj>()
-    override fun iterator() = objs.iterator()
-}
+class Objs:MutableList<Obj> by ArrayList<Obj>()
 
-fun Sequence<Obj>.byKind(kind:Kind) = filter { it.kind == kind }
+fun List<Obj>.byKind(kind:Kind) = filter { it.kind == kind }
 
-fun <T:Obj> Sequence<T>.byPg(pg: Pg) = filter { (it.shape as? Singl)?.pg == pg }
+fun <T:Obj> List<T>.byPg(pg: Pg) = filter { (it.shape as? Singl)?.pg == pg }
 
 abstract class Shape
 
