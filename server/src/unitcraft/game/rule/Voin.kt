@@ -44,12 +44,11 @@ class DrawerVoin(r: Resource, drawer: Drawer, val objs: () -> Objs) {
     }
 }
 
-class EditorVoin(val editor: Editor, val shaper: Shaper, val sider: Sider, val hider: Hider, val enforcer: Enforcer, val lifer: Lifer, val objs: () -> Objs) {
+class EditorVoin(val editor: Editor, val hider: Hider, val enforcer: Enforcer, val lifer: Lifer, val objs: () -> Objs) {
 
     fun regKindVoin(kind: Kind, tlsVoin: TlsVoin) {
         editor.onEdit(tlsVoin.neut, { pg, side ->
-            val voin = Voin(kind, shaper, sider, hider, enforcer, lifer)
-            voin.shape = Singl(pg)
+            val voin = Voin(kind, PriorDraw.voin,Singl(pg),hider, enforcer, lifer)
             voin.side = side
             voin.flip = pg.x > pg.pgser.xr / 2
             objs().add(voin)

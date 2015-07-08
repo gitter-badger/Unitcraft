@@ -1,6 +1,5 @@
 package unitcraft.game
 
-import unitcraft.game.rule.VoinSimple
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.ArrayList

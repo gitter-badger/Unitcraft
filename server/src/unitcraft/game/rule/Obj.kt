@@ -1,13 +1,11 @@
 package unitcraft.game.rule
 
 import unitcraft.game.Pg
+import unitcraft.game.PriorDraw
 import unitcraft.server.Side
 import java.util.*
 
-open class Obj(var kind:Kind,shaper: Shaper){
-
-    var shape:Shape by shaper
-
+open class Obj(var kind:Kind,val priorDraw: PriorDraw,var shape:Shape){
     private val props = HashMap<String, Any>()
 
     fun get(key:String):Any? = props[key]
@@ -20,11 +18,11 @@ open class Obj(var kind:Kind,shaper: Shaper){
     }
 }
 
-open class ObjOwn(kind:Kind,shaper: Shaper,sider:Sider):Obj(kind,shaper){
-    var side: Side by sider
+open class ObjOwn(kind:Kind,priorDraw: PriorDraw,shape:Shape):Obj(kind,priorDraw,shape){
+    var side = Side.n
 }
 
-class Voin(kind:Kind,shaper: Shaper,sider:Sider,hider:Hider,enforcer: Enforcer,lifer:Lifer):ObjOwn(kind,shaper,sider){
+class Voin(kind:Kind,priorDraw: PriorDraw,shape: Shape,hider:Hider,enforcer: Enforcer,lifer:Lifer):ObjOwn(kind,priorDraw,shape){
     var enforced by enforcer
     var hided by hider
     var flip = false
