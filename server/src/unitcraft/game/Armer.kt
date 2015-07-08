@@ -8,21 +8,17 @@ class Armer(val exts: List<Ext>) : Arm {
     val arm = exts.filterIsInstance<OnArm>()
     val getBusys = exts.filterIsInstance<OnGetBusy>()
 
-    override fun canMove(move: Move): Aim? {
+    override fun canMove(move: Move): (()->Boolean)? {
         if (stopAim.any { it.stop(move) }) return null
         val busy = getBusy(move.pgTo, move.tpMoveTo, move.sideVid)
-        if (busy == BusyStd) return null
-        else return Aim(busy != null) {
-            if (busy is BusyInvis) busy.reveal()
-        }
-
+        if(busy.isEmpty()) return {true}
+        val reveals = busy.map{it.reveal}.filterNotNull()
+        return { reveals.forEach { it() };false }
     }
 
-    private fun getBusy(pg: Pg, tpMove: TpMove, side: Side): Busy? {
-        val busys = getBusys.map { it.getBusy(pg, tpMove, side) }.filterNotNull()
-        return busys.firstOrNull()
+    private fun getBusy(pg: Pg, tpMove: TpMove, side: Side): List<Busy> {
+        return getBusys.map { it.getBusy(pg, tpMove, side) }.filterNotNull()
     }
-
 
     override fun canSell(pgFrom: Pg, pgTo: Pg): Boolean {
         return stopAim.all { !it.stopSkil(pgFrom, pgTo) }
@@ -67,8 +63,4 @@ interface OnGetBusy {
     fun getBusy(pg: Pg, tpMove: TpMove, side: Side): Busy?
 }
 
-interface Busy
-
-object BusyStd : Busy
-
-class BusyInvis(val reveal: () -> Unit) : Busy
+class Busy(val reveal: (() -> Unit)? = null)

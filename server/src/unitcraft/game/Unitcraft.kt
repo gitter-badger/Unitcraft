@@ -42,12 +42,12 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val exts1: List<Ext> = listOf(
             place,
             Electric(r, byGame { Grid<VoinSimple>() }),
-            Enforcer(r, byGame { Grid<VoinSimple>() }),
+            Telepath(r, byGame { Grid<VoinSimple>() }),
             Staziser(r, stazis, byGame { Grid<VoinSimple>() }),
             Inviser(r, byGame { Grid<VoinSimple>() }),
             Redeployer(r, byGame { Grid<VoinSimple>() }),
             Imitator(r, byGame { Grid<VoinSimple>() }),
-            Catapult(r, byGame { Grid<Catapult.obj>() }),
+            Catapult(r, byGame { Grid<Catapult.ctplt>() }),
             Mine(r, byGame { Grid<PointControl>() }),
             Hospital(r, byGame { Grid<PointControl>() }),
             Flag(r, byGame { Grid<PointControl>() }),
@@ -58,7 +58,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     val exts = exts1 + exts2
 
-    val stager = Stager(exts,byGame { Score() })
+    val stager = Stager(byGame { Score() })
     val drawer = Drawer(pgser, exts)
     val aimer = Armer(exts)
     val maker = Maker(exts)

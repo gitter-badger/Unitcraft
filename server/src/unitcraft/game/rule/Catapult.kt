@@ -4,7 +4,7 @@ import unitcraft.game.*
 import unitcraft.server.Side
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(r: Resource,val grid :() -> Grid<Catapult.obj>) : OnDraw, OnEdit {
+class Catapult(r: Resource,val grid :() -> Grid<Catapult.ctplt>) : OnDraw, OnEdit {
     val name = "catapult"
     val tile = r.tile(name)
     val tlsAkt = r.tlsAkt(name)
@@ -18,12 +18,12 @@ class Catapult(r: Resource,val grid :() -> Grid<Catapult.obj>) : OnDraw, OnEdit 
     override val tilesEditAdd = listOf(tile)
 
     override fun editAdd(pg: Pg, side: Side,num:Int) {
-        grid()[pg] = obj
+        grid()[pg] = ctplt
     }
 
     override fun editRemove(pg: Pg) = grid().remove(pg)
 
-    object obj
+    object ctplt
 
     //        info<MsgSpot>(20) {
     //            if (pgSrc in flats) g.voin(pgSpot,side)?.let {

@@ -9,27 +9,30 @@ class VoinSimple(val life: Life, var side: Side, var flip: Boolean) {
     var energy = 3
 }
 
-class DrawerVoin(r: Resource, exts: List<Ext>) : OnDraw, OnEdit {
+class DrawerVoin(r: Resource, drawer: Drawer,) {
     val hintTileFlip = r.hintTileFlip
     val hintTextLife = r.hintTextLife
     val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
     val tileHide = r.tile("hide")
-
-    val onHerds = exts.filterIsInstance<OnHerd>()
-
-    override val prior = OnDraw.Prior.voin
-
-    override fun draw(side: Side, ctx: CtxDraw) {
-        for (herd in onHerds) {
-            for ((pg, v) in herd.grid()) {
+    
+    init{
+        drawer.regTile{obj -> if (obj is Voin) }
+        drawer.onDrawObj{ obj,side ->
+            if (obj is Voin) {
                 ctx.drawTile(pg, herd.tlsVoin(side, v.side), if (v.flip) hintTileFlip else null)
-                ctx.drawText(pg, v.life.value, hintTextLife)
-                ctx.drawText(pg, v.energy, hintTextEnergy)
+                ctx.drawText(pg, obj.life.value, hintTextLife)
+                ctx.drawText(pg, obj.energy, hintTextEnergy)
                 if (v.isHided) ctx.drawTile(pg, tileHide)
             }
         }
     }
 
+    fun regTileStt(tile: (Voin)->Int) {
+
+    }
+}
+
+class EditorVoin{
     override val tilesEditAdd = onHerds.map { it.tlsVoin.neut }
 
     override fun editAdd(pg: Pg, side: Side, num: Int) {

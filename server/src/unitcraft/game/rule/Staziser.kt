@@ -21,11 +21,10 @@ class Staziser(r: Resource,val stazis:Stazis, override val grid: () -> Grid<Voin
                 }
             }
             for (pgNear in pgSpot.near) {
-                val aim = arm.canMove(Move(pgSpot, pgNear, TpMove.unit, false, sideVid))
-                if (aim != null) {
+                val reveal = arm.canMove(Move(pgSpot, pgNear, TpMove.unit, false, sideVid))
+                if (reveal != null) {
                     s.add(pgNear, tlsMove) {
-                        aim.fire()
-                        if (!aim.isBusy) {
+                        if (reveal()) {
                             move(voin,pgSpot,pgNear)
                             voin.energy -= 1
                         }

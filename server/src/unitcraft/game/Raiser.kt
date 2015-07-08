@@ -78,14 +78,12 @@ interface OnRaise : Ext {
 }
 
 interface Arm {
-    fun canMove(move: Move): Aim?
+    fun canMove(move: Move): (()->Boolean)?
     fun canSkil(pgFrom: Pg, pgTo: Pg, side: Side): Boolean
     fun canSell(pgFrom: Pg, pgTo: Pg): Boolean
     fun canEnforce(pgFrom: Pg, pgTo: Pg): Boolean
     fun canDmg(pgFrom: Pg, pgTo: Pg): Boolean
 }
-
-class Aim(val isBusy: Boolean, val fire: () -> Unit)
 
 class Spot(val pgSpot: Pg, val isOn: Boolean) {
     val raises = ArrayList<Raise>()

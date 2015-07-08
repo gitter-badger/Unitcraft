@@ -1,26 +1,24 @@
 package unitcraft.game
 
 import unitcraft.server.Side
-import unitcraft.server.Violation
-import java.util.*
+import java.util.ArrayList
+import java.util.HashMap
 
-class Stager(ext:List<Ext>,val score:()->Score){
-    val endTurns = ext.filterIsInstance<OnEndTurn>()
+class Stager(val score: () -> Score) {
+    private val endTurns = ArrayList<(Side) -> Unit>()
+
+    fun onEndTurn(fn: (Side) -> Unit) = endTurns.add(fn)
 
     fun sideTurn() = score().sideTurn
 
-    fun endTurn(){
-        endTurns.forEach { it.onEndTurn(score().sideTurn) }
+    fun endTurn() {
+        endTurns.forEach { it(score().sideTurn) }
         score().sideTurn = score().sideTurn.vs
     }
 }
 
-class Score{
+class Score {
     var sideTurn: Side = Side.a
     val bonus = HashMap<Side, Int>()
     val point = HashMap<Side, Int>()
-}
-
-interface OnEndTurn{
-    fun onEndTurn(side:Side)
 }
