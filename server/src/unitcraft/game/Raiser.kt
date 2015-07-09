@@ -6,10 +6,9 @@ import java.util.ArrayList
 
 class Raiser(val pgser: () -> Pgser,
              val armer: Armer,
-             val stager: Stager,
-             val exts: List<Ext>
+             val stager: Stager
 ) {
-    val onRaises = exts.filterIsInstance<OnRaise>()
+    //val onRaises = exts.filterIsInstance<OnRaise>()
     //    fun spots(side: Side): Map<Pg,List<Sloy>> {
     //        val isOn = stager.sideTurn() == side
     //        return onRaises.flatMap{ ext -> ext.focus().map{
@@ -37,40 +36,25 @@ class Raiser(val pgser: () -> Pgser,
 
     fun spot(pgSpot: Pg, sideVid: Side): List<Sloy> {
         val sloys = ArrayList<Sloy>()
-        for (onRaise in onRaises) {
-            val sideSpot = onRaise.sideSpot(pgSpot)
-            if(sideSpot!=null) {
-                val isOn = stager.sideTurn() == sideVid && (sideVid == sideSpot || false/*enforced*/)
-                val spot = Spot(pgSpot, isOn)
-                spot.addRaise()
-                onRaise.spot(armer, pgSpot, pgSpot, sideVid, spot)
-                for (pgSrc in onRaise.spotByCopy(pgSpot)) {
-                    spot.addRaise()
-                    onRaises.forEach { onRaise.spot(armer, pgSpot, pgSrc, sideVid, spot) }
-                }
-                sloys.addAll(spot.sloys())
-            }
-        }
+//        for (onRaise in onRaises) {
+//            val sideSpot = onRaise.sideSpot(pgSpot)
+//            if(sideSpot!=null) {
+//                val isOn = stager.sideTurn() == sideVid && (sideVid == sideSpot || false/*enforced*/)
+//                val spot = Spot(pgSpot, isOn)
+//                spot.addRaise()
+//                onRaise.spot(armer, pgSpot, pgSpot, sideVid, spot)
+//                for (pgSrc in onRaise.spotByCopy(pgSpot)) {
+//                    spot.addRaise()
+//                    onRaises.forEach { onRaise.spot(armer, pgSpot, pgSrc, sideVid, spot) }
+//                }
+//                sloys.addAll(spot.sloys())
+//            }
+//        }
         return sloys
     }
-
-    private fun canMove(pgFrom: Pg, pgTo: Pg, voinSpot: VoinSimple): Boolean {
-        //return pgTo !in electric.grid()
-        return true
-    }
-
-    private fun move(grid: Grid<VoinSimple>, pgFrom: Pg, pgTo: Pg) {
-        grid[pgFrom]?.let {
-            grid.remove(pgFrom)
-            grid[pgTo] = it
-
-        }
-    }
-
-
 }
 
-interface OnRaise : Ext {
+interface OnRaise {
     fun sideSpot(pg: Pg): Side?
     fun spot(arm: Arm, pgSpot: Pg, pgSrc: Pg, sideVid: Side, s: Spot){}
     fun spotByCopy(pgSpot:Pg): List<Pg> = emptyList()

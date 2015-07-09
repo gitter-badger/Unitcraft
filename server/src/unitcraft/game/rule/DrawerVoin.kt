@@ -2,23 +2,31 @@ package unitcraft.game.rule
 
 import unitcraft.game.*
 import unitcraft.server.Err
-import java.util.HashMap
+import java.util.*
 
 class DrawerVoin(r: Resource, drawer: Drawer, val objs: () -> Objs) {
     val hintTileFlip = r.hintTileFlip
     val hintTextLife = r.hintTextLife
     val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
     val tileHide = r.tile("hide")
+    val tlsDflt = r.tlsVoin("enot")
     val tlsVoins = HashMap<Kind, TlsVoin>()
+    val tileStts = ArrayList<(Voin) -> Int?>()
 
     init {
-        drawer.regTile { obj, side -> if (obj is Voin) tlsVoins[obj.kind]?.invoke(side, obj.side) else null }
-        drawer.onDrawObj { obj, side, ctx ->
-            if (obj is Voin) {
-                val pg = pgLife(obj)
-                ctx.drawText(pg, obj.life.value, hintTextLife)
-                ctx.drawText(pg, obj.energy, hintTextEnergy)
-                if (obj.hided) ctx.drawTile(pg, tileHide)
+        drawer.onDraw(PriorDraw.voin) { side, ctx ->
+            for (voin in objs().filterIsInstance<Voin>()) {
+                val shape = voin.shape
+                when(shape){
+                    is Singl -> {
+                        ctx.drawTile(shape.pg, (tlsVoins[voin.kind]?:tlsDflt)(side, voin.side))
+                        ctx.drawText(shape.pg, voin.life.value, hintTextLife)
+                        if (voin is VoinFuel) ctx.drawText(shape.pg, voin.fuel, hintTextEnergy)
+                        if (voin.hided) ctx.drawTile(shape.pg, tileHide)
+                        tileStts.forEach{ it(voin)?.let{ ctx.drawTile(shape.pg, it) } }
+                    }
+                    else -> throw Err("unknown shape=$shape")
+                }
             }
         }
     }
@@ -31,16 +39,16 @@ class DrawerVoin(r: Resource, drawer: Drawer, val objs: () -> Objs) {
         }
     }
 
-    fun regKind(kind: Kind, tls: TlsVoin) {
+    fun addTile(kind: Kind, tls: TlsVoin) {
         tlsVoins[kind] = tls
     }
 
-    fun regTlsVoin(tls: (Voin) -> TlsVoin) {
+    fun addTile(tls: (Voin) -> TlsVoin) {
 
     }
 
-    fun regTileStt(tile: (Voin) -> Int) {
-
+    fun addTileStt(tile: (Voin) -> Int?) {
+        tileStts.add(tile)
     }
 }
 
@@ -48,9 +56,9 @@ class EditorVoin(val editor: Editor, val hider: Hider, val enforcer: Enforcer, v
 
     fun regKindVoin(kind: Kind, tlsVoin: TlsVoin) {
         editor.onEdit(tlsVoin.neut, { pg, side ->
-            val voin = Voin(kind, PriorDraw.voin,Singl(pg),hider, enforcer, lifer)
+            val voin = Voin(kind, Singl(pg),hider, enforcer, lifer)
             voin.side = side
-            voin.flip = pg.x > pg.pgser.xr / 2
+            (voin.shape as? Singl)?.let{ it.flip = pg.x > pg.pgser.xr / 2}
             objs().add(voin)
         }, { pg ->
             objs().byPg(pg).filterIsInstance<Voin>().firstOrNull()?.let {

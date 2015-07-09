@@ -4,27 +4,20 @@ import unitcraft.game.*
 import unitcraft.server.Side
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(r: Resource,val grid :() -> Grid<Catapult.ctplt>) : OnDraw, OnEdit {
+class Catapult(r: Resource,val editor:Editor,val drawer:Drawer,val objs:()-> Objs) {
     val name = "catapult"
     val tile = r.tile(name)
     val tlsAkt = r.tlsAkt(name)
 
-    override val prior = OnDraw.Prior.flat
+    init{
+        editor.onEdit(tile,{pg, side ->
+            objs().add(Obj(KindCatapult, Singl(pg)))
+        },{objs().remove(it)})
 
-    override fun draw(side: Side, ctx: CtxDraw) {
-        for ((pg, _) in grid()) ctx.drawTile(pg, tile)
+        drawer.onDraw(PriorDraw.flat){side, ctx ->
+            for(obj in objs()) if(obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).pg,tile)
+        }
     }
-
-    override val tilesEditAdd = listOf(tile)
-
-    override fun editAdd(pg: Pg, side: Side,num:Int) {
-        grid()[pg] = ctplt
-    }
-
-    override fun editRemove(pg: Pg) = grid().remove(pg)
-
-    object ctplt
-
     //        info<MsgSpot>(20) {
     //            if (pgSrc in flats) g.voin(pgSpot,side)?.let {
     //                val tggl = g.info(MsgTgglRaise(pgSpot, it))
@@ -36,3 +29,5 @@ class Catapult(r: Resource,val grid :() -> Grid<Catapult.ctplt>) : OnDraw, OnEdi
     //            }
     //        }
 }
+
+object KindCatapult : Kind()

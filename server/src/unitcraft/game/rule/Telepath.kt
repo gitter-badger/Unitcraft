@@ -21,39 +21,11 @@ class Telepath(r: Resource, val enforcer: Enforcer) {
 //    }
 }
 
-class Enforcer(r: Resource, val stager: Stager, val drawerVoin: DrawerVoin, val objs: () -> Objs) {
-
-    val tls = r.tlsBool("enforced", "enforcedAlready")
-
-    init {
-        drawerVoin.regTileStt { voin -> voin.enforced?.let { tls(it) } }
-        stager.onEndTurn {
-            objs().filterIsInstance<Voin>().forEach { it.enforced = null }
-        }
-    }
-
-    fun get(obj: Voin, prop: PropertyMetadata): Boolean? {
-        return obj[prop.name] as Boolean?
-    }
-
-    fun set(obj: Voin, prop: PropertyMetadata, v: Boolean?) {
-        if (v == null) obj.remove(prop.name)
-        else obj[prop.name] = v
-    }
-
-    fun canEnforce(pg: Pg) = objs().filterIsInstance<Voin>().byPg(pg).firstOrNull() != null
+object KindTelepath:Kind()
 
 
-    fun enforce(pg: Pg) {
-        objs().filterIsInstance<Voin>().byPg(pg).firstOrNull()?.let {
-            it.enforced = true
-        }
-    }
-}
 
-enum class Kind {
-    inviser
-}
+
 
 
 

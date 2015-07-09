@@ -5,7 +5,7 @@ import unitcraft.server.*
 import java.util.ArrayList
 import java.util.HashMap
 
-class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer,val editor:Editor?,val raiser:Raiser,val maker:Maker,val stager: Stager) {
+class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer,val editor:Editor?,val raiser:Raiser,val stager: Stager) {
     val pgs = pgser.pgs
 
     val traces = Traces()
@@ -101,5 +101,3 @@ class Game(val pgser: Pgser, canEdit: Boolean = false, val drawer:Drawer,val edi
         if (editor == null) throw Violation("only for test game")
     }
 }
-
-interface Ext

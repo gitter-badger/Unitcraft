@@ -4,38 +4,24 @@ import unitcraft.game.*
 import unitcraft.server.Side
 import unitcraft.server.idxsMap
 
-class Stazis(r:Resource,val grid:() -> Grid<Int>):OnDraw,OnEdit, OnEndTurn{
+class Stazis(r:Resource,val stager:Stager,val editor:Editor,val drawer:Drawer,val grid:() -> Grid<Int>){
     val tiles = r.tlsList(5,"stazis")
+
+    init{
+        editor.onEdit(tiles.last(),{pg, side -> plant(pg)},{pg -> grid().remove(pg)})
+        stager.onEndTurn { grid().forEach { decoy(it.key) } }
+        drawer.onDraw(PriorDraw.overSky){side, ctx ->
+            for ((pg, num) in grid()) ctx.drawTile(pg, tiles[num - 1])
+        }
+    }
 
     fun plant(pg: Pg) {
         grid()[pg] = 5
-    }
-
-    fun addStopStazis(stop:(Pg)->Boolean){
-
     }
 
     private fun decoy(pg: Pg) {
         val num = grid()[pg]!!
         if (num > 1) grid()[pg] = num - 1
         else grid().remove(pg)
-    }
-
-    override val prior = OnDraw.Prior.overVoin
-
-    override fun draw(side: Side, ctx: CtxDraw) {
-        for ((pg, num) in grid()) ctx.drawTile(pg, tiles[num - 1])
-    }
-
-    override val tilesEditAdd = listOf(tiles.last())
-
-    override fun editAdd(pg: Pg, side: Side,num:Int) {
-        plant(pg)
-    }
-
-    override fun editRemove(pg: Pg) = grid().remove(pg)
-
-    override fun onEndTurn(side:Side){
-        grid().forEach { decoy(it.key) }
     }
 }

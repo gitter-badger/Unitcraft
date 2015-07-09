@@ -1,45 +1,58 @@
 package unitcraft.game
 
-import unitcraft.game.rule.*
-import unitcraft.server.Err
+import unitcraft.game.rule.Kind
+import unitcraft.game.rule.Obj
+import unitcraft.game.rule.Objs
+import unitcraft.game.rule.Singl
 import unitcraft.server.Side
-import unitcraft.server.idxOfFirst
-import unitcraft.server.init
-import java.util.*
+import java.util.ArrayList
+import java.util.HashMap
 
-class Drawer(val pgser: () -> Pgser,val objs:()-> Objs) {
+class Drawer(r: Resource, val objs: () -> Objs) {
+    //val tileDflt = r.tile("enot")
 
-    val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
+    private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
+//    private val drawObjs = HashMap<Kind, (Obj, Side, CtxDraw) -> Unit>()
+//
+//    private val tiles = HashMap<Kind, Int>()
+//
+//    fun addTile(kind: Kind, tile: Int) {
+//        tiles[kind] = tile
+//    }
+//
+//    fun onDrawObj(kind: Kind, drawObj: (Obj, Side, CtxDraw) -> Unit) {
+//        drawObjs[kind] = drawObj
+//    }
 
-    val tiles = HashMap<Kind,Int>()
-    val fnTiles = HashMap<Kind,(Obj)->Int>()
-
-    fun onDraw(prior:PriorDraw,onDraw:(Side,CtxDraw)->Unit){
-        draws.getOrPut(prior){ArrayList<(Side, CtxDraw) -> Unit>()}.add(onDraw)
+    fun onDraw(prior: PriorDraw, onDraw: (Side, CtxDraw) -> Unit) {
+        draws.getOrPut(prior) { ArrayList<(Side, CtxDraw) -> Unit>() }.add(onDraw)
     }
 
-
-
-    fun draw(side:Side): List<DabOnGrid> {
+    fun draw(side: Side): List<DabOnGrid> {
         val ctx = CtxDraw(side)
-        for(prior in PriorDraw.values()){
-            draws[prior]?.forEach { it(side,ctx) }
-            objs().filter { it.priorDraw == prior }.forEach { obj ->
-                val shape = obj.shape
-                when(shape){
-                    is Singl -> ctx.drawTile(shape.pg, tile(obj))
-                }
-            }
+        for (prior in PriorDraw.values()) {
+            draws[prior]?.forEach { it(side, ctx) }
+//            objs().filter { it.priorDraw == prior }.p.forEach { obj ->
+//                val drawObj = drawObjs[obj.kind]
+//                if (drawObj != null) {
+//                    drawObj(obj, side, ctx)
+//                } else {
+//                    val shape = obj.shape
+//                    when (shape) {
+//                        is Singl -> ctx.drawTile(shape.pg, tile(obj))
+//                    }
+//                }
+//            }
         }
         return ctx.dabOnGrids
     }
 
-    private fun tile(obj:Obj) = fnTiles[obj.kind]?.invoke(obj)?:tiles[obj.kind]?:0
+    //private fun tile(obj: Obj) = tiles[obj.kind] ?: tileDflt
 
 }
 
-enum class PriorDraw{
-    place, flat, underVoin, voin, overVoin
+enum class PriorDraw {
+    place, flat, underVoin, voin, overVoin, sky, overSky
 }
 
 class CtxDraw(val sideVid: Side) {
@@ -54,6 +67,6 @@ class CtxDraw(val sideVid: Side) {
     }
 
     fun drawText(pg: Pg, value: Int, hint: Int? = null) {
-        drawText(pg,value.toString(),hint)
+        drawText(pg, value.toString(), hint)
     }
 }

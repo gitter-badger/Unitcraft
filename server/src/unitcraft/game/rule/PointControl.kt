@@ -1,15 +1,11 @@
 package unitcraft.game.rule
 
-import sideAfterChange
 import unitcraft.game.*
 import unitcraft.server.Side
+import java.util.*
 
-class PointControl {
-    var side = Side.n
-}
-
-class Flag(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPointControl{
-    override val tlsFlatControl = r.tlsFlatControl("flag")
+class Flag(r: Resource,override val grid: () -> Grid<PointControl>) {
+    val tlsFlatControl = r.tlsObjOwn("flag")
 //    endTurn(100){
 //        for((pg,flat) in flats)
 //            g.info(MsgVoin(pg)).voin?.let{
@@ -18,8 +14,8 @@ class Flag(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPoin
 //    }
 }
 
-class Mine(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPointControl{
-    override val tlsFlatControl = r.tlsFlatControl("mine")
+class Mine(r: Resource,override val grid: () -> Grid<PointControl>) {
+    val tlsFlatControl = r.tlsObjOwn("mine")
     //        endTurn(100){
     //            for((pg,flat) in flats)
     //                g.info(MsgVoin(pg)).voin?.let{
@@ -31,15 +27,29 @@ class Mine(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPoin
     //        }
 }
 
-class Hospital(r: Resource,override val grid: () -> Grid<PointControl>) : OnHerdPointControl{
-    override val tlsFlatControl = r.tlsFlatControl("hospital")
+class Hospital(r: Resource,override val grid: () -> Grid<PointControl>) {
+    val tlsFlatControl = r.tlsObjOwn("hospital")
 }
 
-class DrawerPointControl(exts:List<Ext>): OnEdit,OnDraw {
-    val herds = exts.filterIsInstance<OnHerdPointControl>()
+class DrawerObjOwn(val drawer:Drawer,val objs:()-> Objs) {
+    val kinds = ArrayList<Kind>()
+
+    init{
+        drawer.onDraw(PriorDraw.flat){ side,ctx ->
+            for (objOwn in objs().filterIsInstance<ObjOwn>())
+                ctx.drawTile(pg,herd.tlsFlatControl(side,p.side))
+        }
+    }
 
     override val tilesEditAdd = herds.map{it.tlsFlatControl.neut}
 
+
+    fun regKind(kind:Kind){
+        kinds.add(kind)
+    }
+}
+
+class EditorObjOwn(val editor:Editor){
     override fun editAdd(pg: Pg, side: Side,num:Int) {
         herds[num].grid()[pg] = PointControl()
     }
@@ -48,19 +58,29 @@ class DrawerPointControl(exts:List<Ext>): OnEdit,OnDraw {
         herds.forEach { if (it.grid().remove(pg)) return true }
         return false
     }
-
-    override fun editChange(pg: Pg, side: Side) {
-        herds.forEach { it.grid()[pg]?.let { v -> v.side = sideAfterChange(v.side, side) } }
-    }
-
-    override val prior = OnDraw.Prior.flat
-
-    override fun draw(side: Side, ctx: CtxDraw) {
-        for(herd in herds) for ((pg, p) in herd.grid()) ctx.drawTile(pg,herd.tlsFlatControl(side,p.side))
-    }
 }
 
-interface OnHerdPointControl:Ext{
-    val tlsFlatControl: TlsFlatControl
-    val grid: () -> Grid<PointControl>
+class PointControl(val stager:Stager,val objs:()-> Objs){
+    val kinds = ArrayList<Kind>()
+
+    init{
+        stager.onEndTurn {
+            for (obj in objs().byKind(kinds).filterIsInstance<ObjOwn>()) {
+                for(voin in objs().filterIsInstance<Voin>()){
+                    if(intersect(obj.shape,voin.shape)){
+                        obj.side = voin.side
+                    }
+                }
+            }
+        }
+    }
+
+    private fun intersect(shape: Shape, shapeOther: Shape) =
+        if(shape is Singl && shapeOther is Singl) shape.pg == shapeOther.pg else false
+
+
+    fun regKind(kind:Kind){
+        kinds.add(kind)
+    }
+
 }

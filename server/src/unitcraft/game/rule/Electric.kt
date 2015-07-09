@@ -5,10 +5,15 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.*
 
-class Electric(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd{
-    override val tlsVoin = r.tlsVoin("electric")
+class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin){
+    val tlsVoin = r.tlsVoin("electric")
     val hintTrace = r.hintTileTouch
     val tileTrace = r.tile("electric.akt")
+
+    init{
+        drawerVoin.addTile(KindElectric,tlsVoin)
+        editorVoin.regKindVoin(KindElectric,tlsVoin)
+    }
 
 //    override fun focus() = grid().map{it.key to it.value.side}.toList()
 //
@@ -42,3 +47,5 @@ class Electric(r:Resource,override val grid:()->Grid<VoinSimple>):OnHerd{
 
     }
 }
+
+object KindElectric:Kind()

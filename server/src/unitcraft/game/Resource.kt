@@ -7,6 +7,7 @@ import org.json.simple.JSONAware
 import unitcraft.server.Side
 import unitcraft.server.idxsMap
 import unitcraft.game.Effect
+import unitcraft.game.rule.ObjOwn
 import java.awt.Color
 import kotlin.reflect.*
 import kotlin.reflect.jvm.java
@@ -35,14 +36,14 @@ class Resource {
     val tileEdgeWait = tile("edgeWait", effectPlace)
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
-    val resVoin = ResVoin(this)
 
-    fun tlsFlatControl(name:String) = TlsFlatControl(tile(name),tile(name+".ally"),tile(name+".enemy"))
+    fun tlsObjOwn(name:String) = TlsObjOwn(tile(name),tile(name+".ally"),tile(name+".enemy"))
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
     fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
+    // TODO refactor Int to Tile
     fun tile(tile: String, effect: Effect = effectStandard):Int {
         val t = Tile(tile, effect)
         val idx = tiles.indexOf(t)
@@ -125,14 +126,13 @@ class Resource {
 //    }
 }
 
-class TlsFlatControl(val neut:Int,val ally:Int,val enemy:Int){
-    fun invoke(side:Side,sideFlat: Side) =
-            if(sideFlat.isN) neut else if(sideFlat==side) ally else enemy
+open class TlsObjOwn(val neut:Int,val ally:Int,val enemy:Int){
+    fun invoke(side:Side, objOwn: ObjOwn) =
+            if(objOwn.side.isN) neut else if(objOwn.side == side) ally else enemy
 }
 
-class TlsVoin(val ally:Int,val enemy:Int,val neut:Int){
-    fun invoke(side:Side,sideVoin: Side) =
-            if(sideVoin.isN) neut else if(sideVoin==side) ally else enemy
+class TlsVoin(ally:Int,enemy:Int, neut:Int):TlsObjOwn(ally,enemy,neut){
+
 }
 
 class TlsAkt(val aktOn:Int,val aktOff:Int){
@@ -149,10 +149,3 @@ data class Tile(val name: String, val effect: Effect) {
 
 data class HintTile(val script: String)
 data class HintText(val script: String)
-
-class ResVoin(r:Resource){
-    val tlsMove = r.tlsAktMove
-    val tileHide = r.tileHide
-    val hintTileFlip = r.hintTileFlip
-    val hintTextLife = r.hintTextLife
-}

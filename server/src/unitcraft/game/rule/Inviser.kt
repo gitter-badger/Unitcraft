@@ -1,16 +1,18 @@
 package unitcraft.game.rule
 
+import unitcraft.game.Resource
 import unitcraft.game.Stager
-import unitcraft.game.rule.Kind.inviser
 import unitcraft.server.Side
 
-class Inviser(voiner: Voiner, val stager: Stager, val hider: Hider, val objs: () -> Objs) {
+class Inviser(r: Resource,val stager: Stager, val hider: Hider,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val objs: () -> Objs) {
+    val tlsVoin = r.tlsVoin("inviser")
 
     init {
-        voiner.reg(inviser)
+        drawerVoin.addTile(KindElectric,tlsVoin)
+        editorVoin.regKindVoin(KindElectric,tlsVoin)
         stager.onEndTurn { side ->
-            for (obj in objs().byKind(inviser)) {
-                if (sider.side(obj) == side.vs) hider.hide(obj)
+            for (obj in objs().byKind(KindInviser).filterIsInstance<Voin>()) {
+                if (obj.side == side.vs) hider.hide(obj)
             }
         }
     }
@@ -28,4 +30,6 @@ class Inviser(voiner: Voiner, val stager: Stager, val hider: Hider, val objs: ()
 
 
 }
+
+object KindInviser:Kind()
 

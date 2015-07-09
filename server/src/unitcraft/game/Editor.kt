@@ -12,8 +12,8 @@ import kotlin.properties.Delegates
 
 
 class Editor(val objs:()-> Objs){
-    val editAdds = ArrayList<Pair<Int, (Pg, Side) -> Unit>>()
-    val editRemoves = ArrayList<(Pg) ->Boolean>()
+    private val editAdds = ArrayList<Pair<Int, (Pg, Side) -> Unit>>()
+    private val editRemoves = ArrayList<(Pg) ->Boolean>()
 
     val opterTest by Delegates.lazy{ Opter(editAdds.map { Opt(DabTile(it.first))})}
 
@@ -44,4 +44,11 @@ class Editor(val objs:()-> Objs){
         editAdds.add(tile to editAdd)
         editRemoves.add(0,editRemove)
     }
+
+//    private fun select(num: Int) = ranges.idxOfFirst { num in it }!!
+//    private fun idxRel(num: Int) = num - ranges[select(num)].start
+//
+//    fun editAdd(pg: Pg, side: Side, num: Int) {
+//        edits[select(num)].editAdd(pg,side,idxRel(num))
+//    }
 }
