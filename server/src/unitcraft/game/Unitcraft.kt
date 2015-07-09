@@ -14,13 +14,21 @@ import kotlin.properties.Delegates
 class Unitcraft(r: Resource = Resource()) : CreatorGame {
     override fun createGame(mission: Int?) = CmderUnitcraft(mission)
 
-    var gameCur: WeakReference<Game> by Delegates.notNull()
+    private var gameCur: WeakReference<Game> by Delegates.notNull()
 
-    fun byGame<T : Any>(obj: () -> T): () -> T {
+    private fun byGame<T : Any>(obj: () -> T): () -> T {
         val map = WeakHashMap<Game, T>()
         return { map.getOrPut(gameCur.get(), obj) }
     }
 
+    val pgser = { gameCur.get()!!.pgser }
+    val objs = byGame{Objs()}
+    val stager = Stager(byGame { Score() })
+    val editor = Editor(objs)
+    val drawer = Drawer(objs)
+    val raiser = Raiser(pgser,stager)
+
+    val gridPlace = byGame { Grid<TpPlace>() }
     val sizeFix: Map<TpPlace, Int> = mapOf(
             TpPlace.forest to 4,
             TpPlace.grass to 5,
@@ -29,47 +37,36 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
             TpPlace.sand to 4,
             TpPlace.water to 1
     )
-
-    val pgser = { gameCur.get()!!.pgser }
-    val gridPlace = byGame { Grid<TpPlace>() }
-
     val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
+    val place = Place(pgser, tilesPlace, gridPlace, byGame { Grid<Map<TpPlace, Int>>() },drawer,editor)
 
-    val place = Place(pgser, tilesPlace, gridPlace, byGame { Grid<Map<TpPlace, Int>>() })
+    init {
+        val stazis = Stazis(r, stager,editor,drawer,byGame { Grid<Int>() })
 
-    val stazis = Stazis(r, byGame { Grid<Int>() })
+        val drawerObjOwn = DrawerObjOwn(drawer,objs)
+        val editorObjOwn = EditorObjOwn(editor,objs)
 
-    val exts1: List<Ext> = listOf(
-            place,
-            Electric(r, byGame { Grid<VoinSimple>() }),
-            Telepath(r, byGame { Grid<VoinSimple>() }),
-            Staziser(r, stazis, byGame { Grid<VoinSimple>() }),
-            Inviser(r, byGame { Grid<VoinSimple>() }),
-            Redeployer(r, byGame { Grid<VoinSimple>() }),
-            Imitator(r, byGame { Grid<VoinSimple>() }),
-            Catapult(r, byGame { Grid<Catapult.ctplt>() }),
-            Mine(r, byGame { Grid<PointControl>() }),
-            Hospital(r, byGame { Grid<PointControl>() }),
-            Flag(r, byGame { Grid<PointControl>() }),
-            stazis
-    )
+        val hider = Hider()
+        val lifer = Lifer()
+        val drawerVoin = DrawerVoin(r,drawer, objs)
+        val enforcer = Enforcer(r,stager,drawerVoin,objs)
+        val editorVoin = EditorVoin(editor,hider,enforcer,lifer, objs)
+        val pointControl = PointControl(stager,objs)
 
-    val exts2: List<Ext> = listOf(DrawerVoin(r, exts1),DrawerPointControl(exts1))
+        Mine(r, drawerObjOwn,editorObjOwn,pointControl)
+        Hospital(r, drawerObjOwn,editorObjOwn,pointControl)
+        Flag(r, drawerObjOwn,editorObjOwn,pointControl)
 
-    val exts = exts1 + exts2
+        Electric(r, drawerVoin, editorVoin)
+        Telepath(r, enforcer,drawerVoin, editorVoin)
+        Staziser(r, stazis, drawerVoin, editorVoin)
+        Inviser(r, stager,hider,drawerVoin, editorVoin,objs)
+        Imitator(r, raiser,drawerVoin, editorVoin)
+        Catapult(r, drawer, editor,objs)
 
-    val stager = Stager(byGame { Score() })
-    val drawer = Drawer(pgser, exts)
-    val aimer = Armer(exts)
-    val maker = Maker(exts)
-    val raiser = Raiser(
-            pgser = pgser,
-            stager = stager,
-            exts = exts,
-            armer = aimer
-    )
-
-    val editor = Editor(exts)
+        editorObjOwn.build()
+        editorVoin.build()
+    }
 
     inner class CmderUnitcraft(mission: Int?) : CmderGame {
         val land = Land(mission, sizeFix)
@@ -85,12 +82,10 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         override fun reset() {
             game = Game(
                     pgser = pgser,
-                    canEdit = true,
                     drawer = drawer,
-                    raiser = raiser,
                     editor = editor,
                     stager = stager,
-                    maker = maker
+                    raiser = raiser
             )
             gameCur = WeakReference(game)
             for ((pg, v) in land.grid()) place.grid().set(pg, v)

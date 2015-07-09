@@ -1,11 +1,17 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
-class Flag(r: Resource,override val grid: () -> Grid<PointControl>) {
-    val tlsFlatControl = r.tlsObjOwn("flag")
+class Flag(r: Resource,val drawer:DrawerObjOwn,val editor:EditorObjOwn,val pointOfControl:PointControl) {
+    val tls = r.tlsObjOwn("flag")
+    init{
+        drawer.regKind(KindFlag,tls)
+        editor.addKind(KindFlag,tls.neut)
+        pointOfControl.addKind(KindFlag)
+    }
 //    endTurn(100){
 //        for((pg,flat) in flats)
 //            g.info(MsgVoin(pg)).voin?.let{
@@ -14,8 +20,15 @@ class Flag(r: Resource,override val grid: () -> Grid<PointControl>) {
 //    }
 }
 
-class Mine(r: Resource,override val grid: () -> Grid<PointControl>) {
-    val tlsFlatControl = r.tlsObjOwn("mine")
+object KindFlag : Kind()
+
+class Mine(r: Resource,val drawer:DrawerObjOwn,val editor:EditorObjOwn,val pointOfControl:PointControl) {
+    val tls = r.tlsObjOwn("mine")
+    init{
+        drawer.regKind(KindMine,tls)
+        editor.addKind(KindMine,tls.neut)
+        pointOfControl.addKind(KindMine)
+    }
     //        endTurn(100){
     //            for((pg,flat) in flats)
     //                g.info(MsgVoin(pg)).voin?.let{
@@ -27,36 +40,60 @@ class Mine(r: Resource,override val grid: () -> Grid<PointControl>) {
     //        }
 }
 
-class Hospital(r: Resource,override val grid: () -> Grid<PointControl>) {
-    val tlsFlatControl = r.tlsObjOwn("hospital")
+object KindMine : Kind()
+
+class Hospital(r: Resource,val drawer:DrawerObjOwn,val editor:EditorObjOwn,val pointOfControl:PointControl) {
+    val tls = r.tlsObjOwn("hospital")
+    init{
+        drawer.regKind(KindHospital,tls)
+        editor.addKind(KindHospital,tls.neut)
+        pointOfControl.addKind(KindHospital)
+    }
 }
 
+object KindHospital : Kind()
+
 class DrawerObjOwn(val drawer:Drawer,val objs:()-> Objs) {
-    val kinds = ArrayList<Kind>()
+    private val tlsObjOwns = HashMap<Kind,TlsObjOwn>()
+    private val kinds = ArrayList<Kind>()
 
     init{
         drawer.onDraw(PriorDraw.flat){ side,ctx ->
-            for (objOwn in objs().filterIsInstance<ObjOwn>())
-                ctx.drawTile(pg,herd.tlsFlatControl(side,p.side))
+            for (obj in objs().filterIsInstance<ObjOwn>().byKind(kinds)) {
+                val shape = obj.shape
+                when(shape){
+                    is Singl -> {
+                        ctx.drawTile(shape.pg,tlsObjOwns[obj.kind](side,obj))
+                    }
+                    else -> throw Err("unknown shape=$shape")
+                }
+            }
         }
     }
 
-    override val tilesEditAdd = herds.map{it.tlsFlatControl.neut}
-
-
-    fun regKind(kind:Kind){
+    fun regKind(kind:Kind,tlsObjOwn:TlsObjOwn){
         kinds.add(kind)
+        tlsObjOwns[kind] = tlsObjOwn
     }
 }
 
-class EditorObjOwn(val editor:Editor){
-    override fun editAdd(pg: Pg, side: Side,num:Int) {
-        herds[num].grid()[pg] = PointControl()
+class EditorObjOwn(val editor:Editor,val objs:()-> Objs){
+
+    private val kinds = ArrayList<Kind>()
+    private val tiles = ArrayList<Int>()
+
+    fun build(){
+        editor.onEdit(tiles,{pg,side,num ->
+            objs().add(ObjOwn(kinds[num],Singl(pg)))
+        },{pg ->
+            objs().byPg(pg).filterIsInstance<ObjOwn>().byKind(kinds).firstOrNull()?.let {
+                objs().remove(it)
+            } ?: false})
     }
 
-    override fun editRemove(pg: Pg): Boolean {
-        herds.forEach { if (it.grid().remove(pg)) return true }
-        return false
+    fun addKind(kind:Kind,tile:Int){
+        kinds.add(kind)
+        tiles.add(tile)
     }
 }
 
@@ -79,7 +116,7 @@ class PointControl(val stager:Stager,val objs:()-> Objs){
         if(shape is Singl && shapeOther is Singl) shape.pg == shapeOther.pg else false
 
 
-    fun regKind(kind:Kind){
+    fun addKind(kind:Kind){
         kinds.add(kind)
     }
 

@@ -11,8 +11,8 @@ class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin){
     val tileTrace = r.tile("electric.akt")
 
     init{
-        drawerVoin.addTile(KindElectric,tlsVoin)
-        editorVoin.regKindVoin(KindElectric,tlsVoin)
+        drawerVoin.addKind(KindElectric,tlsVoin)
+        editorVoin.addKind(KindElectric,tlsVoin.neut)
     }
 
 //    override fun focus() = grid().map{it.key to it.value.side}.toList()

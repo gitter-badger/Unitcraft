@@ -5,6 +5,7 @@ import unitcraft.game.*
 import unitcraft.server.Err
 import org.json.simple.JSONValue
 import org.omg.CORBA.portable.Delegate
+import unitcraft.server.idxsMap
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileNotFoundException
@@ -95,7 +96,7 @@ class ServerCdn() : NanoHTTPD(8000) {
             namesUnused.remove(file.name)
         }
         println("Unused:")
-        for (name in namesUnused) println(name)
+        for (name in namesUnused) println(" "+name)
     }
 
     private fun loadImgsPanel(){
@@ -189,8 +190,8 @@ class ServerCdn() : NanoHTTPD(8000) {
         val dirTiles = "content/data/tiles/"
         val dirPanels = "content/data/panels/"
 
-        val listQdmnTile = listOf(44,48,52,56,60,70,72,74,76,78,80,82,84,86,88,90,92,94,96)
-        val listQdmnPanel = listOf(100,120,130,140,150,160,170,180,190)
+        val listQdmnTile = idxsMap(40){40+it*2}
+        val listQdmnPanel = idxsMap(11){70+it*10}
 
         platformStatic fun main(args: Array<String>) {
             ServerCdn().start()

@@ -8,8 +8,8 @@ class Inviser(r: Resource,val stager: Stager, val hider: Hider,val drawerVoin:Dr
     val tlsVoin = r.tlsVoin("inviser")
 
     init {
-        drawerVoin.addTile(KindElectric,tlsVoin)
-        editorVoin.regKindVoin(KindElectric,tlsVoin)
+        drawerVoin.addKind(KindElectric,tlsVoin)
+        editorVoin.addKind(KindElectric,tlsVoin.neut)
         stager.onEndTurn { side ->
             for (obj in objs().byKind(KindInviser).filterIsInstance<Voin>()) {
                 if (obj.side == side.vs) hider.hide(obj)

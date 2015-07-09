@@ -4,10 +4,12 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.ArrayList
 
-class Raiser(val pgser: () -> Pgser,
-             val armer: Armer,
-             val stager: Stager
-) {
+// создает пятна, пятно может быть только у объекта
+// пятно у объекта вычисляется из его способностей
+// зависимые могут выставить райзслой по кинду
+// зависимые могут добавить список способностей по кинду
+// зависимые могут добавить ()-> список способностей по obj
+class Raiser(val pgser: () -> Pgser, val stager: Stager) {
     //val onRaises = exts.filterIsInstance<OnRaise>()
     //    fun spots(side: Side): Map<Pg,List<Sloy>> {
     //        val isOn = stager.sideTurn() == side

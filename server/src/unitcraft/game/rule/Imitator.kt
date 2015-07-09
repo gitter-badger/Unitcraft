@@ -8,8 +8,8 @@ import unitcraft.game.Resource
 class Imitator(r: Resource,val raiser: Raiser,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin) {
     val tls = r.tlsVoin("imitator")
     init{
-        drawerVoin.addTile(KindImitator,tls)
-        editorVoin.regKindVoin(KindImitator,tls)
+        drawerVoin.addKind(KindImitator,tls)
+        editorVoin.addKind(KindImitator,tls.neut)
     }
     //fun sideSpot(pg: Pg) = grid()[pg]?.side
 

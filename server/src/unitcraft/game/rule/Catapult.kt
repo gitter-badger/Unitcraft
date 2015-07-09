@@ -4,13 +4,13 @@ import unitcraft.game.*
 import unitcraft.server.Side
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(r: Resource,val editor:Editor,val drawer:Drawer,val objs:()-> Objs) {
+class Catapult(r: Resource,val drawer:Drawer,val editor:Editor,val objs:()-> Objs) {
     val name = "catapult"
     val tile = r.tile(name)
     val tlsAkt = r.tlsAkt(name)
 
     init{
-        editor.onEdit(tile,{pg, side ->
+        editor.onEdit(listOf(tile),{pg, side, num ->
             objs().add(Obj(KindCatapult, Singl(pg)))
         },{objs().remove(it)})
 

@@ -13,11 +13,11 @@ class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -
         drawer.onDraw(PriorDraw.place){side, ctx ->
             for (pg in pgser()) {
                 val tp = grid()[pg]
-                ctx.drawTile(pg, tiles[tp]!![fixs()[pg][tp]!!])
+                ctx.drawTile(pg, tiles[tp]!![fixs()[pg]!![tp]!!])
             }
         }
-        for(tp in TpPlace.values())
-        editor.onEdit(tiles[tp]!!.first(),{pg,side -> grid()[pg] = tp},{false})
+
+        editor.onEdit(TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> grid()[pg] = TpPlace.values()[num]},{false})
     }
 }
 //val hide : MutableSet<Any> = Collections.newSetFromMap(WeakHashMap<Any,Boolean>())

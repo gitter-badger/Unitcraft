@@ -36,9 +36,8 @@ class VoinFuel(kind:Kind,shape: Shape,hider:Hider,enforcer: Enforcer,lifer:Lifer
 
 class Objs:MutableList<Obj> by ArrayList<Obj>()
 
-fun List<Obj>.byKind(kind:Kind) = filter { it.kind == kind }
-fun List<Obj>.byKind(kinds:List<Kind>) = filter { it.kind in kinds }
-
+fun <T:Obj> List<T>.byKind(kind:Kind) = filter { it.kind == kind }
+fun <T:Obj> List<T>.byKind(kinds:List<Kind>) = filter { it.kind in kinds }
 fun <T:Obj> List<T>.byPg(pg: Pg) = filter { (it.shape as? Singl)?.pg == pg }
 
 abstract class Shape

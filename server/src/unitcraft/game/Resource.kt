@@ -37,8 +37,8 @@ class Resource {
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
 
-    fun tlsObjOwn(name:String) = TlsObjOwn(tile(name),tile(name+".ally"),tile(name+".enemy"))
-    fun tlsVoin(name:String) = TlsVoin(tile(name,effectFriend),tile(name,effectEnemy),tile(name,effectNeut))
+    fun tlsObjOwn(name:String) = TlsObjOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
+    fun tlsVoin(name:String) = TlsVoin(tile(name,effectNeut), tile(name,effectFriend), tile(name,effectEnemy))
     fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
@@ -104,8 +104,21 @@ class Resource {
             extend()
             shadow(Color.red)
         }
+
         val effectPlace = Effect("place") {
             place()
+        }
+
+        val effectControlAlly = Effect("controlAlly") {
+            fit()
+            extend()
+            glow(Color(50, 255, 50))
+        }
+
+        val effectControlEnemy = Effect("controlEnemy") {
+            fit()
+            extend()
+            glow(Color(255, 50, 50))
         }
     }
 //    companion object {
@@ -131,7 +144,7 @@ open class TlsObjOwn(val neut:Int,val ally:Int,val enemy:Int){
             if(objOwn.side.isN) neut else if(objOwn.side == side) ally else enemy
 }
 
-class TlsVoin(ally:Int,enemy:Int, neut:Int):TlsObjOwn(ally,enemy,neut){
+class TlsVoin(neut: Int, ally: Int, enemy: Int):TlsObjOwn(neut,ally,enemy){
 
 }
 

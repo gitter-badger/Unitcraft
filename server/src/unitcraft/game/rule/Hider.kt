@@ -2,7 +2,7 @@ package unitcraft.game.rule
 
 class Hider {
     fun get(obj: Obj, prop: PropertyMetadata): Boolean {
-        return obj[prop.name] as Boolean
+        return (obj[prop.name] as? Boolean)?:false
     }
 
     fun set(obj: Obj, prop: PropertyMetadata, v: Boolean) {

@@ -1,10 +1,10 @@
 package unitcraft.server
 
-import unitcraft.game.Game
-import java.util.ArrayList
 import org.json.simple.JSONObject
 import java.time.Duration
 import java.time.Instant
+import java.util.ArrayList
+import kotlin.properties.Delegates
 
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
 // нужен контроль времени
@@ -13,14 +13,14 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
     val ids = if (idB != null) mapOf(Side.a to idA, Side.b to idB) else mapOf(Side.a to idA)
     val cmds = ArrayList<Pair<Side, String>>()
 
-    private var state:GameState
+    private var state: GameState
 
     init {
         state = cmder.state()
         sendGame(false)
     }
 
-    val isVsRobot:Boolean
+    val isVsRobot: Boolean
         get() = idB == null
 
     fun cmd(id: Id, prm: Prm) {
@@ -33,9 +33,9 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
         aktAndSend(sides[id]!!, akt)
         if (isVsRobot && state.sideWin == null) {
             while (true) {
-                val cmdRobot = try{
+                val cmdRobot = try {
                     cmder.cmdRobot()
-                }catch(e:Throwable){
+                } catch(e: Throwable) {
                     log.error(e)
                     "e"
                 } ?: break
@@ -51,7 +51,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
     }
 
     fun refresh(id: Id) {
-        sendGame(false,id)
+        sendGame(false, id)
     }
 
     fun land(id: Id) {
@@ -81,8 +81,8 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
         }
     }
 
-    private fun sendGame(isErr: Boolean,idOnly:Id?=null) {
-        for ((id,side) in sides) if(idOnly==null || id==idOnly){
+    private fun sendGame(isErr: Boolean, idOnly: Id? = null) {
+        for ((id, side) in sides) if (idOnly == null || id == idOnly) {
             val json = state.json[side]!!
             json["version"] = cmds.size()
             json["bet"] = bet
@@ -152,18 +152,18 @@ interface CmderGame {
 // определен ли победитель?
 // json расположения юнитов
 // чей таймер должны быть запущены
-class GameState(val sideWin:Side?,val json:Map<Side,JSONObject>, val sideClockOn:Side?)
+class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClockOn: Side?)
 
 enum class Side {
     a, b, n;
 
-    val vs:Side
-       get() = when (this) {
-        a -> b
-        b -> a
-        n -> n
+    val vs: Side by Delegates.lazy {
+        when (this) {
+            a -> b
+            b -> a
+            n -> n
+        }
     }
 
-    val isN:Boolean
-        get() = this==n
+    val isN: Boolean by Delegates.lazy { this == n }
 }

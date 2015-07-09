@@ -8,8 +8,7 @@ import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class Drawer(r: Resource, val objs: () -> Objs) {
-    //val tileDflt = r.tile("enot")
+class Drawer(val objs: () -> Objs) {
 
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 //    private val drawObjs = HashMap<Kind, (Obj, Side, CtxDraw) -> Unit>()

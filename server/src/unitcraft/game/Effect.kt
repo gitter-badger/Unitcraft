@@ -27,4 +27,5 @@ interface CtxEffect{
     fun light(color: Color)
     fun place()
     fun shadow(color: Color)
+    fun glow(color: Color)
 }

@@ -9,8 +9,8 @@ class Staziser(r: Resource,val stazis:Stazis,val drawerVoin:DrawerVoin,val edito
     val tlsMove = r.tlsAktMove
 
     init{
-        drawerVoin.addTile(KindStaziser,tlsVoin)
-        editorVoin.regKindVoin(KindStaziser,tlsVoin)
+        drawerVoin.addKind(KindStaziser,tlsVoin)
+        editorVoin.addKind(KindStaziser,tlsVoin.neut)
     }
 
 //    fun spot(pgSpot: Pg,pgSrc: Pg, sideVid: Side, s: Spot) {
