@@ -1,22 +1,28 @@
 package unitcraft.game
 
-import unitcraft.game.rule.ObjOwn
 import unitcraft.game.rule.Objs
 import unitcraft.game.rule.byPg
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.idxOfFirst
+import unitcraft.server.init
 import java.util.ArrayList
 import kotlin.properties.Delegates
 
 
-class Editor(val objs: () -> Objs) {
+class Editor {
     private val groupTiles = ArrayList<List<Int>>()
     private val editAdds = ArrayList<(Pg, Side, Int) -> Unit>()
     private val editRemoves = ArrayList<(Pg) -> Boolean>()
-    private val ranges = ArrayList<Range<Int>>()
 
     val opterTest by Delegates.lazy { Opter(groupTiles.flatten().map { Opt(DabTile(it)) }) }
+
+    private val ranges by Delegates.lazy {ArrayList<Range<Int>>().init{
+        for(tiles in groupTiles) {
+            val s = if (isNotEmpty()) last().end + 1 else 0
+            add(s..s + tiles.lastIndex)
+        }
+    }}
 
     fun editAdd(pg: Pg, side: Side, num: Int) {
         editAdds[select(num)](pg, side, idxRel(num))
@@ -30,23 +36,11 @@ class Editor(val objs: () -> Objs) {
 
     }
 
-    fun editChange(pg: Pg, sideVid: Side) {
-        objs().filterIsInstance<ObjOwn>().byPg(pg).firstOrNull()?.let {
-            it.side = when (it.side) {
-                Side.n -> sideVid
-                sideVid -> sideVid.vs
-                sideVid.vs -> Side.n
-                else -> throw Err("unknown side=${it.side}")
-            }
-        }
-    }
-
     fun onEdit(tiles: List<Int>, editAdd: (Pg, Side, Int) -> Unit, editRemove: (Pg) -> Boolean) {
         groupTiles.add(tiles)
         editAdds.add(editAdd)
         editRemoves.add(0, editRemove)
-        val s = if(ranges.isNotEmpty()) ranges.last().end+1 else 0
-        ranges.add(s..s + tiles.lastIndex)
+
     }
 
     private fun select(num: Int) = ranges.idxOfFirst { num in it }!!

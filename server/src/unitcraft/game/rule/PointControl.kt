@@ -3,67 +3,68 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.*
+import java.util.ArrayList
+import java.util.HashMap
 
-class Flag(r: Resource,val drawer:DrawerObjOwn,val editor:EditorObjOwn,val pointOfControl:PointControl) {
-    val tls = r.tlsObjOwn("flag")
+class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val drawer: DrawerPointControl, val editor: EditorPointControl, val objs: () -> Objs) {
+    val kinds = ArrayList<Kind>()
+    val kindsCanCapture = ArrayList<Kind>()
+
     init{
-        drawer.regKind(KindFlag,tls)
-        editor.addKind(KindFlag,tls.neut)
-        pointOfControl.addKind(KindFlag)
+        stager.onEndTurn {
+            for (point in objs().byKind(kinds))
+                for (voin in objs().byKind(kindsCanCapture))
+                    if (point.shape.pgs.intersect(voin.shape.pgs).isNotEmpty())
+                        sider.capture(voin, point)
+        }
     }
-//    endTurn(100){
-//        for((pg,flat) in flats)
-//            g.info(MsgVoin(pg)).voin?.let{
-//                flat.side = it.side!!
-//            }
-//    }
+
+    fun add(kind:Kind) {
+        val tls = r.tlsObjSide(kind.name)
+        kinds.add(kind)
+        sider.kinds.add(kind)
+        drawer.regKind(kind, tls)
+        editor.addKind(kind, tls.neut)
+    }
 }
 
-object KindFlag : Kind()
-
-class Mine(r: Resource,val drawer:DrawerObjOwn,val editor:EditorObjOwn,val pointOfControl:PointControl) {
-    val tls = r.tlsObjOwn("mine")
-    init{
-        drawer.regKind(KindMine,tls)
-        editor.addKind(KindMine,tls.neut)
-        pointOfControl.addKind(KindMine)
+class Flag(val pointControl: PointControl) {
+    init {
+        pointControl.add(KindFlag)
     }
+    private object KindFlag : Kind()
+}
+
+class Mine(val pointControl: PointControl) {
+    init {
+        pointControl.add(KindMine)
+    }
+    private object KindMine : Kind()
     //        endTurn(100){
-    //            for((pg,flat) in flats)
-    //                g.info(MsgVoin(pg)).voin?.let{
-    //                    flat.side = it.side!!
-    //                }
     //            for((pg,flat) in flats) flat.side?.let{
     //                if(it == g.sideTurn) g.make(EfkGold(1,it))
     //            }
     //        }
 }
 
-object KindMine : Kind()
-
-class Hospital(r: Resource,val drawer:DrawerObjOwn,val editor:EditorObjOwn,val pointOfControl:PointControl) {
-    val tls = r.tlsObjOwn("hospital")
-    init{
-        drawer.regKind(KindHospital,tls)
-        editor.addKind(KindHospital,tls.neut)
-        pointOfControl.addKind(KindHospital)
+class Hospital( val pointControl: PointControl) {
+    init {
+        pointControl.add(KindHospital)
     }
+    private object KindHospital : Kind()
 }
 
-object KindHospital : Kind()
-
-class DrawerObjOwn(val drawer:Drawer,val objs:()-> Objs) {
-    private val tlsObjOwns = HashMap<Kind,TlsObjOwn>()
+class DrawerPointControl(val drawer: Drawer,val sider:Sider, val objs: () -> Objs) {
+    private val tlsPointControls = HashMap<Kind, TlsObjOwn>()
     private val kinds = ArrayList<Kind>()
 
-    init{
-        drawer.onDraw(PriorDraw.flat){ side,ctx ->
-            for (obj in objs().filterIsInstance<ObjOwn>().byKind(kinds)) {
+    init {
+        drawer.onDraw(PriorDraw.flat) { side, ctx ->
+            for (obj in objs().byKind(tlsPointControls.keySet())) {
                 val shape = obj.shape
-                when(shape){
+                when (shape) {
                     is Singl -> {
-                        ctx.drawTile(shape.head,tlsObjOwns[obj.kind](side,obj))
+                        ctx.drawTile(shape.head, tlsPointControls[obj.kind](side, sider.side(obj)))
                     }
                     else -> throw Err("unknown shape=$shape")
                 }
@@ -71,52 +72,30 @@ class DrawerObjOwn(val drawer:Drawer,val objs:()-> Objs) {
         }
     }
 
-    fun regKind(kind:Kind,tlsObjOwn:TlsObjOwn){
+    fun regKind(kind: Kind, tlsObjOwn: TlsObjOwn) {
         kinds.add(kind)
-        tlsObjOwns[kind] = tlsObjOwn
+        tlsPointControls[kind] = tlsObjOwn
     }
 }
 
-class EditorObjOwn(val editor:Editor,val objs:()-> Objs){
+class EditorPointControl(val editor: Editor, val shaper: Shaper, val sider: Sider, val objs: () -> Objs) {
 
     private val kinds = ArrayList<Kind>()
     private val tiles = ArrayList<Int>()
 
-    fun build(){
-        editor.onEdit(tiles,{pg,side,num ->
-            objs().add(ObjOwn(kinds[num],Singl(ZetOrder.flat,pg)))
-        },{pg ->
-            objs().byPg(pg).filterIsInstance<ObjOwn>().byKind(kinds).firstOrNull()?.let {
+    init {
+        editor.onEdit(tiles, { pg, side, num ->
+            val obj = shaper.create(kinds[num], Singl(ZetOrder.flat, pg))
+            sider.change(obj, Side.n)
+        }, { pg ->
+            objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
                 objs().remove(it)
-            } ?: false})
+            } ?: false
+        })
     }
 
-    fun addKind(kind:Kind,tile:Int){
+    fun addKind(kind: Kind, tile: Int) {
         kinds.add(kind)
         tiles.add(tile)
-    }
-}
-
-class PointControl(val stager:Stager,val objs:()-> Objs){
-    val kinds = ArrayList<Kind>()
-
-    init{
-        stager.onEndTurn {
-            for (obj in objs().byKind(kinds).filterIsInstance<ObjOwn>()) {
-                for(voin in objs().filterIsInstance<Voin>()){
-                    if(intersect(obj.shape,voin.shape)){
-                        obj.side = voin.side
-                    }
-                }
-            }
-        }
-    }
-
-    private fun intersect(shape: Shape, shapeOther: Shape) =
-        if(shape is Singl && shapeOther is Singl) shape.head == shapeOther.head else false
-
-
-    fun addKind(kind:Kind){
-        kinds.add(kind)
     }
 }

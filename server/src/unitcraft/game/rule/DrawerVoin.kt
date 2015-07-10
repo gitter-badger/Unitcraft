@@ -6,37 +6,33 @@ import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class DrawerVoin(r: Resource, drawer: Drawer,hider:Hider, val objs: () -> Objs) {
+class DrawerVoin(r: Resource, drawer: Drawer,hider:Hider,sider:Sider, val objs: () -> Objs) {
     private val hintTileFlip = r.hintTileFlip
-    private val hintTextLife = r.hintTextLife
     private val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
     private val tileHide = r.tile("hide")
-    private val tlsVoins = HashMap<Kind, TlsVoin>()
-    private val kinds = ArrayList<Kind>()
+
+    val tlsVoins = HashMap<Kind, TlsVoin>()
     val tileStts = ArrayList<(Obj, Side) -> Int?>()
+    val draws = ArrayList<(Obj, Side,CtxDraw) -> Unit>()
 
     init {
         drawer.onDraw(PriorDraw.voin) { side, ctx ->
-            for (voin in objs().byKind(kinds)) {
-                val shape = voin.shape
-                ctx.drawTile(shape.head, (tlsVoins[voin.kind])(side, voin), if (voin["flip"]!=null) hintTileFlip else null)
-                if (hider.isHided(voin,side)!=null) ctx.drawTile(shape.head, tileHide)
-                tileStts.forEach { it(voin,side)?.let { ctx.drawTile(shape.head, it) } }
+            for (obj in objs().byKind(tlsVoins.keySet())) {
+                val shape = obj.shape
+                ctx.drawTile(shape.head, (tlsVoins[obj.kind])(side, sider.side(obj)), if (obj["flip"] as Boolean? == true) hintTileFlip else null)
+                if (hider.isHided(obj,side)!=null) ctx.drawTile(shape.head, tileHide)
+                draws.forEach{it(obj,side,ctx)}
+                tileStts.forEach { it(obj,side)?.let { ctx.drawTile(shape.head, it) } }
             }
         }
     }
-
-    fun addKind(kind: Kind, tls: TlsVoin) {
-        kinds.add(kind)
-        tlsVoins[kind] = tls
-    }
 }
 
-class EditorVoin(val editor: Editor, val shaper: Shaper, val objs: () -> Objs) {
+class EditorVoin(val editor: Editor, val shaper: Shaper,val sider: Sider, val objs: () -> Objs) {
     private val kinds = ArrayList<Kind>()
     private val tiles = ArrayList<Int>()
 
-    fun build() {
+    init {
         editor.onEdit(tiles, { pg, side, num ->
 //            val voin = Voin(kinds[num], Singl(ZetOrder.voin,pg))
 //            voin.side = side
@@ -44,6 +40,7 @@ class EditorVoin(val editor: Editor, val shaper: Shaper, val objs: () -> Objs) {
 //            objs().add(voin)
             val obj = shaper.create(kinds[num],Singl(ZetOrder.voin,pg))
             obj["flip"] = pg.x > pg.pgser.xr / 2
+            sider.change(obj,side)
         }, { pg ->
             objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
                 shaper.remove(it)

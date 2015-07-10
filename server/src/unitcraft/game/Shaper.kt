@@ -7,7 +7,9 @@ import java.util.*
 
 class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
 
-    val stops = ArrayList<(Move)->Boolean>()
+    val stopMoves = ArrayList<(Move)->Boolean>()
+
+    val creates = ArrayList<(Obj)->Unit>()
 //    val stopAim = exts.filterIsInstance<OnStopAim>()
 //    val arm = exts.filterIsInstance<OnArm>()
 //    val getBusys = exts.filterIsInstance<OnGetBusy>()
@@ -17,6 +19,7 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
      * ()->Boolean - движение выглядит доступным: фунция возвращает true, если это правда
      */
     fun canMove(move: Move): (()->Boolean)? {
+        if(stopMoves.any{it(move)}) return null
         val obj = objClashed(move.shapeTo) ?: return {true}
         return hider.isHided(obj,move.sideVid)?.let{ {it();false} }
     }
@@ -28,8 +31,9 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
     }
 
     fun create(kind:Kind,shape:Shape):Obj{
-        if(objClashed(shape)!=null) throw Err("cant create obj(shape=$shape kind=$kind")
         val obj = Obj(kind,shape)
+        creates.forEach{ it(obj) }
+        if(objClashed(shape)!=null) throw Err("cant create obj(shape=$shape kind=$kind")
         objs().add(obj)
         return obj
     }

@@ -1,28 +1,26 @@
 package unitcraft.game.rule
 
+import unitcraft.game.Drawer
+import unitcraft.game.PriorDraw
 import unitcraft.game.Resource
+import unitcraft.game.Shaper
 import java.util.*
 
-class Lifer(r: Resource,drawer:DrawerVoin) {
+class Lifer(r: Resource,drawer: DrawerVoin,val shaper: Shaper) {
     private val life = "life"
     private val hintTextLife = r.hintTextLife
 
     val kinds = ArrayList<Kind>()
 
-    fun get(obj: Obj, prop: PropertyMetadata): Life {
-        return obj.getOrPut(prop.name){Life(5)} as Life
-    }
-
-    fun set(obj: Obj, prop: PropertyMetadata, v: Life) {
-        obj[prop.name] = v
-    }
+    fun life(obj:Obj) = obj[life] as Life
 
     init{
-        drawer.draws.add{ obj,side,ctx ->
-            if(obj)
-            ctx.drawText(shape.head, obj[life].value, hintTextLife)
+        drawer.draws.add {obj,side,ctx ->
+            ctx.drawText(obj.shape.head, obj<Life>().value, hintTextLife)
         }
-
+        shaper.creates.add{obj ->
+            obj[life] = Life(5)
+        }
     }
 }
 

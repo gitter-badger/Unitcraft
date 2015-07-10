@@ -5,7 +5,7 @@ import unitcraft.server.*
 import java.util.ArrayList
 import java.util.HashMap
 
-class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: Stager,val spoter: Spoter) {
+class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor?,val stager: Stager,val spoter: Spoter) {
     val pgs = pgser.pgs
 
     val traces = Traces()
@@ -61,7 +61,7 @@ class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: St
     private fun editChange(side: Side, prm: Prm) {
         ensureTest()
         prm.ensureSize(2)
-        editor!!.editChange(prm.pg(0), side)
+        sider.editChange(prm.pg(0), side)
     }
 
     private fun akt(side: Side, prm: Prm) {

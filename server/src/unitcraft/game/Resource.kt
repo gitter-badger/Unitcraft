@@ -7,7 +7,6 @@ import org.json.simple.JSONAware
 import unitcraft.server.Side
 import unitcraft.server.idxsMap
 import unitcraft.game.Effect
-import unitcraft.game.rule.ObjOwn
 import java.awt.Color
 import kotlin.reflect.*
 import kotlin.reflect.jvm.java
@@ -37,7 +36,7 @@ class Resource {
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
 
-    fun tlsObjOwn(name:String) = TlsObjOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
+    fun tlsObjSide(name:String) = TlsObjOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
     fun tlsVoin(name:String) = TlsVoin(tile(name,effectNeut), tile(name,effectFriend), tile(name,effectEnemy))
     fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
@@ -140,8 +139,8 @@ class Resource {
 }
 
 open class TlsObjOwn(val neut:Int,val ally:Int,val enemy:Int){
-    fun invoke(side:Side, objOwn: ObjOwn) =
-            if(objOwn.side.isN) neut else if(objOwn.side == side) ally else enemy
+    fun invoke(side:Side, sideOwn: Side) =
+            if(sideOwn.isN) neut else if(sideOwn == side) ally else enemy
 }
 
 class TlsVoin(neut: Int, ally: Int, enemy: Int):TlsObjOwn(neut,ally,enemy){
@@ -162,3 +161,19 @@ data class Tile(val name: String, val effect: Effect) {
 
 data class HintTile(val script: String)
 data class HintText(val script: String)
+
+class Effect(val name: String, val op: CtxEffect.() -> Unit){
+    override fun toString(): String {
+        return "Effect($name)"
+    }
+}
+
+interface CtxEffect{
+    fun fit()
+    fun extend()
+    fun extendBottom()
+    fun light(color: Color)
+    fun place()
+    fun shadow(color: Color)
+    fun glow(color: Color)
+}

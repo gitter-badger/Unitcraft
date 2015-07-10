@@ -6,26 +6,23 @@ import unitcraft.game.ZetOrder
 import unitcraft.server.Side
 import java.util.*
 
-open class Obj(var kind:Kind,var shape:Shape){
-    private val props = HashMap<String, Any>()
+class Obj(var kind:Kind,var shape:Shape){
+    val props = HashMap<String, Any>()
 
     fun get(key:String):Any? = props[key]
     fun set(key:String,value:Any){ props[key] = value }
     fun remove(key:String) = props.remove(key)
     fun getOrPut(key:String,def:()->Any) = props.getOrPut(key,def)
 
+    inline fun <reified T> invoke():T = props.values().first { it is T } as T
+
     override fun toString(): String {
         return "Obj "+props
     }
 }
 
-open class ObjOwn(kind:Kind,shape:Shape):Obj(kind,shape){
-    var side = Side.n
+class Objs:MutableList<Obj> by ArrayList<Obj>(){
 }
-
-open class Voin(kind:Kind,shape: Shape):ObjOwn(kind,shape)
-
-class Objs:MutableList<Obj> by ArrayList<Obj>()
 
 fun <T:Obj> List<T>.byKind(kind:Kind) = filter { it.kind == kind }
 fun <T:Obj> List<T>.byKind(kinds:Collection<Kind>) = filter { it.kind in kinds }

@@ -24,7 +24,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val pgser = { gameCur.get()!!.pgser }
     val objs = byGame{Objs()}
     val stager = Stager(byGame { Score() })
-    val editor = Editor(objs)
+    val editor = Editor()
     val drawer = Drawer(objs)
     val spoter = Spoter(stager,objs)
 
@@ -40,32 +40,35 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
     val place = Place(pgser, tilesPlace, gridPlace, byGame { Grid<Map<TpPlace, Int>>() },drawer,editor)
 
+    val sider = Sider(objs)
+
     init {
         val stazis = Stazis(r, stager,editor,drawer,byGame { Grid<Int>() })
-
-        val drawerObjOwn = DrawerObjOwn(drawer,objs)
-        val editorObjOwn = EditorObjOwn(editor,objs)
-
         val hider = Hider()
-        val lifer = Lifer()
-        val drawerVoin = DrawerVoin(r,drawer, objs)
-        val enforcer = Enforcer(r,stager,drawerVoin,objs)
-        val editorVoin = EditorVoin(editor,hider,lifer, objs)
-        val pointControl = PointControl(stager,objs)
+        val shaper = Shaper(r,hider,objs)
 
-        Mine(r, drawerObjOwn,editorObjOwn,pointControl)
-        Hospital(r, drawerObjOwn,editorObjOwn,pointControl)
-        Flag(r, drawerObjOwn,editorObjOwn,pointControl)
 
-        Electric(r, drawerVoin, editorVoin,spoter)
-        Telepath(r, enforcer,drawerVoin, editorVoin)
-        Staziser(r, stazis, drawerVoin, editorVoin,spoter)
-        Inviser(r, stager,hider,drawerVoin, editorVoin,objs)
-        Imitator(r, spoter,drawerVoin, editorVoin)
         Catapult(r, drawer, editor,objs)
 
-        editorObjOwn.build()
-        editorVoin.build()
+        val drawerPointControl = DrawerPointControl(drawer,sider,objs)
+        val editorPointControl = EditorPointControl(editor,shaper,sider,objs)
+        val pointControl = PointControl(r,stager,sider,drawerPointControl,editorPointControl,objs)
+
+        Mine(pointControl)
+        Hospital(pointControl)
+        Flag(pointControl)
+
+        val drawerVoin = DrawerVoin(r,drawer, hider,sider,objs)
+        val editorVoin = EditorVoin(editor,shaper,sider, objs)
+        val lifer = Lifer(r,drawerVoin,shaper)
+        val enforcer = Enforcer(r,stager,drawerVoin,objs)
+        val voiner = Voiner(r,hider,drawerVoin, editorVoin, sider, lifer, enforcer)
+
+        Electric(r, voiner,spoter)
+        Telepath(r, enforcer,voiner)
+        Staziser(r, stazis,voiner)
+        Inviser(voiner, hider, sider,  stager,objs)
+        Imitator(spoter,voiner)
     }
 
     inner class CmderUnitcraft(mission: Int?) : CmderGame {
@@ -85,7 +88,8 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
                     drawer = drawer,
                     editor = editor,
                     stager = stager,
-                    spoter = spoter
+                    spoter = spoter,
+                    sider = sider
             )
             gameCur = WeakReference(game)
             for ((pg, v) in land.grid()) place.grid().set(pg, v)
