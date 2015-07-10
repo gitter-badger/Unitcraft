@@ -2,6 +2,7 @@ package unitcraft.game.rule
 
 import unitcraft.game.Pg
 import unitcraft.game.PriorDraw
+import unitcraft.game.ZetOrder
 import unitcraft.server.Side
 import java.util.*
 
@@ -22,27 +23,26 @@ open class ObjOwn(kind:Kind,shape:Shape):Obj(kind,shape){
     var side = Side.n
 }
 
-open class Voin(kind:Kind,shape: Shape,hider:Hider,enforcer: Enforcer,lifer:Lifer):ObjOwn(kind,shape){
-    var enforced by enforcer
+open class Voin(kind:Kind,shape: Shape,hider:Hider,lifer:Lifer):ObjOwn(kind,shape){
     var hided by hider
     var life by lifer
     var tired = true
 }
 
-class VoinFuel(kind:Kind,shape: Shape,hider:Hider,enforcer: Enforcer,lifer:Lifer):
-        Voin(kind,shape,hider,enforcer,lifer){
+class VoinFuel(kind:Kind,shape: Shape,hider:Hider,lifer:Lifer):
+        Voin(kind,shape,hider,lifer){
     var fuel = 3
 }
 
 class Objs:MutableList<Obj> by ArrayList<Obj>()
 
 fun <T:Obj> List<T>.byKind(kind:Kind) = filter { it.kind == kind }
-fun <T:Obj> List<T>.byKind(kinds:List<Kind>) = filter { it.kind in kinds }
+fun <T:Obj> List<T>.byKind(kinds:Collection<Kind>) = filter { it.kind in kinds }
 fun <T:Obj> List<T>.byPg(pg: Pg) = filter { (it.shape as? Singl)?.pg == pg }
 
-abstract class Shape
+abstract class Shape(var zetOrder: ZetOrder)
 
-class Singl(val pg:Pg) : Shape(){
+class Singl(zetOrder: ZetOrder,val pg:Pg) : Shape(zetOrder){
     var flip = false
 }
 

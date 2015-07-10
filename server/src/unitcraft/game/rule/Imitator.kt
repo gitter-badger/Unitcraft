@@ -2,10 +2,10 @@ package unitcraft.game.rule
 
 import unitcraft.game.Grid
 import unitcraft.game.Pg
-import unitcraft.game.Raiser
+import unitcraft.game.Spoter
 import unitcraft.game.Resource
 
-class Imitator(r: Resource,val raiser: Raiser,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin) {
+class Imitator(r: Resource,val spoter: Spoter,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin) {
     val tls = r.tlsVoin("imitator")
     init{
         drawerVoin.addKind(KindImitator,tls)

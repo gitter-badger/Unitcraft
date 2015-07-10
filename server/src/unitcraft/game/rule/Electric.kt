@@ -5,16 +5,19 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.*
 
-class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin){
+class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val spoter:Spoter){
     val tlsVoin = r.tlsVoin("electric")
+    val tlsMove = r.tlsAktMove
+    val tlsAkt = r.tlsAkt("electric")
     val hintTrace = r.hintTileTouch
     val tileTrace = r.tile("electric.akt")
 
     init{
         drawerVoin.addKind(KindElectric,tlsVoin)
         editorVoin.addKind(KindElectric,tlsVoin.neut)
+        spoter.skils[KindElectric] = listOf(Sk(tlsAkt),Sk(tlsMove))
     }
-
+    private object KindElectric:Kind()
 //    override fun focus() = grid().map{it.key to it.value.side}.toList()
 //
 //
@@ -48,4 +51,8 @@ class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin){
     }
 }
 
-object KindElectric:Kind()
+
+
+class Sk(val tlsAkt:TlsAkt):Skil{
+    override fun tlsAkt()=tlsAkt
+}

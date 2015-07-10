@@ -3,7 +3,7 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.server.Side
 
-class Staziser(r: Resource,val stazis:Stazis,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin){
+class Staziser(r: Resource,val stazis:Stazis,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val spoter:Spoter){
     val tlsVoin = r.tlsVoin("staziser")
     val tlsAkt = r.tlsAkt("staziser")
     val tlsMove = r.tlsAktMove
@@ -11,8 +11,9 @@ class Staziser(r: Resource,val stazis:Stazis,val drawerVoin:DrawerVoin,val edito
     init{
         drawerVoin.addKind(KindStaziser,tlsVoin)
         editorVoin.addKind(KindStaziser,tlsVoin.neut)
+        spoter.skils[KindStaziser] = listOf(Sk(tlsAkt),Sk(tlsMove))
     }
-
+    private object KindStaziser:Kind()
 //    fun spot(pgSpot: Pg,pgSrc: Pg, sideVid: Side, s: Spot) {
 //        grid()[pgSrc]?.let { voin ->
 //            for (pgNear in pgSpot.near) {
@@ -24,7 +25,7 @@ class Staziser(r: Resource,val stazis:Stazis,val drawerVoin:DrawerVoin,val edito
 //                }
 //            }
 //            for (pgNear in pgSpot.near) {
-//                val reveal = arm.canMove(Move(pgSpot, pgNear, TpMove.unit, false, sideVid))
+//                val reveal = arm.canMove(Move(pgSpot, pgNear, ZetOrder.unit, false, sideVid))
 //                if (reveal != null) {
 //                    s.add(pgNear, tlsMove) {
 //                        if (reveal()) {
@@ -44,4 +45,3 @@ class Staziser(r: Resource,val stazis:Stazis,val drawerVoin:DrawerVoin,val edito
 //    }
 }
 
-object KindStaziser:Kind()

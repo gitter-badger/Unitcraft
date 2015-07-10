@@ -9,31 +9,22 @@ import unitcraft.game.rule.Voin
 import unitcraft.game.rule.byPg
 
 class Enforcer(r: Resource, val stager: Stager, val drawerVoin: DrawerVoin, val objs: () -> Objs) {
-
+    private val enforced = "enforced"
     val tls = r.tlsBool("enforced", "enforcedAlready")
 
     init {
-        drawerVoin.addTileStt { voin -> voin.enforced?.let { tls(it) } }
+        drawerVoin.addTileStt { voin -> voin[enforced]?.let { tls(it as Boolean) } }
         stager.onEndTurn {
-            objs().filterIsInstance<Voin>().forEach { it.enforced = null }
+            objs().filterIsInstance<Voin>().forEach { it.remove(enforced) }
         }
     }
 
-    fun get(obj: Voin, prop: PropertyMetadata): Boolean? {
-        return obj[prop.name] as Boolean?
-    }
-
-    fun set(obj: Voin, prop: PropertyMetadata, v: Boolean?) {
-        if (v == null) obj.remove(prop.name)
-        else obj[prop.name] = v
-    }
-
-    fun canEnforce(pg: Pg) = objs().filterIsInstance<Voin>().byPg(pg).firstOrNull() != null
+    fun canEnforce(pg: Pg) = objs().filterIsInstance<Voin>().byPg(pg).filter{it[enforced]!=null}.firstOrNull() != null
 
 
     fun enforce(pg: Pg) {
-        objs().filterIsInstance<Voin>().byPg(pg).firstOrNull()?.let {
-            it.enforced = true
+        objs().filterIsInstance<Voin>().byPg(pg).sortBy{it.shape.zetOrder}.firstOrNull()?.let {
+            it[enforced] = true
         }
     }
 }

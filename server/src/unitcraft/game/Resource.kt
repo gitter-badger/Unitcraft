@@ -112,13 +112,13 @@ class Resource {
         val effectControlAlly = Effect("controlAlly") {
             fit()
             extend()
-            glow(Color(50, 255, 50))
+            glow(Color(50, 200, 50,150))
         }
 
         val effectControlEnemy = Effect("controlEnemy") {
             fit()
             extend()
-            glow(Color(255, 50, 50))
+            glow(Color(200, 50, 50,150))
         }
     }
 //    companion object {

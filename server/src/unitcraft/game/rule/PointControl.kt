@@ -84,7 +84,7 @@ class EditorObjOwn(val editor:Editor,val objs:()-> Objs){
 
     fun build(){
         editor.onEdit(tiles,{pg,side,num ->
-            objs().add(ObjOwn(kinds[num],Singl(pg)))
+            objs().add(ObjOwn(kinds[num],Singl(ZetOrder.flat,pg)))
         },{pg ->
             objs().byPg(pg).filterIsInstance<ObjOwn>().byKind(kinds).firstOrNull()?.let {
                 objs().remove(it)
@@ -119,5 +119,4 @@ class PointControl(val stager:Stager,val objs:()-> Objs){
     fun addKind(kind:Kind){
         kinds.add(kind)
     }
-
 }

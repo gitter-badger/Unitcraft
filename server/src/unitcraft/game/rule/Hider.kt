@@ -13,8 +13,8 @@ class Hider {
 
     }
 
-    //    fun getBusy(pg: Pg, tpMove: TpMove, side: Side): Busy? {
-    //        if(tpMove!=TpMove.unit)  return null
+    //    fun getBusy(pg: Pg, zetOrder: ZetOrder, side: Side): Busy? {
+    //        if(zetOrder!=ZetOrder.unit)  return null
     //        return grid()[pg]?.let{ if(it.isHided) Busy{ it.isHided = false } else Busy() }
     //    }
 }

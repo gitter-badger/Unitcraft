@@ -8,15 +8,15 @@ class Inviser(r: Resource,val stager: Stager, val hider: Hider,val drawerVoin:Dr
     val tlsVoin = r.tlsVoin("inviser")
 
     init {
-        drawerVoin.addKind(KindElectric,tlsVoin)
-        editorVoin.addKind(KindElectric,tlsVoin.neut)
+        drawerVoin.addKind(KindInviser,tlsVoin)
+        editorVoin.addKind(KindInviser,tlsVoin.neut)
         stager.onEndTurn { side ->
             for (obj in objs().byKind(KindInviser).filterIsInstance<Voin>()) {
                 if (obj.side == side.vs) hider.hide(obj)
             }
         }
     }
-
+    private object KindInviser:Kind()
     //    val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
 
     //    make<EfkUnhide>(0) {
@@ -31,5 +31,5 @@ class Inviser(r: Resource,val stager: Stager, val hider: Hider,val drawerVoin:Dr
 
 }
 
-object KindInviser:Kind()
+
 

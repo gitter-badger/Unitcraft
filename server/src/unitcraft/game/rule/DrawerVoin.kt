@@ -42,13 +42,13 @@ class DrawerVoin(r: Resource, drawer: Drawer, val objs: () -> Objs) {
     }
 }
 
-class EditorVoin(val editor: Editor, val hider: Hider, val enforcer: Enforcer, val lifer: Lifer, val objs: () -> Objs) {
+class EditorVoin(val editor: Editor, val hider: Hider, val lifer: Lifer, val objs: () -> Objs) {
     private val kinds = ArrayList<Kind>()
     private val tiles = ArrayList<Int>()
 
     fun build() {
         editor.onEdit(tiles, { pg, side, num ->
-            val voin = Voin(kinds[num], Singl(pg), hider, enforcer, lifer)
+            val voin = Voin(kinds[num], Singl(ZetOrder.voin,pg), hider, lifer)
             voin.side = side
             (voin.shape as? Singl)?.let { it.flip = pg.x > pg.pgser.xr / 2 }
             objs().add(voin)

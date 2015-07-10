@@ -1,15 +1,11 @@
 package unitcraft.game
 
+import unitcraft.game.rule.*
 import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.ArrayList
+import java.util.*
 
-// создает пятна, пятно может быть только у объекта
-// пятно у объекта вычисляется из его способностей
-// зависимые могут выставить райзслой по кинду
-// зависимые могут добавить список способностей по кинду
-// зависимые могут добавить ()-> список способностей по obj
-class Raiser(val pgser: () -> Pgser, val stager: Stager) {
+class Spoter(val stager: Stager,val objs:()-> Objs) {
     //val onRaises = exts.filterIsInstance<OnRaise>()
     //    fun spots(side: Side): Map<Pg,List<Sloy>> {
     //        val isOn = stager.sideTurn() == side
@@ -36,8 +32,22 @@ class Raiser(val pgser: () -> Pgser, val stager: Stager) {
     //        return emptyMap()
     //    }
 
+    val skils = HashMap<Kind, List<Skil>>()
+    val addSkils = ArrayList<(Obj)->List<Skil>>()
+    val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
+
     fun spot(pgSpot: Pg, sideVid: Side): List<Sloy> {
         val sloys = ArrayList<Sloy>()
+        for(obj in objs().byPg(pgSpot).byKind(skils.keySet()).sortBy{it.shape.zetOrder}){
+            for(skil in skils[obj.kind].plus(addSkils.flatMap{it(obj)}).filterNot { skil -> stopSkils.any{it(obj,skil)} }){
+                val r =  Raise(pgSpot,true)
+                pgSpot.near.forEach {
+                    r.add(it,skil.tlsAkt()){}
+                }
+                sloys.addAll(r.sloys())
+            }
+        }
+
 //        for (onRaise in onRaises) {
 //            val sideSpot = onRaise.sideSpot(pgSpot)
 //            if(sideSpot!=null) {
@@ -54,6 +64,10 @@ class Raiser(val pgser: () -> Pgser, val stager: Stager) {
 //        }
         return sloys
     }
+}
+
+interface Skil{
+    fun tlsAkt():TlsAkt
 }
 
 interface OnRaise {

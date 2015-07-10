@@ -10,14 +10,14 @@ class Armer() {
 
 //    override fun canMove(move: Move): (()->Boolean)? {
 //        if (stopAim.any { it.stop(move) }) return null
-//        val busy = getBusy(move.pgTo, move.tpMoveTo, move.sideVid)
+//        val busy = getBusy(move.pgTo, move.zetOrderTo, move.sideVid)
 //        if(busy.isEmpty()) return {true}
 //        val reveals = busy.map{it.reveal}.filterNotNull()
 //        return { reveals.forEach { it() };false }
 //    }
 //
-//    private fun getBusy(pg: Pg, tpMove: TpMove, side: Side): List<Busy> {
-//        return getBusys.map { it.getBusy(pg, tpMove, side) }.filterNotNull()
+//    private fun getBusy(pg: Pg, zetOrder: ZetOrder, side: Side): List<Busy> {
+//        return getBusys.map { it.getBusy(pg, zetOrder, side) }.filterNotNull()
 //    }
 //
 //    override fun canSell(pgFrom: Pg, pgTo: Pg): Boolean {
@@ -49,18 +49,18 @@ interface OnArm {
 class Move(
         val pgFrom: Pg,
         val pgTo: Pg,
-        val tpMoveTo: TpMove,
+        val zetOrderTo: ZetOrder,
         val isIgnoreStop: Boolean,
         val sideVid: Side
 )
 
 
-enum class TpMove {
-    flat, unit, fly
+enum class ZetOrder {
+    flat, voin, fly
 }
 
 interface OnGetBusy {
-    fun getBusy(pg: Pg, tpMove: TpMove, side: Side): Busy?
+    fun getBusy(pg: Pg, zetOrder: ZetOrder, side: Side): Busy?
 }
 
 class Busy(val reveal: (() -> Unit)? = null)

@@ -26,7 +26,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val stager = Stager(byGame { Score() })
     val editor = Editor(objs)
     val drawer = Drawer(objs)
-    val raiser = Raiser(pgser,stager)
+    val spoter = Spoter(stager,objs)
 
     val gridPlace = byGame { Grid<TpPlace>() }
     val sizeFix: Map<TpPlace, Int> = mapOf(
@@ -50,18 +50,18 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         val lifer = Lifer()
         val drawerVoin = DrawerVoin(r,drawer, objs)
         val enforcer = Enforcer(r,stager,drawerVoin,objs)
-        val editorVoin = EditorVoin(editor,hider,enforcer,lifer, objs)
+        val editorVoin = EditorVoin(editor,hider,lifer, objs)
         val pointControl = PointControl(stager,objs)
 
         Mine(r, drawerObjOwn,editorObjOwn,pointControl)
         Hospital(r, drawerObjOwn,editorObjOwn,pointControl)
         Flag(r, drawerObjOwn,editorObjOwn,pointControl)
 
-        Electric(r, drawerVoin, editorVoin)
+        Electric(r, drawerVoin, editorVoin,spoter)
         Telepath(r, enforcer,drawerVoin, editorVoin)
-        Staziser(r, stazis, drawerVoin, editorVoin)
+        Staziser(r, stazis, drawerVoin, editorVoin,spoter)
         Inviser(r, stager,hider,drawerVoin, editorVoin,objs)
-        Imitator(r, raiser,drawerVoin, editorVoin)
+        Imitator(r, spoter,drawerVoin, editorVoin)
         Catapult(r, drawer, editor,objs)
 
         editorObjOwn.build()
@@ -85,7 +85,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
                     drawer = drawer,
                     editor = editor,
                     stager = stager,
-                    raiser = raiser
+                    spoter = spoter
             )
             gameCur = WeakReference(game)
             for ((pg, v) in land.grid()) place.grid().set(pg, v)

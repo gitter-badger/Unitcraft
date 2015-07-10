@@ -98,15 +98,16 @@ function loadImage(prefix,qdmn){
 }
 
 function storeImages(pool,prefix) {
-    var qdmnLast = null;
+    var qdmnLast = [];
     var imgs = new Map();
     var plugLoadImg = qdmn => pool.plug(loadImage(prefix, qdmn).onValue(img => imgs.set(img.step, img)));
     if(isLocal) $(window).focus(()=>{
         imgs.clear();
-        if(qdmnLast!==null) plugLoadImg(qdmnLast);
+        for(var q of qdmnLast) plugLoadImg(q);
     });
     return qdmn => {
-        qdmnLast = qdmn;
+        if(qdmnLast[qdmnLast.length-1]!==qdmn) qdmnLast.push(qdmn);
+        if(qdmnLast.length>2) qdmnLast.shift();
         var img = imgs.get(qdmn);
         if (img) {
             return img;
@@ -116,5 +117,3 @@ function storeImages(pool,prefix) {
         }
     };
 }
-
-

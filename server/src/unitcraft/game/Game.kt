@@ -5,7 +5,7 @@ import unitcraft.server.*
 import java.util.ArrayList
 import java.util.HashMap
 
-class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: Stager,val raiser:Raiser) {
+class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: Stager,val spoter: Spoter) {
     val pgs = pgser.pgs
 
     val traces = Traces()
@@ -66,7 +66,7 @@ class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: St
 
     private fun akt(side: Side, prm: Prm) {
         prm.ensureSize(5)
-        val sloy = raiser.spot(prm.pg(0),side)[prm.int(2)]
+        val sloy = spoter.spot(prm.pg(0),side)[prm.int(2)]
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
@@ -76,7 +76,7 @@ class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: St
 
     private fun aktOpt(side: Side, prm: Prm) {
         prm.ensureSize(6)
-        val sloy = raiser.spot(prm.pg(0),side)[prm.int(2)]
+        val sloy = spoter.spot(prm.pg(0),side)[prm.int(2)]
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
@@ -94,7 +94,7 @@ class Game(val pgser: Pgser, val drawer:Drawer,val editor:Editor?,val stager: St
             pgser.xr,
             pgser.yr,
             drawer.draw(side),
-            pgs.map{it to raiser.spot(it, side)}.filter{it.second.isNotEmpty()}.toMap(),
+            pgs.map{it to spoter.spot(it, side)}.filter{it.second.isNotEmpty()}.toMap(),
             traces, side == stager.sideTurn(), Stage.turn, editor?.opterTest
     )
     private fun ensureTest() {

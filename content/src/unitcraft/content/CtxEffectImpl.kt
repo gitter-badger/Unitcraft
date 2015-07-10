@@ -94,51 +94,24 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
     }
 
     override fun glow(color: Color) {
-        val lightSize = if (size <= 100) 2 else 3
         val sizeShadow = size / 5
-        var imgLight = image(sizeExtend) {
-            val imgLight = image(sizeExtend) {
-                it.drawImage(img, 0, 0, null)
-                it.setComposite(AlphaComposite.SrcIn);
-                it.setColor(color);
-                it.fillRect(0, 0, sizeExtend, sizeExtend);
-            }
-            it.drawImage(imgLight, lightSize, lightSize, null)
-            it.drawImage(imgLight, -lightSize, lightSize, null)
-            it.drawImage(imgLight, lightSize, -lightSize, null)
-            it.drawImage(imgLight, -lightSize, -lightSize, null)
-            it.drawImage(imgLight, lightSize, 0, null)
-            it.drawImage(imgLight, -lightSize, 0, null)
-            it.drawImage(imgLight, 0, -lightSize, null)
-            it.drawImage(imgLight, 0, lightSize, null)
+        var circle = image(img.getWidth(), img.getHeight()) {
+            it.setColor(color)
+            it.fillOval(size/2,size/2,size,size)
         }
-        imgLight = getGaussianBlurFilter(sizeShadow, true).filter(imgLight, null)
-        imgLight = getGaussianBlurFilter(sizeShadow, false).filter(imgLight, null)
+        circle = getGaussianBlurFilter(sizeShadow, true).filter(circle, null)
+        circle = getGaussianBlurFilter(sizeShadow, false).filter(circle, null)
         img = image(img.getWidth(), img.getHeight()) {
-            it.drawImage(imgLight, 0, 0, null)
+            it.drawImage(circle, sizeShadow / 2, sizeShadow / 2, null)
             it.drawImage(img, 0, 0, null)
         }
-    }
-
-    private fun createGlow(sizeShadow: Int, color: Color): BufferedImage {
-        val xr = img.getWidth() + 4 * sizeShadow
-        val yr = img.getHeight() + 4 * sizeShadow
-        var imgShadow = image(xr, yr) {
-            it.drawImage(img, 0, 0, null)
-            it.setComposite(AlphaComposite.SrcIn);
-            it.setColor(color);
-            it.fillRect(0, 0, xr, yr);
-        }
-        imgShadow = getGaussianBlurFilter(sizeShadow, true).filter(imgShadow, null)
-        imgShadow = getGaussianBlurFilter(sizeShadow, false).filter(imgShadow, null)
-        return imgShadow
     }
 
     override fun shadow(color: Color) {
         val sizeShadow = size / 10
         val imgShadow = createDropShadow(sizeShadow, color)
         img = image(img.getWidth(), img.getHeight()) {
-            it.drawImage(imgShadow, -sizeShadow * 2 + sizeShadow / 2, -sizeShadow * 2 + sizeShadow / 2, null)
+            it.drawImage(imgShadow, sizeShadow / 2, sizeShadow / 2, null)
             it.drawImage(img, 0, 0, null)
         }
     }
@@ -147,7 +120,7 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         val xr = img.getWidth() + 4 * sizeShadow
         val yr = img.getHeight() + 4 * sizeShadow
         var imgShadow = image(xr, yr) {
-            it.drawImage(img, sizeShadow * 2, sizeShadow * 2, null)
+            it.drawImage(img, 0, 0, null)
             it.setComposite(AlphaComposite.SrcIn);
             it.setColor(color);
             it.fillRect(0, 0, xr, yr);

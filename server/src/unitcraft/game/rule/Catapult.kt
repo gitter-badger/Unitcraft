@@ -11,7 +11,7 @@ class Catapult(r: Resource,val drawer:Drawer,val editor:Editor,val objs:()-> Obj
 
     init{
         editor.onEdit(listOf(tile),{pg, side, num ->
-            objs().add(Obj(KindCatapult, Singl(pg)))
+            objs().add(Obj(KindCatapult, Singl(ZetOrder.flat,pg)))
         },{objs().remove(it)})
 
         drawer.onDraw(PriorDraw.flat){side, ctx ->
