@@ -4,15 +4,12 @@ import unitcraft.game.Resource
 import unitcraft.game.Stager
 import unitcraft.server.Side
 
-class Inviser(r: Resource,val stager: Stager, val hider: Hider,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val objs: () -> Objs) {
-    val tlsVoin = r.tlsVoin("inviser")
-
+class Inviser(voiner:Voiner, val hider: Hider,val sider: Sider,val stager: Stager,val objs: () -> Objs) {
     init {
-        drawerVoin.addKind(KindInviser,tlsVoin)
-        editorVoin.addKind(KindInviser,tlsVoin.neut)
+        voiner.voinStd(KindInviser)
         stager.onEndTurn { side ->
-            for (obj in objs().byKind(KindInviser).filterIsInstance<Voin>()) {
-                if (obj.side == side.vs) hider.hide(obj)
+            for (obj in objs().byKind(KindInviser)) {
+                if (sider.isEnemy(obj,side)) hider.hide(obj,this)
             }
         }
     }

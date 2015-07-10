@@ -121,3 +121,5 @@ class Raise(val pgRaise: Pg, val isOn: Boolean) {
         return listSloy
     }
 }
+
+class PreAkt(val pg:Pg,tlsAkt: TlsAkt, fn: () -> Unit)

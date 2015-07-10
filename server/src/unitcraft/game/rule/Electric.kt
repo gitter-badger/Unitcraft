@@ -5,9 +5,9 @@ import unitcraft.land.Land
 import unitcraft.server.Side
 import java.util.*
 
-class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val spoter:Spoter){
+class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val spoter:Spoter,val shaper: Shaper){
     val tlsVoin = r.tlsVoin("electric")
-    val tlsMove = r.tlsAktMove
+
     val tlsAkt = r.tlsAkt("electric")
     val hintTrace = r.hintTileTouch
     val tileTrace = r.tile("electric.akt")
@@ -15,7 +15,7 @@ class Electric(r:Resource,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,va
     init{
         drawerVoin.addKind(KindElectric,tlsVoin)
         editorVoin.addKind(KindElectric,tlsVoin.neut)
-        spoter.skils[KindElectric] = listOf(Sk(tlsAkt),Sk(tlsMove))
+        spoter.skils[KindElectric] = listOf(Sk(tlsAkt), shaper.skil)
     }
     private object KindElectric:Kind()
 //    override fun focus() = grid().map{it.key to it.value.side}.toList()

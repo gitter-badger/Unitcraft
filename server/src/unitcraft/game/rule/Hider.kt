@@ -1,20 +1,30 @@
 package unitcraft.game.rule
 
+import unitcraft.game.Pg
+import unitcraft.server.Side
+import java.util.*
+
 class Hider {
-    fun get(obj: Obj, prop: PropertyMetadata): Boolean {
-        return (obj[prop.name] as? Boolean)?:false
+//    val hides = ArrayList<(Obj)->Boolean>()
+//    val isVidPgs = ArrayList<(Pg)->Boolean>()
+
+    fun isHided(obj:Obj,sideVid: Side):(()->Unit)?{
+         if(obj.kind.name == "KindInviser") return {() -> println("reveal")} else return null
     }
 
-    fun set(obj: Obj, prop: PropertyMetadata, v: Boolean) {
-        obj[prop.name] = v
-    }
-
-    fun hide(obj: Obj) {
+    fun hide(obj: Obj,src:Any) {
 
     }
+//
+//    fun unhide(obj: Obj,src:Any) {
+//
+//    }
+//
+//    fun
 
     //    fun getBusy(pg: Pg, zetOrder: ZetOrder, side: Side): Busy? {
     //        if(zetOrder!=ZetOrder.unit)  return null
     //        return grid()[pg]?.let{ if(it.isHided) Busy{ it.isHided = false } else Busy() }
     //    }
 }
+

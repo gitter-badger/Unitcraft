@@ -63,7 +63,7 @@ class DrawerObjOwn(val drawer:Drawer,val objs:()-> Objs) {
                 val shape = obj.shape
                 when(shape){
                     is Singl -> {
-                        ctx.drawTile(shape.pg,tlsObjOwns[obj.kind](side,obj))
+                        ctx.drawTile(shape.head,tlsObjOwns[obj.kind](side,obj))
                     }
                     else -> throw Err("unknown shape=$shape")
                 }
@@ -113,7 +113,7 @@ class PointControl(val stager:Stager,val objs:()-> Objs){
     }
 
     private fun intersect(shape: Shape, shapeOther: Shape) =
-        if(shape is Singl && shapeOther is Singl) shape.pg == shapeOther.pg else false
+        if(shape is Singl && shapeOther is Singl) shape.head == shapeOther.head else false
 
 
     fun addKind(kind:Kind){

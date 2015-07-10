@@ -1,10 +1,11 @@
 package unitcraft.game.rule
 
+import unitcraft.game.Shaper
 import unitcraft.game.Pg
 import unitcraft.game.Resource
 import unitcraft.game.Stager
 
-class Telepath(r: Resource, val enforcer: Enforcer,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin) {
+class Telepath(r: Resource, val enforcer: Enforcer,val drawerVoin:DrawerVoin,val editorVoin:EditorVoin,val shaper: Shaper) {
     val tlsVoin = r.tlsVoin("enforcer")
     val tlsAkt = r.tlsAkt("enforcer")
     val tlsMove = r.tlsAktMove

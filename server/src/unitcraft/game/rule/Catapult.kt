@@ -15,7 +15,7 @@ class Catapult(r: Resource,val drawer:Drawer,val editor:Editor,val objs:()-> Obj
         },{objs().remove(it)})
 
         drawer.onDraw(PriorDraw.flat){side, ctx ->
-            for(obj in objs()) if(obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).pg,tile)
+            for(obj in objs()) if(obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).head,tile)
         }
     }
     //        info<MsgSpot>(20) {

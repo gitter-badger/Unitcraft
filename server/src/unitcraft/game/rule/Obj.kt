@@ -23,29 +23,27 @@ open class ObjOwn(kind:Kind,shape:Shape):Obj(kind,shape){
     var side = Side.n
 }
 
-open class Voin(kind:Kind,shape: Shape,hider:Hider,lifer:Lifer):ObjOwn(kind,shape){
-    var hided by hider
-    var life by lifer
-    var tired = true
-}
-
-class VoinFuel(kind:Kind,shape: Shape,hider:Hider,lifer:Lifer):
-        Voin(kind,shape,hider,lifer){
-    var fuel = 3
-}
+open class Voin(kind:Kind,shape: Shape):ObjOwn(kind,shape)
 
 class Objs:MutableList<Obj> by ArrayList<Obj>()
 
 fun <T:Obj> List<T>.byKind(kind:Kind) = filter { it.kind == kind }
 fun <T:Obj> List<T>.byKind(kinds:Collection<Kind>) = filter { it.kind in kinds }
-fun <T:Obj> List<T>.byPg(pg: Pg) = filter { (it.shape as? Singl)?.pg == pg }
+fun <T:Obj> List<T>.byPg(pg: Pg) = filter { pg in it.shape.pgs }
+fun <T:Obj> List<T>.byZetOrder(zetOrder: ZetOrder) = filter { it.shape.zetOrder == zetOrder }
 
-abstract class Shape(var zetOrder: ZetOrder)
+data abstract class Shape(val zetOrder: ZetOrder,val head:Pg){
+    abstract val pgs:List<Pg>
+}
 
-class Singl(zetOrder: ZetOrder,val pg:Pg) : Shape(zetOrder){
-    var flip = false
+class Singl(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
+    override val pgs = listOf(head)
+}
+
+class Quadr(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
+    override val pgs = listOf(head,head.rt,head.dw,head.rt?.dw).requireNoNulls()
 }
 
 abstract class Kind{
-    fun name() = this.javaClass.getSimpleName()
+    val name = this.javaClass.getSimpleName().substring(4).decapitalize()
 }
