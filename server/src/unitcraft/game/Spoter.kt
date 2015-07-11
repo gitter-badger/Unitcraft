@@ -32,8 +32,7 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
     //        return emptyMap()
     //    }
 
-    //val skils = HashMap<Kind, List<Skil>>()
-    val skils = ArrayList<Skil>()
+    val listSkils = ArrayList<(Obj)->List<Skil>>()
     //val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
 
     fun spots(sideVid: Side): Map<Pg,List<Sloy>>{
@@ -66,7 +65,7 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
 
     fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
         val sloys = ArrayList<Sloy>()
-        for(skil in skils){
+        for(skil in listSkils.flatMap{it(obj)}){
             val r =  Raise(obj.shape.pgs,skil.isReady(obj))
             for(p in skil.preAkts(sideVid,obj)){
                 r.add(p.pg,p.tlsAkt,p.fn)

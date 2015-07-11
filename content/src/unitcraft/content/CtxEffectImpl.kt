@@ -102,7 +102,7 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         circle = getGaussianBlurFilter(sizeShadow, true).filter(circle, null)
         circle = getGaussianBlurFilter(sizeShadow, false).filter(circle, null)
         img = image(img.getWidth(), img.getHeight()) {
-            it.drawImage(circle, sizeShadow / 2, sizeShadow / 2, null)
+            it.drawImage(circle, 0, 0, null)
             it.drawImage(img, 0, 0, null)
         }
     }

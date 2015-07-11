@@ -9,15 +9,29 @@ class SkilerMove(r: Resource, spoter: Spoter,val shaper: Shaper):Skil{
     val kinds = ArrayList<Kind>()
 
     init{
-        spoter.skils.add(this)
+        spoter.listSkils.add{ if(it.kind in kinds) listOf(this) else emptyList() }
+    }
+
+    fun charged(obj: Obj): Boolean {
+        return (obj["move.charge"] as Boolean?) ?: true
+    }
+
+    fun discharge(obj: Obj) {
+        obj["move.charge"] = false
     }
 
     private fun fuel(obj:Obj):Int{
         return (obj["move.fuel"] as Int?)?:3
     }
 
-    private fun minusFuel(obj:Obj){
-        obj["move.fuel"] = fuel(obj) - 1
+    private fun minusFuel(obj:Obj) {
+        val fl = fuel(obj) - 1
+        if (fl == 0) {
+            obj["move.fuel"] = 3
+            discharge(obj)
+        } else {
+            obj["move.fuel"] = fl
+        }
     }
 
     override fun isReady(obj: Obj) = fuel(obj) > 0

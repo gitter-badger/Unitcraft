@@ -136,18 +136,25 @@ class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, spoter: Spoter) 
 
     init {
         voiner.add(KindStaziser)
-        spoter.skils.add(this)
+        spoter.listSkils.add{ if(it.kind==KindStaziser) listOf(this) else emptyList() }
     }
 
     fun charged(obj: Obj): Boolean {
         return (obj["staziser.charge"] as Boolean?) ?: true
     }
 
+    fun uncharge(obj: Obj) {
+        obj["staziser.charge"] = false
+    }
+
     override fun isReady(obj: Obj) = charged(obj)
 
     override fun preAkts(sideVid: Side, obj: Obj) =
             obj.shape.head.near.filter { it !in stazis }.map {
-                PreAkt(it, tlsAkt) { stazis.plant(it) }
+                PreAkt(it, tlsAkt) {
+                    stazis.plant(it)
+                    uncharge(obj)
+                }
             }
 
     private object KindStaziser : Kind()

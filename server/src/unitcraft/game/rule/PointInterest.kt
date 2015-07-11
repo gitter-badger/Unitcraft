@@ -4,38 +4,38 @@ import unitcraft.game.*
 import unitcraft.server.Side
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(r: Resource,val drawer:Drawer,val editor:Editor,val spoter: Spoter,val shaper:Shaper,val objs:()-> Objs):Skil {
+class Catapult(r: Resource, val drawer: Drawer, val editor: Editor, val spoter: Spoter, val shaper: Shaper, val objs: () -> Objs) : Skil {
     val name = "catapult"
     val tile = r.tile(name)
     val tlsAkt = r.tlsAkt(name)
 
-    init{
-        editor.onEdit(listOf(tile),{pg, side, num ->
-            objs().add(Obj(KindCatapult, Singl(ZetOrder.flat,pg)))
-        },{objs().remove(it)})
+    init {
+        editor.onEdit(listOf(tile), { pg, side, num ->
+            objs().add(Obj(KindCatapult, Singl(ZetOrder.flat, pg)))
+        }, { objs().remove(it) })
 
-        drawer.onDraw(PriorDraw.flat){side, ctx ->
-            for(obj in objs()) if(obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).head,tile)
+        drawer.onDraw(PriorDraw.flat) { side, ctx ->
+            for (obj in objs()) if (obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).head, tile)
         }
 
-        spoter.skils.add(this)
+        spoter.listSkils.add {
+            if (it.shape.zetOrder==ZetOrder.voin && it.shape.pgs.intersect(objs().byKind(KindCatapult).flatMap { it.shape.pgs }).isNotEmpty()) listOf(this) else emptyList()
+        }
     }
 
     override fun isReady(obj: Obj): Boolean {
         return true
     }
 
-    override fun preAkts(sideVid: Side, obj: Obj): List<PreAkt> {
-        return if(obj.shape.pgs.intersect(objs().byKind(KindCatapult).flatMap{it.shape.pgs}).isNotEmpty()){
-            obj.shape.head.all.map{ pg ->
+    override fun preAkts(sideVid: Side, obj: Obj) =
+            obj.shape.head.all.map { pg ->
                 val move = Move(obj, obj.shape.headTo(pg), sideVid)
                 val can = shaper.canMove(move)
-                if(can!=null) PreAkt(pg,tlsAkt){
-                    if(can()) shaper.move(move)
+                if (can != null) PreAkt(pg, tlsAkt) {
+                    if (can()) shaper.move(move)
                 } else null
             }.filterNotNull()
-        }else emptyList()
-    }
+
 
     private object KindCatapult : Kind()
     //        info<MsgSpot>(20) {
