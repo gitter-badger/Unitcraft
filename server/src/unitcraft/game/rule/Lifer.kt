@@ -12,14 +12,11 @@ class Lifer(r: Resource,drawer: DrawerVoin,val shaper: Shaper) {
 
     val kinds = ArrayList<Kind>()
 
-    fun life(obj:Obj) = obj[life] as Life
+    fun life(obj:Obj) = (obj[life] as Life?)?:Life(5)
 
     init{
         drawer.draws.add {obj,side,ctx ->
-            ctx.drawText(obj.shape.head, obj<Life>().value, hintTextLife)
-        }
-        shaper.creates.add{obj ->
-            obj[life] = Life(5)
+            ctx.drawText(obj.shape.head, life(obj).value, hintTextLife)
         }
     }
 }

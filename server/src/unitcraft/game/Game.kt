@@ -66,7 +66,7 @@ class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor
 
     private fun akt(side: Side, prm: Prm) {
         prm.ensureSize(5)
-        val sloy = spoter.spot(prm.pg(0),side)[prm.int(2)]
+        val sloy = spoter.spots(side)[prm.pg(0)]!![prm.int(2)]
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
@@ -76,7 +76,7 @@ class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor
 
     private fun aktOpt(side: Side, prm: Prm) {
         prm.ensureSize(6)
-        val sloy = spoter.spot(prm.pg(0),side)[prm.int(2)]
+        val sloy = spoter.spots(side)[prm.pg(0)]!![prm.int(2)]
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
         traces.clear()
@@ -94,7 +94,8 @@ class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor
             pgser.xr,
             pgser.yr,
             drawer.draw(side),
-            pgs.map{it to spoter.spot(it, side)}.filter{it.second.isNotEmpty()}.toMap(),
+//            pgs.map{it to spoter.spot(it, side)}.filter{it.second.isNotEmpty()}.toMap(),
+            spoter.spots(side),
             traces, side == stager.sideTurn(), Stage.turn, editor?.opterTest
     )
     private fun ensureTest() {

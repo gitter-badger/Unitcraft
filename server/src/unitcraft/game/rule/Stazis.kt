@@ -3,7 +3,7 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.server.exclude
 
-class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Drawer, val grid: () -> Grid<Int>) {
+class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Drawer,shaper:Shaper, private val grid: () -> Grid<Int>) {
     val tiles = r.tlsList(5, "stazis")
 
     init {
@@ -15,9 +15,12 @@ class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Dr
         drawer.onDraw(PriorDraw.overSky) { side, ctx ->
             for ((pg, num) in grid()) ctx.drawTile(pg, tiles[num - 1])
         }
+        shaper.stopMoves.add{ it.shapeTo.pgs.any{it in this} }
     }
 
     fun plant(pg: Pg) {
         grid()[pg] = 5
     }
+
+    fun contains(pg:Pg) = grid()[pg]!=null
 }

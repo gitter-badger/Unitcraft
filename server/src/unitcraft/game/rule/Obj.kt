@@ -29,16 +29,19 @@ fun <T:Obj> List<T>.byKind(kinds:Collection<Kind>) = filter { it.kind in kinds }
 fun <T:Obj> List<T>.byPg(pg: Pg) = filter { pg in it.shape.pgs }
 fun <T:Obj> List<T>.byZetOrder(zetOrder: ZetOrder) = filter { it.shape.zetOrder == zetOrder }
 
-data abstract class Shape(val zetOrder: ZetOrder,val head:Pg){
+abstract class Shape(val zetOrder: ZetOrder,val head:Pg){
     abstract val pgs:List<Pg>
+    abstract fun headTo(pgTo:Pg):Shape
 }
 
-class Singl(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
+data class Singl(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
     override val pgs = listOf(head)
+    override fun headTo(pgTo: Pg) = Singl(zetOrder,pgTo)
 }
 
-class Quadr(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
+data class Quadr(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
     override val pgs = listOf(head,head.rt,head.dw,head.rt?.dw).requireNoNulls()
+    override fun headTo(pgTo: Pg) = Quadr(zetOrder,pgTo)
 }
 
 abstract class Kind{

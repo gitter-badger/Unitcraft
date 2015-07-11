@@ -32,76 +32,74 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
     //        return emptyMap()
     //    }
 
-    val skils = HashMap<Kind, List<Skil>>()
-    val addSkils = ArrayList<(Obj)->List<Skil>>()
-    val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
+    //val skils = HashMap<Kind, List<Skil>>()
+    val skils = ArrayList<Skil>()
+    //val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
 
-    fun spot(pgSpot: Pg, sideVid: Side): List<Sloy> {
-        val sloys = ArrayList<Sloy>()
-        for(obj in objs().byPg(pgSpot).byKind(skils.keySet()).sortBy{it.shape.zetOrder}){
-            for(skil in skils[obj.kind].plus(addSkils.flatMap{it(obj)}).filterNot { skil -> stopSkils.any{it(obj,skil)} }){
-                val r =  Raise(pgSpot,true)
-                pgSpot.near.forEach {
-                    r.add(it,skil.tlsAkt()){}
+    fun spots(sideVid: Side): Map<Pg,List<Sloy>>{
+        val spots = HashMap<Pg,ArrayList<Sloy>>()
+        for(zetOrder in ZetOrder.values()){
+            for(obj in objs().byZetOrder(zetOrder)){
+                val sloysObj = sloysObj(obj,sideVid)
+                for(pg in obj.shape.pgs){
+                    spots.getOrPut(pg){ArrayList<Sloy>()}.addAll(sloysObj)
                 }
-                sloys.addAll(r.sloys())
             }
         }
+        return spots
+    }
 
-//        for (onRaise in onRaises) {
-//            val sideSpot = onRaise.sideSpot(pgSpot)
-//            if(sideSpot!=null) {
-//                val isOn = stager.sideTurn() == sideVid && (sideVid == sideSpot || false/*enforced*/)
-//                val spot = Spot(pgSpot, isOn)
-//                spot.addRaise()
-//                onRaise.spot(armer, pgSpot, pgSpot, sideVid, spot)
-//                for (pgSrc in onRaise.spotByCopy(pgSpot)) {
-//                    spot.addRaise()
-//                    onRaises.forEach { onRaise.spot(armer, pgSpot, pgSrc, sideVid, spot) }
+//    fun spot(pgSpot: Pg, sideVid: Side): List<Sloy> {
+//        val sloys = ArrayList<Sloy>()
+//        for(obj in objs().byPg(pgSpot)){//.byKind(skils.keySet()).sortBy{it.shape.zetOrder}){
+//            //for(skil in skils[obj.kind].plus(addSkils.map{it(obj)}.filterNotNull()).filterNot { skil -> stopSkils.any{it(obj,skil)} }){
+//            for(skil in skils){
+//                val r =  Raise(pgSpot,skil.isReady(obj))
+//                for(p in skil.preAkts(pgSpot,sideVid,obj)){
+//                    r.add(p.pg,p.tlsAkt,p.fn)
 //                }
-//                sloys.addAll(spot.sloys())
+//                sloys.addAll(r.sloys())
 //            }
 //        }
+//        return sloys
+//    }
+
+    fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
+        val sloys = ArrayList<Sloy>()
+        for(skil in skils){
+            val r =  Raise(obj.shape.pgs,skil.isReady(obj))
+            for(p in skil.preAkts(sideVid,obj)){
+                r.add(p.pg,p.tlsAkt,p.fn)
+            }
+            sloys.addAll(r.sloys())
+        }
         return sloys
     }
 }
 
 interface Skil{
-    fun tlsAkt():TlsAkt
+    fun isReady(obj:Obj):Boolean
+    fun preAkts(sideVid: Side,obj:Obj):List<PreAkt>
 }
 
-interface OnRaise {
-    fun sideSpot(pg: Pg): Side?
-    fun spot(arm: Arm, pgSpot: Pg, pgSrc: Pg, sideVid: Side, s: Spot){}
-    fun spotByCopy(pgSpot:Pg): List<Pg> = emptyList()
-}
+//class Spot(val pgSpot: Pg, val isOn: Boolean) {
+//    val raises = ArrayList<Raise>()
+//
+//    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
+//        raises.last().add(pgAkt, tlsAkt, fn)
+//    }
+//
+//    fun addRaise() {
+//        raises.add(Raise(pgSpot, isOn))
+//    }
+//
+//    fun sloys(): List<Sloy> {
+//        // TODO схлопнуть, если нет пересечений
+//        return raises.flatMap { it.sloys() }
+//    }
+//}
 
-interface Arm {
-    fun canMove(move: Move): (()->Boolean)?
-    fun canSkil(pgFrom: Pg, pgTo: Pg, side: Side): Boolean
-    fun canSell(pgFrom: Pg, pgTo: Pg): Boolean
-    fun canEnforce(pgFrom: Pg, pgTo: Pg): Boolean
-    fun canDmg(pgFrom: Pg, pgTo: Pg): Boolean
-}
-
-class Spot(val pgSpot: Pg, val isOn: Boolean) {
-    val raises = ArrayList<Raise>()
-
-    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
-        raises.last().add(pgAkt, tlsAkt, fn)
-    }
-
-    fun addRaise() {
-        raises.add(Raise(pgSpot, isOn))
-    }
-
-    fun sloys(): List<Sloy> {
-        // TODO схлопнуть, если нет пересечений
-        return raises.flatMap { it.sloys() }
-    }
-}
-
-class Raise(val pgRaise: Pg, val isOn: Boolean) {
+class Raise(val pgsErr: List<Pg>, val isOn: Boolean) {
     private val listSloy = ArrayList<Sloy>()
 
     fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
@@ -110,7 +108,7 @@ class Raise(val pgRaise: Pg, val isOn: Boolean) {
     //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
 
     private fun addAkt(akt: Akt) {
-        if (akt.pgAim == pgRaise) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
+        if (akt.pgAim in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
         val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
         if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
@@ -122,4 +120,4 @@ class Raise(val pgRaise: Pg, val isOn: Boolean) {
     }
 }
 
-class PreAkt(val pg:Pg,tlsAkt: TlsAkt, fn: () -> Unit)
+class PreAkt(val pg:Pg,val tlsAkt: TlsAkt, val fn: () -> Unit)

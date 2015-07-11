@@ -9,7 +9,7 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
 
     val stopMoves = ArrayList<(Move)->Boolean>()
 
-    val creates = ArrayList<(Obj)->Unit>()
+    //val creates = ArrayList<(Obj)->Unit>()
 //    val stopAim = exts.filterIsInstance<OnStopAim>()
 //    val arm = exts.filterIsInstance<OnArm>()
 //    val getBusys = exts.filterIsInstance<OnGetBusy>()
@@ -24,6 +24,11 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
         return hider.isHided(obj,move.sideVid)?.let{ {it();false} }
     }
 
+    fun move(move: Move) {
+        if(objClashed(move.shapeTo)!=null) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
+        move.obj.shape = move.shapeTo
+    }
+
     private fun objClashed(shape: Shape):Obj?{
         val sameZetOrd = objs().byZetOrder(shape.zetOrder)
         // TODO quadr may clash with 2 objs
@@ -32,8 +37,8 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
 
     fun create(kind:Kind,shape:Shape):Obj{
         val obj = Obj(kind,shape)
-        creates.forEach{ it(obj) }
-        if(objClashed(shape)!=null) throw Err("cant create obj(shape=$shape kind=$kind")
+        //creates.forEach{ it(obj) }
+        if(objClashed(shape)!=null) throw Err("cant create obj with shape=$shape kind=$kind")
         objs().add(obj)
         return obj
     }
@@ -51,18 +56,4 @@ class Move(
 
 enum class ZetOrder {
     flat, voin, fly
-}
-
-class SkilMove(r:Resource,val shaper: Shaper){
-    val tlsMove = r.tlsAktMove
-    fun pgs(pgSpot:Pg,obj:Obj,sideVid:Side,r:Raise){
-        for(pg in pgSpot.near) {
-            val shapeTo = obj.shape.copy(head=pg)
-            val can = shaper.canMove(Move(obj, shapeTo, sideVid))
-            if (can!=null)
-                r.add(pg, tlsMove) {
-                    if(can()) obj.shape = shapeTo
-                }
-        }
-    }
 }
