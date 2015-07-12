@@ -11,7 +11,7 @@ class SkilerMove(r: Resource, spoter: Spoter,val shaper: Shaper):Skil{
     val fuel = "move.fuel"
 
     init{
-        spoter.listSkils.add{ if(it.kind in kinds) listOf(this) else emptyList() }
+        spoter.listSkils.add{ if(it.kind in kinds) this else null }
         spoter.listOnTire.add{obj ->
             refuel(obj)
         }

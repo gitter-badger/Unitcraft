@@ -4,22 +4,19 @@ import unitcraft.game.*
 import unitcraft.server.Side
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(r: Resource, val drawer: Drawer, val editor: Editor, val spoter: Spoter, val shaper: Shaper, val objs: () -> Objs) : Skil {
+class Catapult(r: Resource, val drawer: Drawer, val spoter: Spoter, val shaper: Shaper, val objs: () -> Objs) : Skil {
     val name = "catapult"
     val tile = r.tile(name)
     val tlsAkt = r.tlsAkt(name)
 
     init {
-        editor.onEdit(listOf(tile), { pg, side, num ->
-            objs().add(Obj(KindCatapult, Singl(ZetOrder.flat, pg)))
-        }, { objs().remove(it) })
-
+        shaper.addToEditor(KindCatapult,ZetOrder.flat,tile)
         drawer.onDraw(PriorDraw.flat) { side, ctx ->
             for (obj in objs()) if (obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).head, tile)
         }
 
         spoter.listSkils.add {
-            if (it.shape.zetOrder==ZetOrder.voin && it.shape.pgs.intersect(objs().byKind(KindCatapult).flatMap { it.shape.pgs }).isNotEmpty()) listOf(this) else emptyList()
+            if (it.shape.zetOrder==ZetOrder.voin && it.shape.pgs.intersect(objs().byKind(KindCatapult).flatMap { it.shape.pgs }).isNotEmpty()) this else null
         }
     }
 

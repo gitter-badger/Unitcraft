@@ -6,30 +6,43 @@ import unitcraft.server.Side
 class Voiner(val r: Resource,
              val hider: Hider,
              val drawerVoin: DrawerVoin,
-             val editorVoin: EditorVoin,
+             val shaper: Shaper,
              val sider: Sider,
              val lifer: Lifer,
              val enforcer: Enforcer,
+             val spoter:Spoter,
              val skilerMove: SkilerMove
 ) {
     fun add(kind: Kind) {
         val tlsVoin = r.tlsVoin(kind.name)
         drawerVoin.tlsVoins[kind] = tlsVoin
-        editorVoin.addKind(kind, tlsVoin.neut)
+        shaper.addToEditor(kind,ZetOrder.voin, tlsVoin.neut)
         lifer.kinds.add(kind)
         sider.kinds.add(kind)
         enforcer.kinds.add(kind)
         skilerMove.kinds.add(kind)
+        shaper.refinesEditor.add{obj,pg,side ->
+            obj["flip"] = pg.x > pg.pgser.xr / 2
+            sider.change(obj,side)
+            spoter.refresh(obj)
+        }
     }
 }
 
-class Telepath(r: Resource, val enforcer: Enforcer, val voiner: Voiner) {
+class Telepath(r: Resource, val enforcer: Enforcer, val voiner: Voiner, val spoter: Spoter):Skil {
     val tlsAkt = r.tlsAkt("telepath")
 
     init {
         voiner.add(KindTelepath)
+        spoter.listSkils.add{ if(it.kind == KindTelepath) this else null }
     }
-
+    override fun preAkts(sideVid: Side, obj: Obj) =
+            obj.shape.head.near.filter { enforcer.canEnforce(it) }.map {
+                PreAkt(it, tlsAkt) {
+                    enforcer.enforce(it)
+                    spoter.tire(obj)
+                }
+            }
     private object KindTelepath : Kind()
     //    fun spot() {
     //        for (pgNear in pgSpot.near)
@@ -136,7 +149,7 @@ class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, val spoter: Spot
 
     init {
         voiner.add(KindStaziser)
-        spoter.listSkils.add{ if(it.kind==KindStaziser) listOf(this) else emptyList() }
+        spoter.listSkils.add{ if(it.kind==KindStaziser) this else null }
     }
 
     override fun preAkts(sideVid: Side, obj: Obj) =

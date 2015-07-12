@@ -27,26 +27,3 @@ class DrawerVoin(r: Resource, drawer: Drawer,hider:Hider,sider:Sider, spoter: Sp
         }
     }
 }
-
-class EditorVoin(val editor: Editor, val shaper: Shaper,val sider: Sider, spoter: Spoter, val objs: () -> Objs) {
-    private val kinds = ArrayList<Kind>()
-    private val tiles = ArrayList<Int>()
-
-    init {
-        editor.onEdit(tiles, { pg, side, num ->
-            val obj = shaper.create(kinds[num],Singl(ZetOrder.voin,pg))
-            obj["flip"] = pg.x > pg.pgser.xr / 2
-            sider.change(obj,side)
-            spoter.refresh(obj)
-        }, { pg ->
-            objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
-                shaper.remove(it)
-            } ?: false
-        })
-    }
-
-    fun addKind(kind: Kind, tile: Int) {
-        kinds.add(kind)
-        tiles.add(tile)
-    }
-}

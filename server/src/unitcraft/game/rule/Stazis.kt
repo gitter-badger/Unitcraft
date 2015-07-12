@@ -7,12 +7,12 @@ class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Dr
     val tiles = r.tlsList(5, "stazis")
 
     init {
-        editor.onEdit(listOf(tiles.last()), { pg, side, num -> plant(pg) }, { pg -> grid().remove(pg) != null })
+        editor.onEdit(PriorDraw.overFly,listOf(tiles.last()), { pg, side, num -> plant(pg) }, { pg -> grid().remove(pg) != null })
         stager.onEndTurn {
             for ((pg, v) in grid()) grid()[pg] = v - 1
             grid().values().exclude { it == 0 }
         }
-        drawer.onDraw(PriorDraw.overSky) { side, ctx ->
+        drawer.onDraw(PriorDraw.overFly) { side, ctx ->
             for ((pg, num) in grid()) ctx.drawTile(pg, tiles[num - 1])
         }
         shaper.stopMoves.add{ it.shapeTo.pgs.any{it in this} }

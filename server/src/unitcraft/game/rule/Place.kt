@@ -17,7 +17,7 @@ class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -
             }
         }
 
-        editor.onEdit(TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> grid()[pg] = TpPlace.values()[num]},{false})
+        editor.onEdit(PriorDraw.place,TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> grid()[pg] = TpPlace.values()[num]},{false})
     }
 }
 //val hide : MutableSet<Any> = Collections.newSetFromMap(WeakHashMap<Any,Boolean>())

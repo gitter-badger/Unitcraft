@@ -9,7 +9,7 @@ import java.util.*
 class Spoter(val stager: Stager,val objs:()-> Objs) {
     private val freshed = "freshed"
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
-    val listSkils = ArrayList<(Obj)->List<Skil>>()
+    val listSkils = ArrayList<(Obj)->Skil?>()
     val listOnTire = ArrayList<(Obj) -> Unit>()
     //val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
 
@@ -66,7 +66,7 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
 
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
         val sloys = ArrayList<Sloy>()
-        for(skil in listSkils.flatMap{it(obj)}){
+        for(skil in listSkils.map{it(obj)}.filterNotNull()){
             val isOn = if(sideVid == stager.sideTurn() && isFresh(obj)) listCanAkt.any{it(sideVid,obj)} else false
 
             val r =  Raise(obj.shape.pgs,isOn)

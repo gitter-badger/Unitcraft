@@ -3,12 +3,35 @@ package unitcraft.game
 import unitcraft.game.rule.*
 import unitcraft.server.Err
 import unitcraft.server.Side
+import unitcraft.server.init
 import java.util.*
 import kotlin.properties.Delegates
 
-class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
-
+class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) {
     val stopMoves = ArrayList<(Move)->Boolean>()
+
+    private val kindsEditor = HashMap<ZetOrder, Pair<MutableList<Kind>, MutableList<Int>>>().init{
+        for(zetOrder in ZetOrder.all)
+            this[zetOrder] = ArrayList<Kind>() to ArrayList<Int>()
+    }
+    val refinesEditor = ArrayList<(Obj,Pg,Side)->Unit>()
+
+    init{
+        for(zetOrder in ZetOrder.all){
+            val pairList = kindsEditor[zetOrder]!!
+            editor.onEdit(zetOrder.toPriorDraw(),pairList.second, { pg, side, num ->
+                val shape = Singl(zetOrder, pg)
+                objClashed(shape)?.let { remove(it) }
+                val obj = Obj(pairList.first[num], shape)
+                refinesEditor.forEach{it(obj,pg,side)}
+                objs().add(obj)
+            },{pg ->
+                objs().lay(zetOrder,pg)?.let {
+                    remove(it)
+                } ?: false
+            })
+        }
+    }
 
     //val creates = ArrayList<(Obj)->Unit>()
 //    val stopAim = exts.filterIsInstance<OnStopAim>()
@@ -47,6 +70,12 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
     fun remove(obj:Obj):Boolean{
         return objs().remove(obj)
     }
+
+    fun addToEditor(kind:Kind,zetOrder:ZetOrder,tile:Int){
+        val (kinds,tiles) = kindsEditor[zetOrder]
+        kinds.add(kind)
+        tiles.add(tile)
+    }
 }
 
 class Move(
@@ -57,6 +86,8 @@ class Move(
 
 enum class ZetOrder {
     flat, voin, fly;
+
+    fun toPriorDraw() = PriorDraw.valueOf(this.name())
 
     companion object{
         val all = ZetOrder.values()

@@ -6,7 +6,7 @@ import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val drawer: DrawerPointControl, val editor: EditorPointControl, val objs: () -> Objs) {
+class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val drawer: DrawerPointControl, val shaper: Shaper, val objs: () -> Objs) {
     val kinds = ArrayList<Kind>()
     val kindsCanCapture = ArrayList<Kind>()
 
@@ -24,7 +24,7 @@ class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val draw
         kinds.add(kind)
         sider.kinds.add(kind)
         drawer.regKind(kind, tls)
-        editor.addKind(kind, tls.neut)
+        shaper.addToEditor(kind,ZetOrder.flat, tls.neut)
     }
 }
 
@@ -78,23 +78,23 @@ class DrawerPointControl(val drawer: Drawer,val sider:Sider, val objs: () -> Obj
     }
 }
 
-class EditorPointControl(val editor: Editor, val shaper: Shaper, val sider: Sider, val objs: () -> Objs) {
-
-    private val kinds = ArrayList<Kind>()
-    private val tiles = ArrayList<Int>()
-
-    init {
-        editor.onEdit(tiles, { pg, side, num ->
-            shaper.create(kinds[num], Singl(ZetOrder.flat, pg))
-        }, { pg ->
-            objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
-                objs().remove(it)
-            } ?: false
-        })
-    }
-
-    fun addKind(kind: Kind, tile: Int) {
-        kinds.add(kind)
-        tiles.add(tile)
-    }
-}
+//class EditorPointControl(val editor: Editor, val shaper: Shaper, val sider: Sider, val objs: () -> Objs) {
+//
+//    private val kinds = ArrayList<Kind>()
+//    private val tiles = ArrayList<Int>()
+//
+//    init {
+////        editor.onEdit(tiles, { pg, side, num ->
+////            shaper.create(kinds[num], Singl(ZetOrder.flat, pg))
+////        }, { pg ->
+////            objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
+////                objs().remove(it)
+////            } ?: false
+////        })
+//    }
+//
+//    fun addKind(kind: Kind, tile: Int) {
+//        kinds.add(kind)
+//        tiles.add(tile)
+//    }
+//}

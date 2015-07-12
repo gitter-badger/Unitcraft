@@ -44,28 +44,26 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     init {
         val hider = Hider()
-        val shaper = Shaper(r,hider,objs)
+        val shaper = Shaper(r,hider,editor,objs)
         val stazis = Stazis(r, stager,editor,drawer,shaper,byGame { Grid<Int>() })
 
-        Catapult(r, drawer, editor,spoter,shaper,objs)
+        Catapult(r, drawer, spoter,shaper,objs)
 
         val drawerPointControl = DrawerPointControl(drawer,sider,objs)
-        val editorPointControl = EditorPointControl(editor,shaper,sider,objs)
-        val pointControl = PointControl(r,stager,sider,drawerPointControl,editorPointControl,objs)
+        val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
 
         Mine(pointControl)
         Hospital(pointControl)
         Flag(pointControl)
 
         val drawerVoin = DrawerVoin(r,drawer, hider,sider,spoter,objs)
-        val editorVoin = EditorVoin(editor,shaper,sider,spoter, objs)
         val lifer = Lifer(r,drawerVoin,shaper)
         val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
         val skilerMove = SkilerMove(r,spoter,shaper)
-        val voiner = Voiner(r,hider,drawerVoin, editorVoin, sider, lifer, enforcer,skilerMove)
+        val voiner = Voiner(r,hider,drawerVoin, shaper, sider, lifer, enforcer,spoter,skilerMove)
 
         Electric(r, voiner)
-        Telepath(r, enforcer,voiner)
+        Telepath(r, enforcer,voiner,spoter)
         Staziser(r, stazis,voiner,spoter)
         Inviser(voiner, hider, sider,  stager,objs)
         Imitator(spoter,voiner)

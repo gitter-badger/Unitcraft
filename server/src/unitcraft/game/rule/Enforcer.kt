@@ -20,7 +20,7 @@ class Enforcer(r: Resource, val stager: Stager, val drawerVoin: DrawerVoin, spot
     private fun enforced(obj: Obj) = (obj[enforced] as Boolean?) ?: false
 
 
-    fun canEnforce(pg: Pg) = objs().byPg(pg).byKind(kinds).filter { it[enforced] != null }.firstOrNull() != null
+    fun canEnforce(pg: Pg) = objs().byPg(pg).byKind(kinds).filter { it[enforced] == null }.firstOrNull() != null
 
 
     fun enforce(pg: Pg) {

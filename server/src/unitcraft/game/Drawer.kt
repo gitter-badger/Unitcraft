@@ -51,7 +51,7 @@ class Drawer(val objs: () -> Objs) {
 }
 
 enum class PriorDraw {
-    place, flat, underVoin, voin, overVoin, sky, overSky
+    place, flat, underVoin, voin, overVoin, fly, overFly
 }
 
 class CtxDraw(val sideVid: Side) {
