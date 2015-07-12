@@ -8,7 +8,7 @@ import java.util.HashMap
 class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor?,val stager: Stager,val spoter: Spoter) {
     val pgs = pgser.pgs
 
-    val traces = Traces()
+    val traces = Tracer()
 
     fun cmd(side: Side, cmd: String) {
         if(side.isN) throw throw Err("side is neutral")
@@ -66,22 +66,12 @@ class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor
 
     private fun akt(side: Side, prm: Prm) {
         prm.ensureSize(5)
-        val sloy = spoter.spots(side)[prm.pg(0)]!![prm.int(2)]
-        if (!sloy.isOn) throw Violation("sloy is off")
-        val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
-        traces.clear()
-        akt.fn?.invoke()
-        println("akt " + side + " from " + prm.pg(0) + " index " + prm.int(2) + " to " + prm.pg(3))
+        spoter.akt(side,prm.pg(0),prm.int(2),prm.pg(3))
     }
 
     private fun aktOpt(side: Side, prm: Prm) {
         prm.ensureSize(6)
-        val sloy = spoter.spots(side)[prm.pg(0)]!![prm.int(2)]
-        if (!sloy.isOn) throw Violation("sloy is off")
-        val akt = sloy.aktByPg(prm.pg(3)) ?: throw Violation("akt not found")
-        traces.clear()
-        //make(akt.efkOpt) prm.int(5)
-        println("akt " + side + " from " + prm.pg(0) + " index " + prm.int(2) + " to " + prm.pg(3) + " opt " + prm.int(5))
+        spoter.akt(side,prm.pg(0),prm.int(2),prm.pg(3),prm.int(5))
     }
 
     private fun endTurn(side: Side, prm: Prm) {

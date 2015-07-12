@@ -130,7 +130,7 @@ class Redeployer(voiner: Voiner) {
     private object KindRededloyer : Kind()
 }
 
-class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, spoter: Spoter) : Skil {
+class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, val spoter: Spoter) : Skil {
     val tlsAkt = r.tlsAkt("staziser")
     val tlsMove = r.tlsAktMove
 
@@ -139,21 +139,11 @@ class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, spoter: Spoter) 
         spoter.listSkils.add{ if(it.kind==KindStaziser) listOf(this) else emptyList() }
     }
 
-    fun charged(obj: Obj): Boolean {
-        return (obj["staziser.charge"] as Boolean?) ?: true
-    }
-
-    fun uncharge(obj: Obj) {
-        obj["staziser.charge"] = false
-    }
-
-    override fun isReady(obj: Obj) = charged(obj)
-
     override fun preAkts(sideVid: Side, obj: Obj) =
             obj.shape.head.near.filter { it !in stazis }.map {
                 PreAkt(it, tlsAkt) {
                     stazis.plant(it)
-                    uncharge(obj)
+                    spoter.tire(obj)
                 }
             }
 

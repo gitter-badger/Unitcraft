@@ -85,8 +85,7 @@ class EditorPointControl(val editor: Editor, val shaper: Shaper, val sider: Side
 
     init {
         editor.onEdit(tiles, { pg, side, num ->
-            val obj = shaper.create(kinds[num], Singl(ZetOrder.flat, pg))
-            sider.change(obj, Side.n)
+            shaper.create(kinds[num], Singl(ZetOrder.flat, pg))
         }, { pg ->
             objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
                 objs().remove(it)

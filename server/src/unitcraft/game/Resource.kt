@@ -37,7 +37,11 @@ class Resource {
     val tileHide = tile("hide")
 
     fun tlsObjSide(name:String) = TlsObjOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
-    fun tlsVoin(name:String) = TlsVoin(tile(name,effectNeut), tile(name,effectFriend), tile(name,effectEnemy))
+    fun tlsVoin(name:String) = TlsVoin(
+            tile(name,effectNeut),
+            TlsBool(tile(name,effectFriend),tile(name,effectFriendTired)),
+            TlsBool(tile(name,effectEnemy),tile(name,effectEnemyTired))
+    )
     fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
@@ -75,21 +79,33 @@ class Resource {
             extend()
         }
 
-        val effectFriend = Effect("friend") {
-            fit()
-            extendBottom()
-            light(Color(50, 255, 50))
-        }
-
         val effectNeut = Effect("neut") {
             fit()
             extendBottom()
         }
 
+        val effectFriend = Effect("friend") {
+            fit()
+            extendBottom()
+            light(Color(80, 255, 80))
+        }
+
+        val effectFriendTired = Effect("friendTired") {
+            fit()
+            extendBottom()
+            light(Color(0, 150, 0))
+        }
+
         val effectEnemy = Effect("enemy") {
             fit()
             extendBottom()
-            light(Color(255, 50, 50))
+            light(Color(255, 80, 80))
+        }
+
+        val effectEnemyTired = Effect("enemyTired") {
+            fit()
+            extendBottom()
+            light(Color(150, 0, 0))
         }
 
         val effectAkt = Effect("akt") {
@@ -143,8 +159,9 @@ open class TlsObjOwn(val neut:Int,val ally:Int,val enemy:Int){
             if(sideOwn.isN) neut else if(sideOwn == side) ally else enemy
 }
 
-class TlsVoin(neut: Int, ally: Int, enemy: Int):TlsObjOwn(neut,ally,enemy){
-
+class TlsVoin(val neut: Int, val ally: TlsBool, val enemy: TlsBool){
+    fun invoke(side:Side, sideOwn: Side,isFresh:Boolean) =
+            if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
 }
 
 class TlsAkt(val aktOn:Int,val aktOff:Int){

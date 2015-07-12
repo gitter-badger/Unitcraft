@@ -1,18 +1,21 @@
 package unitcraft.game.rule
 
 import unitcraft.game.Pg
+import unitcraft.game.Spoter
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
-class Sider(val objs: () -> Objs){
+class Sider(spoter: Spoter,val objs: () -> Objs){
     private val side = "side"
 
     val kinds = ArrayList<Kind>()
 
+    init{
+        spoter.listCanAkt.add { side, obj -> side(obj) == side }
+    }
 
-
-    fun side(obj:Obj) = obj[side] as Side
+    fun side(obj:Obj) = (obj[side] as Side?)?:Side.n
 
     fun change(obj:Obj,side:Side){
         obj[this.side]=side
@@ -22,9 +25,8 @@ class Sider(val objs: () -> Objs){
         target[side] = side(obj)
     }
 
-
-    fun isEnemy(obj:Obj,side:Side) = side(obj:Obj) == side.vs
-    fun isAlly(obj:Obj,side:Side) = side(obj:Obj) == side
+    fun isEnemy(obj:Obj,side:Side) = side(obj) == side.vs
+    fun isAlly(obj:Obj,side:Side) = side(obj) == side
 
     fun editChange(pg: Pg, sideVid: Side) {
         objs().byPg(pg).byKind(kinds).firstOrNull()?.let {

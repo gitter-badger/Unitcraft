@@ -4,6 +4,7 @@ import unitcraft.game.rule.*
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
+import kotlin.properties.Delegates
 
 class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
 
@@ -29,9 +30,9 @@ class Shaper(r:Resource,val hider: Hider,val objs:()-> Objs) {
         move.obj.shape = move.shapeTo
     }
 
+    // TODO must return list
     private fun objClashed(shape: Shape):Obj?{
         val sameZetOrd = objs().byZetOrder(shape.zetOrder)
-        // TODO quadr may clash with 2 objs
         return sameZetOrd.firstOrNull{obj -> shape.pgs.any{it in obj.shape.pgs}}
     }
 
@@ -55,5 +56,10 @@ class Move(
 )
 
 enum class ZetOrder {
-    flat, voin, fly
+    flat, voin, fly;
+
+    companion object{
+        val all = ZetOrder.values()
+        val reverse = ZetOrder.values().reverse()
+    }
 }

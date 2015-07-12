@@ -1,44 +1,39 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
 class SkilerMove(r: Resource, spoter: Spoter,val shaper: Shaper):Skil{
     val tlsAktMove = r.tlsAktMove
     val kinds = ArrayList<Kind>()
+    val fuel = "move.fuel"
 
     init{
         spoter.listSkils.add{ if(it.kind in kinds) listOf(this) else emptyList() }
-    }
-
-    fun charged(obj: Obj): Boolean {
-        return (obj["move.charge"] as Boolean?) ?: true
-    }
-
-    fun discharge(obj: Obj) {
-        obj["move.charge"] = false
-    }
-
-    private fun fuel(obj:Obj):Int{
-        return (obj["move.fuel"] as Int?)?:3
-    }
-
-    private fun minusFuel(obj:Obj) {
-        val fl = fuel(obj) - 1
-        if (fl == 0) {
-            obj["move.fuel"] = 3
-            discharge(obj)
-        } else {
-            obj["move.fuel"] = fl
+        spoter.listOnTire.add{obj ->
+            refuel(obj)
         }
     }
 
-    override fun isReady(obj: Obj) = fuel(obj) > 0
+    private fun fuel(obj:Obj):Int{
+        return (obj[fuel] as Int?)?:3
+    }
+
+    private fun refuel(obj:Obj){
+        obj[fuel] = 3
+    }
+
+    private fun minusFuel(obj:Obj) {
+        val fl = fuel(obj)
+        if(fl<=0) throw Err("fuel=$fl <= 0")
+        obj[fuel] = fl - 1
+    }
 
     override fun preAkts(sideVid: Side, obj: Obj): List<PreAkt> {
         val list = ArrayList<PreAkt>()
-        for(pg in obj.shape.head.near) {
+        if(fuel(obj)>0) for(pg in obj.shape.head.near) {
             val move = Move(obj, obj.shape.headTo(pg), sideVid)
             val can = shaper.canMove(move)
             if (can!=null) list.add(PreAkt(pg, tlsAktMove) {

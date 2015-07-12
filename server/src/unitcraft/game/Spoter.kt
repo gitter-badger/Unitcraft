@@ -3,44 +3,28 @@ package unitcraft.game
 import unitcraft.game.rule.*
 import unitcraft.server.Err
 import unitcraft.server.Side
+import unitcraft.server.Violation
 import java.util.*
 
 class Spoter(val stager: Stager,val objs:()-> Objs) {
-    //val onRaises = exts.filterIsInstance<OnRaise>()
-    //    fun spots(side: Side): Map<Pg,List<Sloy>> {
-    //        val isOn = stager.sideTurn() == side
-    //        return onRaises.flatMap{ ext -> ext.focus().map{
-    //            it.first to Rais(ext.raise(aimer,it.first,it.first,it.second),it.first,isOn).sloys()
-    //        }}.toMap().filter { it.value.isNotEmpty() }
-    // 1) sideVid==sideFocus умолчание 2) sideTurn == sideVid 3) enforced разрешает
-    //        if (breed.grid()[pgSrc] != null) breed.grid()[pgSpot]?.let { voinSpot ->
-    //            if (!voinSpot.isHided) {
-    //                if (pgSpot !in stazis.grid()) {
-    //                    var isOn = voinSpot.side == side// || voinSpot
-    //                    if (endTurn.sideTurn() != side) isOn = false
-    //                    val r = Raise(pgSpot, isOn)
-    //                    for (pgNear in pgSpot.near) aim(pgNear, pgSpot, breed, side, r)
-    //                    for (pgNear in pgSpot.near) {
-    //                        if (canMove(pgSpot, pgNear, voinSpot)) r.addFn(pgNear, tlsMove){
-    //                            move(breed.grid(),pgSpot,pgNear)
-    //                        }
-    //                    }
-    //                    raises.add(r)
-    //                }
-    //            }
-    //        }
-    //        return emptyMap()
-    //    }
-
+    private val freshed = "freshed"
+    val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
     val listSkils = ArrayList<(Obj)->List<Skil>>()
+    val listOnTire = ArrayList<(Obj) -> Unit>()
     //val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
+
+    init{
+        stager.onEndTurn {
+            objs().forEach { refresh(it) }
+        }
+    }
 
     fun spots(sideVid: Side): Map<Pg,List<Sloy>>{
         val spots = HashMap<Pg,ArrayList<Sloy>>()
-        for(zetOrder in ZetOrder.values()){
+        for(zetOrder in ZetOrder.reverse){
             for(obj in objs().byZetOrder(zetOrder)){
                 val sloysObj = sloysObj(obj,sideVid)
-                for(pg in obj.shape.pgs){
+                if(sloysObj.isNotEmpty()) for(pg in obj.shape.pgs){
                     spots.getOrPut(pg){ArrayList<Sloy>()}.addAll(sloysObj)
                 }
             }
@@ -48,25 +32,43 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
         return spots
     }
 
-//    fun spot(pgSpot: Pg, sideVid: Side): List<Sloy> {
-//        val sloys = ArrayList<Sloy>()
-//        for(obj in objs().byPg(pgSpot)){//.byKind(skils.keySet()).sortBy{it.shape.zetOrder}){
-//            //for(skil in skils[obj.kind].plus(addSkils.map{it(obj)}.filterNotNull()).filterNot { skil -> stopSkils.any{it(obj,skil)} }){
-//            for(skil in skils){
-//                val r =  Raise(pgSpot,skil.isReady(obj))
-//                for(p in skil.preAkts(pgSpot,sideVid,obj)){
-//                    r.add(p.pg,p.tlsAkt,p.fn)
-//                }
-//                sloys.addAll(r.sloys())
-//            }
-//        }
-//        return sloys
-//    }
+    fun akt(sideVid:Side,pgFrom: Pg,index:Int,pgAkt: Pg,num:Int? = null){
+        var sm = 0
+        var objFinded:Obj? = null
+        var sloyFinded: Sloy? = null
+        for(zetOrder in ZetOrder.reverse){
+            val obj = objs().byPg(pgFrom).byZetOrder(zetOrder).firstOrNull()?:continue
+            val sloysObj = sloysObj(obj,sideVid)
+            if(index-sm<sloysObj.size()) {
+                objFinded = obj
+                sloyFinded = sloysObj[index-sm]
+            }else{
+                sm += sloysObj.size()
+            }
+        }
+        if(sloyFinded==null || objFinded==null) throw Violation("sloy not found")
+        if (!sloyFinded.isOn) throw Violation("sloy is off")
+        val akt = sloyFinded.aktByPg(pgAkt) ?: throw Violation("akt not found")
+        startAkt(objFinded,sideVid)
+        akt.fn?.invoke()
+        endAkt(objFinded,sideVid)
+    }
 
-    fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
+    private fun endAkt(obj:Obj,sideVid: Side){
+        if(isFresh(obj) && sloysObj(obj,sideVid).isEmpty()) tire(obj)
+        if(isFresh(obj)) objs().objAktLast = obj
+    }
+
+    private fun startAkt(obj:Obj,sideVid: Side){
+        objs().objAktLast?.let{ if(obj!=it) tire(it) }
+    }
+
+    private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
         val sloys = ArrayList<Sloy>()
         for(skil in listSkils.flatMap{it(obj)}){
-            val r =  Raise(obj.shape.pgs,skil.isReady(obj))
+            val isOn = if(sideVid == stager.sideTurn() && isFresh(obj)) listCanAkt.any{it(sideVid,obj)} else false
+
+            val r =  Raise(obj.shape.pgs,isOn)
             for(p in skil.preAkts(sideVid,obj)){
                 r.add(p.pg,p.tlsAkt,p.fn)
             }
@@ -74,10 +76,20 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
         }
         return sloys
     }
+
+    fun isFresh(obj: Obj) = (obj[freshed] as Boolean?) ?: false
+
+    fun refresh(obj: Obj) {
+        obj[freshed] = true
+    }
+
+    fun tire(obj:Obj){
+        obj[freshed] = false
+        listOnTire.forEach{it(obj)}
+    }
 }
 
 interface Skil{
-    fun isReady(obj:Obj):Boolean
     fun preAkts(sideVid: Side,obj:Obj):List<PreAkt>
 }
 

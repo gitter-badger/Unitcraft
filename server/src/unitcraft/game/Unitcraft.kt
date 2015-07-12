@@ -23,7 +23,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     val pgser = { gameCur.get()!!.pgser }
     val objs = byGame{Objs()}
-    val stager = Stager(byGame { Score() })
+    val stager = Stager(objs)
     val editor = Editor()
     val drawer = Drawer(objs)
     val spoter = Spoter(stager,objs)
@@ -40,13 +40,12 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
     val place = Place(pgser, tilesPlace, gridPlace, byGame { Grid<Map<TpPlace, Int>>() },drawer,editor)
 
-    val sider = Sider(objs)
+    val sider = Sider(spoter,objs)
 
     init {
         val hider = Hider()
         val shaper = Shaper(r,hider,objs)
         val stazis = Stazis(r, stager,editor,drawer,shaper,byGame { Grid<Int>() })
-
 
         Catapult(r, drawer, editor,spoter,shaper,objs)
 
@@ -58,10 +57,10 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         Hospital(pointControl)
         Flag(pointControl)
 
-        val drawerVoin = DrawerVoin(r,drawer, hider,sider,objs)
-        val editorVoin = EditorVoin(editor,shaper,sider, objs)
+        val drawerVoin = DrawerVoin(r,drawer, hider,sider,spoter,objs)
+        val editorVoin = EditorVoin(editor,shaper,sider,spoter, objs)
         val lifer = Lifer(r,drawerVoin,shaper)
-        val enforcer = Enforcer(r,stager,drawerVoin,objs)
+        val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
         val skilerMove = SkilerMove(r,spoter,shaper)
         val voiner = Voiner(r,hider,drawerVoin, editorVoin, sider, lifer, enforcer,skilerMove)
 

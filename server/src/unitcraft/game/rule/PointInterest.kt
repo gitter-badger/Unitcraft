@@ -23,16 +23,15 @@ class Catapult(r: Resource, val drawer: Drawer, val editor: Editor, val spoter: 
         }
     }
 
-    override fun isReady(obj: Obj): Boolean {
-        return true
-    }
-
     override fun preAkts(sideVid: Side, obj: Obj) =
             obj.shape.head.all.map { pg ->
                 val move = Move(obj, obj.shape.headTo(pg), sideVid)
                 val can = shaper.canMove(move)
                 if (can != null) PreAkt(pg, tlsAkt) {
-                    if (can()) shaper.move(move)
+                    if (can()) {
+                        shaper.move(move)
+                        spoter.tire(obj)
+                    }
                 } else null
             }.filterNotNull()
 

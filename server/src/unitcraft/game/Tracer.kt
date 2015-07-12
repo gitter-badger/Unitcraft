@@ -3,7 +3,7 @@ package unitcraft.game
 import org.json.simple.JSONAware
 import java.util.ArrayList
 
-class Traces : JSONAware{
+class Tracer : JSONAware{
     val traces = ArrayList<Trace>()
 
     fun add(trace:Trace){
