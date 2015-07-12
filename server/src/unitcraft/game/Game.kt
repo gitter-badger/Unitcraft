@@ -21,17 +21,13 @@ class Game(val pgser: Pgser, val drawer:Drawer,val sider:Sider,val editor:Editor
             'c' -> editChange(side, prm)
             'a' -> akt(side, prm)
             'b' -> aktOpt(side, prm)
-            'e' -> endTurn(side, prm)
+            'e','w' -> endTurn(side, prm)
             else -> throw Violation("unknown msg: " + cmd)
         }
     }
 
     fun state(): GameState {
         return GameState(null, Side.values().map { it to snap(it).toJson() }.toMap(), null)
-    }
-
-    fun cmdRobot(): String? {
-        return if (stager.sideTurn() == Side.b) "e" else null
     }
 
     fun land(): String {

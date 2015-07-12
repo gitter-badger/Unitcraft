@@ -139,7 +139,7 @@ class CmderStub : CmderGame {
         if(cmd=="violationCmd") throw Violation("violationCmd")
     }
 
-    override fun cmdRobot(): String? {
+    override fun cmdRobot(sideRobot:Side): String? {
         if(cmds.lastOrNull()=="errRobot") throw Err("errRobot")
         return if(cmds.lastOrNull()=="robot") "robotAnswer" else null
     }

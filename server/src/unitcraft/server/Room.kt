@@ -4,13 +4,23 @@ import org.json.simple.JSONObject
 import java.time.Duration
 import java.time.Instant
 import java.util.ArrayList
+import java.util.HashMap
+import java.util.Random
 import kotlin.properties.Delegates
 
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
-// нужен контроль времени
-class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: Int = 0, private val cmder: CmderGame) {
-    val sides = if (idB != null) mapOf(idA to Side.a, idB to Side.b) else mapOf(idA to Side.a)
-    val ids = if (idB != null) mapOf(Side.a to idA, Side.b to idB) else mapOf(Side.a to idA)
+// TODO нужен контроль времени
+class Room(val log: Log, val send: Sender, val idPrim: Id, val idSec: Id?, val bet: Int = 0, private val cmder: CmderGame) {
+    private val sides = HashMap<Id, Side>().init {
+        if (idSec != null) if (r.nextBoolean()) {
+            this[idPrim] = Side.a
+            this[idSec] = Side.b
+        } else {
+            this[idPrim] = Side.b
+            this[idSec] = Side.a
+        } else this[idPrim] = Side.a
+    }
+
     val cmds = ArrayList<Pair<Side, String>>()
 
     private var state: GameState
@@ -20,8 +30,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
         sendGame(false)
     }
 
-    val isVsRobot: Boolean
-        get() = idB == null
+    val isVsRobot = idSec == null
 
     fun cmd(id: Id, prm: Prm) {
         val (version, akt) = prm.akt()
@@ -34,7 +43,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
         if (isVsRobot && state.sideWin == null) {
             while (true) {
                 val cmdRobot = try {
-                    cmder.cmdRobot()
+                    cmder.cmdRobot(sides[idPrim].vs)
                 } catch(e: Throwable) {
                     log.error(e)
                     "e"
@@ -47,7 +56,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
 
     fun idWin(): Id? {
         if (isVsRobot) throw Err("call idWin() on robot room")
-        return if (state.sideWin != null) ids[state.sideWin] else null
+        return if (state.sideWin != null) sides.entrySet().first { it.value == state.sideWin }.key else null
     }
 
     fun refresh(id: Id) {
@@ -63,6 +72,7 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
             cmder.cmd(side, akt)
             state = cmder.state()
             cmds.add(Pair(side, akt))
+            if (isVsRobot && akt == "w") sides[idPrim] = sides[idPrim].vs
             sendGame(false)
         } catch (ex: Violation) {
             throw ex
@@ -86,9 +96,14 @@ class Room(val log: Log, val send: Sender, val idA: Id, val idB: Id?, val bet: I
             val json = state.json[side]!!
             json["version"] = cmds.size()
             json["bet"] = bet
+            json["clock"] = listOf(1000000, 198000)
             if (isErr) json["err"] = true else json.remove("err")
             send(id, "g" + json)
         }
+    }
+
+    companion object {
+        val r = Random()
     }
 }
 
@@ -142,7 +157,7 @@ interface CmderGame {
     fun state(): GameState
 
     // если не null, значит ИИ должен сходить
-    fun cmdRobot(): String?
+    fun cmdRobot(sideRobot: Side): String?
 
     // сохранить карту
     fun land(): String
@@ -151,7 +166,7 @@ interface CmderGame {
 // состояние игры
 // определен ли победитель?
 // json расположения юнитов
-// чей таймер должны быть запущены
+// [sideClockOn] - чей таймер должны быть запущен, null - оба таймеры запущены
 class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClockOn: Side?)
 
 enum class Side {

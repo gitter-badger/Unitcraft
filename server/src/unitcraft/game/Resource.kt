@@ -117,7 +117,8 @@ class Resource {
         val effectAktOff = Effect("aktOff") {
             fit()
             extend()
-            shadow(Color.red)
+            shadow(Color.black)
+            opacity(50)
         }
 
         val effectPlace = Effect("place") {
@@ -193,4 +194,5 @@ interface CtxEffect{
     fun place()
     fun shadow(color: Color)
     fun glow(color: Color)
+    fun opacity(procent:Int)
 }

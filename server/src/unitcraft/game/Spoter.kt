@@ -15,6 +15,7 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
 
     init{
         stager.onEndTurn {
+            objs().objAktLast = null
             objs().forEach { refresh(it) }
         }
     }

@@ -1,7 +1,6 @@
 package unitcraft.server
 
 import java.util.HashMap
-import unitcraft.land.Land
 
 class Rooms(val log: Log, val send: Sender, val creatorGame: CreatorGame) {
     private val rooms = HashMap<Id, Room>()
@@ -111,10 +110,10 @@ class Rooms(val log: Log, val send: Sender, val creatorGame: CreatorGame) {
     fun akt(id: Id, prm: Prm) {
         val room = rooms[id]!!
         room.cmd(id, prm)
-        if (room.idB != null && room.idWin() != null) {
+        if (room.idSec != null && room.idWin() != null) {
             log.end(room.idWin().toString())
-            sendStatus(room.idA)
-            sendStatus(room.idB)
+            sendStatus(room.idPrim)
+            sendStatus(room.idSec)
         }
     }
 
@@ -192,5 +191,5 @@ data class Invite(val id: Id, val idVs: Id, val bet: Int) {init {
 data class Match(val id: Id, val playVs: Play, val bet: Int, var accepted: Boolean = false)
 
 interface CreatorGame {
-    fun createGame(mission:Int?=null):CmderGame
+    fun createGame(mission: Int? = null): CmderGame
 }

@@ -28,7 +28,6 @@ class Snap(
         put("traces", tracer)
         put("edge", if(canEndTurn) 0 else 1)
         put("canEndTurn", canEndTurn)
-        put("clock",listOf(100000,198000))
         put("vpoint",listOf(15,7))
         put("stage",stage.toString())
         if(opterTest!=null) put("opterTest",opterTest)

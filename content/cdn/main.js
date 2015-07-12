@@ -63,12 +63,14 @@ function onCmdScale(cmdScale, ui) {
 function onKey(key, ui) {
     if (key === "Enter") {
         ui.fireAkt("e");
+    } else if (key === "w") {
+        ui.fireAkt("w");
     } else if (key === "q") {
         ui.fireCmd("t");
     }
 }
 
-var keyTestToCmd = {"x": "r", "c": "d", "v": "c"};
+var keyTestToCmd = {"x": "r", "c": "c", "v": "d"};
 
 function onKeyTest([key,pst], ui) {
     if(ui.game.opterTest==null) return;
@@ -213,7 +215,7 @@ function initKeyTest(keyboard) {
 }
 
 function initKey(keyboard) {
-    return Kefir.merge([keyboard.key("Enter", "q")]);
+    return Kefir.merge([keyboard.key("Enter", "q", "w")]);
 }
 
 function initCmdScale(keyboard) {

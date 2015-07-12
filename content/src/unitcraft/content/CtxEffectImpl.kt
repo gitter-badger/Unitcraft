@@ -63,7 +63,7 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         val mask = prepareMask()
         img = image(sizeExtend) {
             it.drawImage(img, 0, 0, null)
-            it.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN))
+            it.setComposite(AlphaComposite.DstIn)
             it.drawImage(mask, 0, 0, null)
         }
     }
@@ -91,6 +91,14 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
             }
         }
         return mask
+    }
+
+    override fun opacity(procent: Int) {
+        if(procent <0 || procent >100) throw Err("invalid opacity=$procent")
+        img = image(img.getWidth(), img.getHeight()) {
+            it.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, procent.toFloat()/100));
+            it.drawImage(img, 0, 0, null)
+        }
     }
 
     override fun glow(color: Color) {

@@ -106,9 +106,9 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
             return game.state()
         }
 
-        override fun cmdRobot(): String? {
+        override fun cmdRobot(sideRobot:Side): String? {
             WeakReference(game)
-            return game.cmdRobot()
+            return if (stager.sideTurn() == sideRobot) "e" else null
         }
 
         override fun land(): String {
