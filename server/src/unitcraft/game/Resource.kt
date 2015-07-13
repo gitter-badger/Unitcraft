@@ -27,7 +27,7 @@ class Resource {
 
     val hintTextLife = hintText("ctx.fillStyle = 'white';")
     val hintTextNeutral = hintText("ctx.fillStyle = 'yellow';")
-    val hintTextPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
+
     val hintTextRedPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
 
     val tileFocus = tile("focus")

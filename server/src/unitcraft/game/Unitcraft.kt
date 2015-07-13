@@ -52,21 +52,25 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         val drawerPointControl = DrawerPointControl(drawer,sider,objs)
         val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
 
-        Mine(pointControl)
-        Hospital(pointControl)
-        Flag(pointControl)
-
         val drawerVoin = DrawerVoin(r,drawer, hider,sider,spoter,objs)
         val lifer = Lifer(r,drawerVoin,shaper)
         val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
         val skilerMove = SkilerMove(r,spoter,shaper)
-        val voiner = Voiner(r,hider,drawerVoin, shaper, sider, lifer, enforcer,spoter,skilerMove)
+        val builder = Builder(r,lifer,sider,spoter, shaper,objs)
+        val voiner = Voiner(r,hider,drawerVoin, shaper, sider, lifer, enforcer,spoter,pointControl, builder,skilerMove)
+
+
+
+        Mine(pointControl,stager,sider,builder,objs)
+        Hospital(pointControl)
+        Flag(pointControl)
 
         Electric(r, voiner)
         Telepath(r, enforcer,voiner,spoter)
         Staziser(r, stazis,voiner,spoter)
         Inviser(voiner, hider, sider,  stager,objs)
-        Imitator(spoter,voiner)
+        Imitator(spoter,voiner,objs)
+        Redeployer(voiner,builder)
     }
 
     inner class CmderUnitcraft(mission: Int?) : CmderGame {

@@ -1,85 +1,94 @@
 package unitcraft.game.rule
 
 import unitcraft.game.Pg
-import unitcraft.game.PriorDraw
 import unitcraft.game.ZetOrder
 import unitcraft.server.Side
-import java.util.*
+import java.util.ArrayList
+import java.util.HashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.kotlin
 
-open class Obj(var kind:Kind,var shape:Shape){
+open class Obj(var kind: Kind, var shape: Shape) {
     val props = HashMap<String, Any>()
-    val datas = HashMap<KClass<out Data>,Data>()
+    val datas = HashMap<KClass<out Data>, Data>()
 
-    fun get(key:String):Any? = props[key]
-    fun getOrPut(key:String,def:()->Any) = props.getOrPut(key,def)
+    fun get(key: String): Any? = props[key]
+    fun getOrPut(key: String, def: () -> Any) = props.getOrPut(key, def)
 
-    fun contains(key:String):Boolean = props[key]!=null
-
-
-    fun set(key:String,value:Any){ props[key] = value }
-    fun remove(key:String) = props.remove(key)
+    fun contains(key: String): Boolean = props[key] != null
 
 
-    inline fun <reified T> invoke():T = props.values().first { it is T } as T
+    fun set(key: String, value: Any) {
+        props[key] = value
+    }
 
-    inline fun <reified T:Data> data():T = datas[javaClass<T>().kotlin] as T
+    fun remove(key: String) = props.remove(key)
 
-    override fun toString() = "Obj "+props
+
+    inline fun <reified T> invoke(): T = props.values().first { it is T } as T
+
+    inline fun <reified T : Data> data(): T = datas[javaClass<T>().kotlin] as T
+
+    override fun toString() = "$kind " + props
+
+    fun near() = shape.near()
 }
 
-abstract class Data{
-    open fun onEndTurn(){}
+abstract class Data {
+    open fun onEndTurn() {
+    }
 }
 
-class Objs{
+class Objs {
     private val list = ArrayList<Obj>()
     var sideTurn: Side = Side.a
     val bonus = HashMap<Side, Int>()
     val point = HashMap<Side, Int>()
     var objAktLast: Obj? = null
 
-    fun remove(obj:Obj) = list.remove(obj)
+    fun remove(obj: Obj) = list.remove(obj)
 
-    fun add(obj:Obj){
+    fun add(obj: Obj) {
         list.add(obj)
     }
 
-    fun forEach(f:(Obj)->Unit){
+    fun forEach(f: (Obj) -> Unit) {
         list.forEach(f)
     }
 
     fun iterator() = list.iterator()
 
-    fun byKind(kind:Kind) = list.byKind(kind)
-    fun byKind(kinds:Collection<Kind>) = list.byKind(kinds)
+    fun byKind(kind: Kind) = list.byKind(kind)
+    fun byKind(kinds: Collection<Kind>) = list.byKind(kinds)
     fun byPg(pg: Pg) = list.byPg(pg)
     fun byZetOrder(zetOrder: ZetOrder) = list.byZetOrder(zetOrder)
-    fun lay(zetOrder: ZetOrder,pg:Pg) = list.firstOrNull { it.shape.zetOrder == zetOrder && pg in it.shape.pgs }
+    fun lay(zetOrder: ZetOrder, pg: Pg) = list.firstOrNull { it.shape.zetOrder == zetOrder && pg in it.shape.pgs }
 }
 
-fun <T:Obj> List<T>.byKind(kind:Kind) = filter { it.kind == kind }
-fun <T:Obj> List<T>.byKind(kinds:Collection<Kind>) = filter { it.kind in kinds }
-fun <T:Obj> List<T>.byPg(pg: Pg) = filter { pg in it.shape.pgs }
-fun <T:Obj> List<T>.byZetOrder(zetOrder: ZetOrder) = filter { it.shape.zetOrder == zetOrder }
+fun <T : Obj> List<T>.byKind(kind: Kind) = filter { it.kind == kind }
+fun <T : Obj> List<T>.byKind(kinds: Collection<Kind>) = filter { it.kind in kinds }
+fun <T : Obj> List<T>.byPg(pg: Pg) = filter { pg in it.shape.pgs }
+fun <T : Obj> List<T>.byZetOrder(zetOrder: ZetOrder) = filter { it.shape.zetOrder == zetOrder }
 //fun List<Obj>.lay(zetOrder: ZetOrder,pg:Pg) = firstOrNull { it.shape.zetOrder == zetOrder && pg in it.shape.pgs }
 
-abstract class Shape(val zetOrder: ZetOrder,val head:Pg){
-    abstract val pgs:List<Pg>
-    abstract fun headTo(pgTo:Pg):Shape
+abstract class Shape(val zetOrder: ZetOrder, val head: Pg) {
+    abstract val pgs: List<Pg>
+    abstract fun headTo(pgTo: Pg): Shape
+    abstract fun near(): List<Pg>
 }
 
-data class Singl(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
+data class Singl(zetOrder: ZetOrder, head: Pg) : Shape(zetOrder, head) {
     override val pgs = listOf(head)
-    override fun headTo(pgTo: Pg) = Singl(zetOrder,pgTo)
+    override fun headTo(pgTo: Pg) = Singl(zetOrder, pgTo)
+    override fun near() = head.near
 }
 
-data class Quadr(zetOrder: ZetOrder,head:Pg) : Shape(zetOrder,head){
-    override val pgs = listOf(head,head.rt,head.dw,head.rt?.dw).requireNoNulls()
-    override fun headTo(pgTo: Pg) = Quadr(zetOrder,pgTo)
+data class Quadr(zetOrder: ZetOrder, head: Pg) : Shape(zetOrder, head) {
+    override val pgs = listOf(head, head.rt, head.dw, head.rt?.dw).requireNoNulls()
+    override fun headTo(pgTo: Pg) = Quadr(zetOrder, pgTo)
+    override fun near() = listOf(head.up, head.lf, head.dw?.lf, head.dw?.dw, head.rt?.up, head.rt?.rt).filterNotNull()
 }
 
-abstract class Kind{
+abstract class Kind {
     val name = this.javaClass.getSimpleName().substring(4).decapitalize()
 }

@@ -38,4 +38,6 @@ class Sider(spoter: Spoter,val objs: () -> Objs){
             })
         }
     }
+
+    fun objsSide(side:Side) = objs().byKind(kinds).filter{side(it)==side}
 }

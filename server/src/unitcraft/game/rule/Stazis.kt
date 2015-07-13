@@ -15,7 +15,7 @@ class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Dr
         drawer.onDraw(PriorDraw.overFly) { side, ctx ->
             for ((pg, num) in grid()) ctx.drawTile(pg, tiles[num - 1])
         }
-        shaper.stopMoves.add{ it.shapeTo.pgs.any{it in this} }
+        shaper.slotStopMove.add{ it.shapeTo.pgs.any{it in this} }
     }
 
     fun plant(pg: Pg) {

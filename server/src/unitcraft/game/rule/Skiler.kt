@@ -11,7 +11,7 @@ class SkilerMove(r: Resource, spoter: Spoter,val shaper: Shaper):Skil{
     val fuel = "move.fuel"
 
     init{
-        spoter.listSkils.add{ if(it.kind in kinds) this else null }
+        spoter.listSkil.add{ if(it.kind in kinds) this else null }
         spoter.listOnTire.add{obj ->
             refuel(obj)
         }
@@ -31,12 +31,12 @@ class SkilerMove(r: Resource, spoter: Spoter,val shaper: Shaper):Skil{
         obj[fuel] = fl - 1
     }
 
-    override fun preAkts(sideVid: Side, obj: Obj): List<PreAkt> {
-        val list = ArrayList<PreAkt>()
+    override fun akts(sideVid: Side, obj: Obj): List<AktSimple> {
+        val list = ArrayList<AktSimple>()
         if(fuel(obj)>0) for(pg in obj.shape.head.near) {
             val move = Move(obj, obj.shape.headTo(pg), sideVid)
             val can = shaper.canMove(move)
-            if (can!=null) list.add(PreAkt(pg, tlsAktMove) {
+            if (can!=null) list.add(AktSimple(pg, tlsAktMove) {
                 if(can()) {
                     shaper.move(move)
                     minusFuel(obj)

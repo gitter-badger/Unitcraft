@@ -2,6 +2,7 @@ package unitcraft.game.rule
 
 import unitcraft.game.*
 import unitcraft.server.Side
+import java.util.*
 
 class Voiner(val r: Resource,
              val hider: Hider,
@@ -11,9 +12,32 @@ class Voiner(val r: Resource,
              val lifer: Lifer,
              val enforcer: Enforcer,
              val spoter:Spoter,
+             val pointControl: PointControl,
+             val builder: Builder,
              val skilerMove: SkilerMove
 ) {
-    fun add(kind: Kind) {
+    private val flip = "flip"
+
+    val kinds = ArrayList<Kind>()
+
+    init{
+        shaper.refinesEditor.add{obj,pg,side ->
+            if(obj.kind in kinds) {
+                obj[flip] = pg.x > pg.pgser.xr / 2
+                sider.change(obj, side)
+                spoter.refresh(obj)
+            }
+        }
+        shaper.slotMoveAfter.add{ shapeFrom,move ->
+            if(move.obj.kind in kinds) {
+                val d = shapeFrom.head.x - move.shapeTo.head.x
+                if(d!=0) move.obj[flip] = d > 0
+            }
+        }
+    }
+
+    fun add(kind: Kind,isFabric:Boolean = true) {
+        kinds.add(kind)
         val tlsVoin = r.tlsVoin(kind.name)
         drawerVoin.tlsVoins[kind] = tlsVoin
         shaper.addToEditor(kind,ZetOrder.voin, tlsVoin.neut)
@@ -21,11 +45,43 @@ class Voiner(val r: Resource,
         sider.kinds.add(kind)
         enforcer.kinds.add(kind)
         skilerMove.kinds.add(kind)
-        shaper.refinesEditor.add{obj,pg,side ->
-            obj["flip"] = pg.x > pg.pgser.xr / 2
-            sider.change(obj,side)
-            spoter.refresh(obj)
-        }
+        pointControl.kindsCanCapture.add(kind)
+        if(isFabric) builder.addFabric(kind,tlsVoin.neut)
+    }
+}
+
+class Builder(r: Resource,val lifer: Lifer,val sider: Sider, val spoter: Spoter,val shaper:Shaper,val objs:()->Objs):Skil{
+    private val kindsBuild = HashMap<Kind,(Obj)-> List<Pg>>()
+    private val kindsFabrik = ArrayList<Kind>()
+    val tilesFabrik = ArrayList<Int>()
+    val tlsAkt = TlsAkt(r.tile("build",Resource.effectAkt),r.tile("build",Resource.effectAktOff))
+    val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
+    val price = 5
+
+    init{
+        spoter.listSkil.add{obj -> if(obj.kind in kindsBuild) this else null}
+    }
+
+    override fun akts(sideVid: Side, obj: Obj): List<Akt> {
+        val dabs = tilesFabrik.map{listOf(DabTile(it),DabText(price.toString(),hintText))}
+        return kindsBuild[obj.kind](obj).filter{shaper.canCreate(Singl(ZetOrder.voin,it))}.
+                map{pg -> AktOpt(pg,tlsAkt,dabs){
+            shaper.create(kindsFabrik[it],Singl(ZetOrder.voin,pg))
+            lifer.damage(obj,price)
+        }}
+    }
+
+    fun plusGold(side:Side,value:Int){
+        sider.objsSide(side).byKind(kindsBuild.keySet()).forEach { lifer.heal(it,value) }
+    }
+
+    fun add(kind:Kind,zone:(Obj)-> List<Pg>){
+        kindsBuild[kind] = zone
+    }
+
+    fun addFabric(kind:Kind,tile:Int){
+        kindsFabrik.add(kind)
+        tilesFabrik.add(tile)
     }
 }
 
@@ -34,11 +90,11 @@ class Telepath(r: Resource, val enforcer: Enforcer, val voiner: Voiner, val spot
 
     init {
         voiner.add(KindTelepath)
-        spoter.listSkils.add{ if(it.kind == KindTelepath) this else null }
+        spoter.listSkil.add{ if(it.kind == KindTelepath) this else null }
     }
-    override fun preAkts(sideVid: Side, obj: Obj) =
+    override fun akts(sideVid: Side, obj: Obj) =
             obj.shape.head.near.filter { enforcer.canEnforce(it) }.map {
-                PreAkt(it, tlsAkt) {
+                AktSimple(it, tlsAkt) {
                     enforcer.enforce(it)
                     spoter.tire(obj)
                 }
@@ -122,9 +178,11 @@ class Inviser(voiner: Voiner, val hider: Hider, val sider: Sider, val stager: St
     //
 }
 
-class Imitator(val spoter: Spoter, voiner: Voiner) {
+class Imitator(val spoter: Spoter, voiner: Voiner, val objs: () -> Objs) {
     init {
         voiner.add(KindImitator)
+        spoter.listSkilByCopy.add{obj -> if(obj.kind == KindImitator) obj.shape.head.near.flatMap { objs().byPg(it) } else emptyList()}
+
     }
 
     private object KindImitator : Kind()
@@ -135,12 +193,13 @@ class Imitator(val spoter: Spoter, voiner: Voiner) {
     //    }
 }
 
-class Redeployer(voiner: Voiner) {
+class Redeployer(voiner: Voiner,builder:Builder) {
     init {
-        voiner.add(KindRededloyer)
+        voiner.add(KindRedeployer,false)
+        builder.add(KindRedeployer){obj->obj.near()}
     }
 
-    private object KindRededloyer : Kind()
+    private object KindRedeployer : Kind()
 }
 
 class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, val spoter: Spoter) : Skil {
@@ -149,12 +208,12 @@ class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, val spoter: Spot
 
     init {
         voiner.add(KindStaziser)
-        spoter.listSkils.add{ if(it.kind==KindStaziser) this else null }
+        spoter.listSkil.add{ if(it.kind==KindStaziser) this else null }
     }
 
-    override fun preAkts(sideVid: Side, obj: Obj) =
+    override fun akts(sideVid: Side, obj: Obj) =
             obj.shape.head.near.filter { it !in stazis }.map {
-                PreAkt(it, tlsAkt) {
+                AktSimple(it, tlsAkt) {
                     stazis.plant(it)
                     spoter.tire(obj)
                 }

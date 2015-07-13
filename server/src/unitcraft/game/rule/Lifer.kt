@@ -14,6 +14,14 @@ class Lifer(r: Resource,drawer: DrawerVoin,val shaper: Shaper) {
 
     fun life(obj:Obj) = (obj[life] as Life?)?:Life(5)
 
+    fun heal(obj:Obj,value:Int){
+        life(obj).alter(value)
+    }
+
+    fun damage(obj:Obj,value:Int){
+        life(obj).alter(-value)
+    }
+
     init{
         drawer.draws.add {obj,side,ctx ->
             ctx.drawText(obj.shape.head, life(obj).value, hintTextLife)

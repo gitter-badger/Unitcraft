@@ -8,7 +8,8 @@ import java.util.*
 import kotlin.properties.Delegates
 
 class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) {
-    val stopMoves = ArrayList<(Move)->Boolean>()
+    val slotStopMove = ArrayList<(Move)->Boolean>()
+    val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
 
     private val kindsEditor = HashMap<ZetOrder, Pair<MutableList<Kind>, MutableList<Int>>>().init{
         for(zetOrder in ZetOrder.all)
@@ -43,20 +44,26 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
      * ()->Boolean - движение выглядит доступным: фунция возвращает true, если это правда
      */
     fun canMove(move: Move): (()->Boolean)? {
-        if(stopMoves.any{it(move)}) return null
+        if(slotStopMove.any{it(move)}) return null
         val obj = objClashed(move.shapeTo) ?: return {true}
         return hider.isHided(obj,move.sideVid)?.let{ {it();false} }
     }
 
     fun move(move: Move) {
         if(objClashed(move.shapeTo)!=null) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
+        val shapeFrom = move.obj.shape
         move.obj.shape = move.shapeTo
+        slotMoveAfter.forEach{it(shapeFrom,move)}
     }
 
     // TODO must return list
     private fun objClashed(shape: Shape):Obj?{
         val sameZetOrd = objs().byZetOrder(shape.zetOrder)
         return sameZetOrd.firstOrNull{obj -> shape.pgs.any{it in obj.shape.pgs}}
+    }
+
+    fun canCreate(shape:Shape):Boolean{
+        return objClashed(shape)==null
     }
 
     fun create(kind:Kind,shape:Shape):Obj{

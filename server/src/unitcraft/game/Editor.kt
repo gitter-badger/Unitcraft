@@ -27,7 +27,7 @@ class Editor {
 
     private val editRemoves by Delegates.lazy {
         sort()
-        edits.map{it.editRemove}
+        edits.reverse().map{it.editRemove}
     }
 
     val opterTest by Delegates.lazy {

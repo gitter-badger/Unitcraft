@@ -15,7 +15,7 @@ class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val draw
             for (point in objs().byKind(kinds))
                 for (voin in objs().byKind(kindsCanCapture))
                     if (point.shape.pgs.intersect(voin.shape.pgs).isNotEmpty())
-                        sider.capture(voin, point)
+                        sider.capture(voin,point)
         }
     }
 
@@ -35,9 +35,13 @@ class Flag(val pointControl: PointControl) {
     private object KindFlag : Kind()
 }
 
-class Mine(val pointControl: PointControl) {
+class Mine(val pointControl: PointControl,val stager: Stager,val sider:Sider,val builder:Builder, val objs: () -> Objs) {
     init {
         pointControl.add(KindMine)
+        stager.onEndTurn {
+            val gold = objs().byKind(KindMine).filter{sider.side(it) == stager.sideTurn()}.size()
+            builder.plusGold(stager.sideTurn(),gold)
+        }
     }
     private object KindMine : Kind()
     //        endTurn(100){

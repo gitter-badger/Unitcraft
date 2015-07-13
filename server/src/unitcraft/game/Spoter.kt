@@ -9,7 +9,8 @@ import java.util.*
 class Spoter(val stager: Stager,val objs:()-> Objs) {
     private val freshed = "freshed"
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
-    val listSkils = ArrayList<(Obj)->Skil?>()
+    val listSkil = ArrayList<(Obj)->Skil?>()
+    val listSkilByCopy = ArrayList<(Obj)->List<Obj>>()
     val listOnTire = ArrayList<(Obj) -> Unit>()
     //val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
 
@@ -50,9 +51,18 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
         if(sloyFinded==null || objFinded==null) throw Violation("sloy not found")
         if (!sloyFinded.isOn) throw Violation("sloy is off")
         val akt = sloyFinded.aktByPg(pgAkt) ?: throw Violation("akt not found")
-        startAkt(objFinded,sideVid)
-        akt.fn?.invoke()
-        endAkt(objFinded,sideVid)
+        if(num==null) {
+            if (akt !is AktSimple) throw Violation("akt=$akt !is AktSimple")
+            startAkt(objFinded, sideVid)
+            akt.fn()
+            endAkt(objFinded, sideVid)
+        }else{
+            if (akt !is AktOpt) throw Violation("akt=$akt !is AktOpt")
+            if(num !in akt.dabs.indices) throw Violation("num=$num is out range for opt akt=$akt")
+            startAkt(objFinded, sideVid)
+            akt.fn(num)
+            endAkt(objFinded, sideVid)
+        }
     }
 
     private fun endAkt(obj:Obj,sideVid: Side){
@@ -64,15 +74,19 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
         objs().objAktLast?.let{ if(obj!=it) tire(it) }
     }
 
+    private fun skilsOwnObj(obj:Obj)=listSkil.map{it(obj)}.filterNotNull()
+
+    private fun skilsObj(obj:Obj)=
+        HashSet(skilsOwnObj(obj) + listSkilByCopy.flatMap{it(obj)}.flatMap{skilsOwnObj(it)}).toList()
+
+
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
         val sloys = ArrayList<Sloy>()
-        for(skil in listSkils.map{it(obj)}.filterNotNull()){
+        for(skil in skilsObj(obj)){
             val isOn = if(sideVid == stager.sideTurn() && isFresh(obj)) listCanAkt.any{it(sideVid,obj)} else false
-
             val r =  Raise(obj.shape.pgs,isOn)
-            for(p in skil.preAkts(sideVid,obj)){
-                r.add(p.pg,p.tlsAkt,p.fn)
-            }
+            for(p in skil.akts(sideVid,obj))
+                r.addAkt(p)
             sloys.addAll(r.sloys())
         }
         return sloys
@@ -91,7 +105,7 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
 }
 
 interface Skil{
-    fun preAkts(sideVid: Side,obj:Obj):List<PreAkt>
+    fun akts(sideVid: Side,obj:Obj):List<Akt>
 }
 
 //class Spot(val pgSpot: Pg, val isOn: Boolean) {
@@ -114,14 +128,18 @@ interface Skil{
 class Raise(val pgsErr: List<Pg>, val isOn: Boolean) {
     private val listSloy = ArrayList<Sloy>()
 
-    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
-        addAkt(Akt(pgAkt, tlsAkt(isOn), null, fn))
-    }
-    //    fun akt(pgAim: Pg, tlsAkt: TlsAkt, opter: Opter) = addAkt(Akt(pgAim, tlsAkt(isOn), null, opter))
+//    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
+//        addAkt(AktSimple(pgAkt, tlsAkt, fn))
+//    }
+//
+//    fun add(pgAim: Pg, tlsAkt: TlsAkt,dabs:List<List<Dab>>, fn: (Int) -> Unit){
+//        addAkt(AktOpt(pgAim, tlsAkt, dabs, fn))
+//    }
 
-    private fun addAkt(akt: Akt) {
-        if (akt.pgAim in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
-        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pgAim) != null } + 1
+    fun addAkt(akt: Akt) {
+        if(akt is AktOpt && akt.dabs.isEmpty()) return
+        //if (akt.pgAim in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
+        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pg) != null } + 1
         if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
     }
@@ -131,5 +149,3 @@ class Raise(val pgsErr: List<Pg>, val isOn: Boolean) {
         return listSloy
     }
 }
-
-class PreAkt(val pg:Pg,val tlsAkt: TlsAkt, val fn: () -> Unit)

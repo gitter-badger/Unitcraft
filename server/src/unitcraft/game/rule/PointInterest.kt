@@ -15,16 +15,16 @@ class Catapult(r: Resource, val drawer: Drawer, val spoter: Spoter, val shaper: 
             for (obj in objs()) if (obj.kind == KindCatapult) ctx.drawTile((obj.shape as Singl).head, tile)
         }
 
-        spoter.listSkils.add {
+        spoter.listSkil.add {
             if (it.shape.zetOrder==ZetOrder.voin && it.shape.pgs.intersect(objs().byKind(KindCatapult).flatMap { it.shape.pgs }).isNotEmpty()) this else null
         }
     }
 
-    override fun preAkts(sideVid: Side, obj: Obj) =
+    override fun akts(sideVid: Side, obj: Obj) =
             obj.shape.head.all.map { pg ->
                 val move = Move(obj, obj.shape.headTo(pg), sideVid)
                 val can = shaper.canMove(move)
-                if (can != null) PreAkt(pg, tlsAkt) {
+                if (can != null) AktSimple(pg, tlsAkt) {
                     if (can()) {
                         shaper.move(move)
                         spoter.tire(obj)
