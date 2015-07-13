@@ -7,6 +7,7 @@ import java.util.ArrayList
 import java.util.HashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.kotlin
+import kotlin.properties.Delegates
 
 open class Obj(var kind: Kind, var shape: Shape) {
     val props = HashMap<String, Any>()
@@ -32,6 +33,7 @@ open class Obj(var kind: Kind, var shape: Shape) {
     override fun toString() = "$kind " + props
 
     fun near() = shape.near()
+    fun further() = shape.further
 }
 
 abstract class Data {
@@ -75,6 +77,7 @@ abstract class Shape(val zetOrder: ZetOrder, val head: Pg) {
     abstract val pgs: List<Pg>
     abstract fun headTo(pgTo: Pg): Shape
     abstract fun near(): List<Pg>
+    val further:List<Pg> by Delegates.lazy{ near().flatMap{it.near}.distinct().filter { it != head } }
 }
 
 data class Singl(zetOrder: ZetOrder, head: Pg) : Shape(zetOrder, head) {

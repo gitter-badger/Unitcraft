@@ -45,7 +45,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     init {
         val hider = Hider()
         val shaper = Shaper(r,hider,editor,objs)
-        val stazis = Stazis(r, stager,editor,drawer,shaper,byGame { Grid<Int>() })
+        val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,byGame { Grid<Int>() })
 
         Catapult(r, drawer, spoter,shaper,objs)
 
@@ -71,6 +71,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         Inviser(voiner, hider, sider,  stager,objs)
         Imitator(spoter,voiner,objs)
         Redeployer(voiner,builder)
+        Warehouse(voiner,builder, lifer)
     }
 
     inner class CmderUnitcraft(mission: Int?) : CmderGame {

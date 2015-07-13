@@ -12,7 +12,7 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
     val listSkil = ArrayList<(Obj)->Skil?>()
     val listSkilByCopy = ArrayList<(Obj)->List<Obj>>()
     val listOnTire = ArrayList<(Obj) -> Unit>()
-    //val stopSkils = ArrayList<(Obj,Skil)->Boolean>()
+    val slotStopSkils = ArrayList<(Obj,Skil)->Boolean>()
 
     init{
         stager.onEndTurn {
@@ -71,13 +71,13 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
     }
 
     private fun startAkt(obj:Obj,sideVid: Side){
-        objs().objAktLast?.let{ if(obj!=it) tire(it) }
+//        objs().objAktLast?.let{ if(obj!=it) tire(it) }
     }
 
-    private fun skilsOwnObj(obj:Obj)=listSkil.map{it(obj)}.filterNotNull()
+    private fun skilsOwnObj(obj:Obj)=listSkil.map{it(obj)}.filterNotNull().filter{skil -> slotStopSkils.any{it(obj,skil)}}
 
     private fun skilsObj(obj:Obj)=
-        HashSet(skilsOwnObj(obj) + listSkilByCopy.flatMap{it(obj)}.flatMap{skilsOwnObj(it)}).toList()
+        (skilsOwnObj(obj) + listSkilByCopy.flatMap{it(obj)}.flatMap{skilsOwnObj(it)}).distinct()
 
 
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{

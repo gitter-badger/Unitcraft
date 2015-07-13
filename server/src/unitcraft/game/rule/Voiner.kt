@@ -36,7 +36,7 @@ class Voiner(val r: Resource,
         }
     }
 
-    fun add(kind: Kind,isFabric:Boolean = true) {
+    fun add(kind: Kind,isFabric:Boolean = true,hasMove:Boolean = true) {
         kinds.add(kind)
         val tlsVoin = r.tlsVoin(kind.name)
         drawerVoin.tlsVoins[kind] = tlsVoin
@@ -44,14 +44,14 @@ class Voiner(val r: Resource,
         lifer.kinds.add(kind)
         sider.kinds.add(kind)
         enforcer.kinds.add(kind)
-        skilerMove.kinds.add(kind)
+        if(hasMove) skilerMove.kinds.add(kind)
         pointControl.kindsCanCapture.add(kind)
-        if(isFabric) builder.addFabric(kind,tlsVoin.neut)
+        if(isFabric) builder.addFabric(kind,tlsVoin.neut,kind.hashCode())
     }
 }
 
 class Builder(r: Resource,val lifer: Lifer,val sider: Sider, val spoter: Spoter,val shaper:Shaper,val objs:()->Objs):Skil{
-    private val kindsBuild = HashMap<Kind,(Obj)-> List<Pg>>()
+    private val kindsBuild = HashMap<Kind,Pair<(Obj)-> List<Pg>,(Obj)->Unit>>()
     private val kindsFabrik = ArrayList<Kind>()
     val tilesFabrik = ArrayList<Int>()
     val tlsAkt = TlsAkt(r.tile("build",Resource.effectAkt),r.tile("build",Resource.effectAktOff))
@@ -64,9 +64,10 @@ class Builder(r: Resource,val lifer: Lifer,val sider: Sider, val spoter: Spoter,
 
     override fun akts(sideVid: Side, obj: Obj): List<Akt> {
         val dabs = tilesFabrik.map{listOf(DabTile(it),DabText(price.toString(),hintText))}
-        return kindsBuild[obj.kind](obj).filter{shaper.canCreate(Singl(ZetOrder.voin,it))}.
+        return kindsBuild[obj.kind].first(obj).filter{shaper.canCreate(Singl(ZetOrder.voin,it))}.
                 map{pg -> AktOpt(pg,tlsAkt,dabs){
-            shaper.create(kindsFabrik[it],Singl(ZetOrder.voin,pg))
+            val objCreated = shaper.create(kindsFabrik[it],Singl(ZetOrder.voin,pg))
+            kindsBuild[obj.kind].second(objCreated)
             lifer.damage(obj,price)
         }}
     }
@@ -75,11 +76,11 @@ class Builder(r: Resource,val lifer: Lifer,val sider: Sider, val spoter: Spoter,
         sider.objsSide(side).byKind(kindsBuild.keySet()).forEach { lifer.heal(it,value) }
     }
 
-    fun add(kind:Kind,zone:(Obj)-> List<Pg>){
-        kindsBuild[kind] = zone
+    fun add(kind:Kind,zone:(Obj)-> List<Pg>,refine:(Obj)->Unit){
+        kindsBuild[kind] = zone to refine
     }
 
-    fun addFabric(kind:Kind,tile:Int){
+    fun addFabric(kind:Kind,tile:Int,prior:Int){
         kindsFabrik.add(kind)
         tilesFabrik.add(tile)
     }
@@ -92,6 +93,7 @@ class Telepath(r: Resource, val enforcer: Enforcer, val voiner: Voiner, val spot
         voiner.add(KindTelepath)
         spoter.listSkil.add{ if(it.kind == KindTelepath) this else null }
     }
+
     override fun akts(sideVid: Side, obj: Obj) =
             obj.shape.head.near.filter { enforcer.canEnforce(it) }.map {
                 AktSimple(it, tlsAkt) {
@@ -99,6 +101,7 @@ class Telepath(r: Resource, val enforcer: Enforcer, val voiner: Voiner, val spot
                     spoter.tire(obj)
                 }
             }
+
     private object KindTelepath : Kind()
     //    fun spot() {
     //        for (pgNear in pgSpot.near)
@@ -195,11 +198,21 @@ class Imitator(val spoter: Spoter, voiner: Voiner, val objs: () -> Objs) {
 
 class Redeployer(voiner: Voiner,builder:Builder) {
     init {
-        voiner.add(KindRedeployer,false)
-        builder.add(KindRedeployer){obj->obj.near()}
+        voiner.add(KindRedeployer,false,false)
+        builder.add(KindRedeployer,{it.near()},{})
+
     }
 
     private object KindRedeployer : Kind()
+}
+
+class Warehouse(voiner: Voiner,builder:Builder,val lifer: Lifer) {
+    init {
+        voiner.add(KindWarehouse,false)
+        builder.add(KindWarehouse,{it.further()},{lifer.heal(it,1)})
+    }
+
+    private object KindWarehouse : Kind()
 }
 
 class Staziser(r: Resource, val stazis: Stazis, voiner: Voiner, val spoter: Spoter) : Skil {

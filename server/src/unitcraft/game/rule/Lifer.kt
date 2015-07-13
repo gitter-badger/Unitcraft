@@ -12,7 +12,7 @@ class Lifer(r: Resource,drawer: DrawerVoin,val shaper: Shaper) {
 
     val kinds = ArrayList<Kind>()
 
-    fun life(obj:Obj) = (obj[life] as Life?)?:Life(5)
+    fun life(obj:Obj) = obj.getOrPut(life){Life(5)} as Life
 
     fun heal(obj:Obj,value:Int){
         life(obj).alter(value)
