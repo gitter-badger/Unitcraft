@@ -1,24 +1,32 @@
 package unitcraft.game
 
 import org.json.simple.JSONAware
+import unitcraft.server.Side
 import java.util.ArrayList
 
-class Tracer : JSONAware{
-    val traces = ArrayList<Trace>()
+class Tracer(r:Resource){
+//    val traces = ArrayList<Trace>()
+//
+//    fun add(trace:Trace){
+//        traces.add(trace)
+//    }
+//
+//    fun rem(trace:Trace){
+//        traces.remove(trace)
+//    }
+//
+//    fun clear(){
+//        traces.clear()
+//    }
+    // сам подписывается на нужные события и собирает следы
+//    fun move()
+//    fun damage()
+//    fun heal()
+//    fun objCreated()
 
-    fun add(trace:Trace){
-        traces.add(trace)
+    fun traces(side: Side):List<DabOnGrid>{
+        return emptyList()
     }
-
-    fun rem(trace:Trace){
-        traces.remove(trace)
-    }
-
-    fun clear(){
-        traces.clear()
-    }
-
-    override fun toJSONString() = traces.toJSONString()
 }
 
 abstract class Trace : JSONAware{

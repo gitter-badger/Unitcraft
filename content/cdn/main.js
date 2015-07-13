@@ -62,7 +62,7 @@ function onCmdScale(cmdScale, ui) {
 
 function onKey(key, ui) {
     if (key === "Enter") {
-        ui.fireAkt("e");
+        if(ui.game.canEndTurn) endTurn(ui);
     } else if (key === "w") {
         ui.fireAkt("w");
     } else if (key === "q") {
@@ -113,9 +113,13 @@ function onClick(click, ui) {
     }
 }
 
+function endTurn(ui){
+    if(ui.game.canEndTurn) ui.fireAkt("e");
+}
+
 function onClickToolbar(num,ui){
-    if(num==0 && ui.game.canEndTurn){
-        ui.fireAkt("e");
+    if(num==0){
+        endTurn(ui);
     }else if(num==1){
         if(ui.status=="online") ws.send("p1 1");
         else if(ui.status=="queue" || ui.status=="macth" || ui.status=="invite") ws.send("d");

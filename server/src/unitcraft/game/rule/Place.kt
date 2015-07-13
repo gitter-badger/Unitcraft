@@ -5,7 +5,6 @@ import unitcraft.game.TpPlace.*
 import unitcraft.land.Land
 import unitcraft.server.Side
 import unitcraft.server.init
-import unitcraft.game.Game
 import java.util.*
 
 class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>,val drawer:Drawer,val editor:Editor){

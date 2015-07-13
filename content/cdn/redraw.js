@@ -37,9 +37,7 @@ function redrawGrid(){
         var edge = calcEdge(pst,ui);
         edge.drawTopLeft();
         drawDrawing(ctx,ui.game.grid,ui.tileset,ui.tile());
-        for(var trace of ui.game.traces){
-            drawDrawing(ctx,trace,ui.tileset,ui.tile());
-        }
+        drawDrawing(ctx,ui.game.traces,ui.tileset,ui.tile());
         edge.drawBotRight();
 
         ctx.restore();
