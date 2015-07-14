@@ -11,14 +11,14 @@ import kotlin.properties.Delegates
 class Unitcraft(r: Resource = Resource()) : CreatorGame {
     override fun createGame(mission: Int?) = CmderUnitcraft(mission,true)
 
-    private var cur: WeakReference<Any> by Delegates.notNull()
+    private var cur: WeakReference<Pgser> by Delegates.notNull()
 
     private fun byGame<T : Any>(obj: () -> T): () -> T {
         val map = WeakHashMap<Any, T>()
         return { map.getOrPut(cur.get(), obj) }
     }
 
-    val pgser = { cur.get()!!.pgser }
+    val pgser = { cur.get()!! }
     val objs = byGame{Objs()}
     val stager = Stager(objs)
     val editor = Editor()
@@ -74,7 +74,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         val land = Land(mission, sizeFix)
         val pgser = land.pgser
 
-        var game:Any by Delegates.notNull()
+        var game:WeakReference<Pgser> by Delegates.notNull()
 
 
         init {
@@ -82,14 +82,13 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         }
 
         override fun reset() {
-            game = Any()
-            cur = WeakReference(game)
-            for ((pg, v) in land.grid()) place.grid().set(pg, v)
-            for ((pg, v) in land.fixs()) place.fixs().set(pg, v)
+            game = WeakReference(pgser)
+            cur = game
+            place.start(land)
         }
 
         override fun cmd(side: Side, cmd: String) {
-            cur = WeakReference(game)
+            cur = game
             if(side.isN) throw throw Err("side is neutral")
             if (cmd.isEmpty()) throw Violation("cmd is empty")
             val prm = Prm(pgser, cmd[1, cmd.length()].toString())
@@ -106,16 +105,17 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         }
 
         override fun state(): GameState {
-            cur = WeakReference(game)
+            cur = game
             return GameState(null, Side.values().map { it to snap(it).toJson() }.toMap(), null)
         }
 
         override fun cmdRobot(sideRobot:Side): String? {
-            WeakReference(this)
+            cur = game
             return if (stager.sideTurn() == sideRobot) "e" else null
         }
 
         override fun land(): String {
+            cur = game
             throw UnsupportedOperationException()
         }
 

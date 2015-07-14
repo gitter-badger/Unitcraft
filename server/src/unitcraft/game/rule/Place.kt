@@ -18,6 +18,11 @@ class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -
 
         editor.onEdit(PriorDraw.place,TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> grid()[pg] = TpPlace.values()[num]},{false})
     }
+
+    fun start(land: Land) {
+        for ((pg, v) in land.grid()) grid().set(pg, v)
+        for ((pg, v) in land.fixs()) fixs().set(pg, v)
+    }
 }
 //val hide : MutableSet<Any> = Collections.newSetFromMap(WeakHashMap<Any,Boolean>())
 //        endTurn(5) {
