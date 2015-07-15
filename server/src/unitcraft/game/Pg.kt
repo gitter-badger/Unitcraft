@@ -35,6 +35,7 @@ class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{
     override fun iterator() = pgs.iterator()
 }
 
+// TODO превратить его в ArrayList
 class Grid<V:Any>:MutableMap<Pg, V> by HashMap<Pg,V>(){
 
 //    fun get(pg:Pg) = objs[pg]

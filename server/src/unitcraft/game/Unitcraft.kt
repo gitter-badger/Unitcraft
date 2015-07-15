@@ -11,22 +11,20 @@ import kotlin.properties.Delegates
 class Unitcraft(r: Resource = Resource()) : CreatorGame {
     override fun createGame(mission: Int?) = CmderUnitcraft(mission,true)
 
-    private var cur: Any by Delegates.notNull()
-    private var curPgser: Pgser by Delegates.notNull()
+    private var cur: CmderUnitcraft by Delegates.notNull()
+    val allDatas = WeakHashMap<CmderUnitcraft, AllData>()
 
-    private fun byGame<T : Any>(obj: () -> T): () -> T {
-        val map = WeakHashMap<Any, T>()
-        return { map.getOrPut(cur, obj) }
-    }
+    val pgser = { cur.pgser }
+    val allData = {cur.allData}
+    val objs = {cur.allData.objs}
+    val flats = {cur.allData.flats}
 
-    val pgser = { curPgser }
-    val objs = byGame{Objs()}
-    val stager = Stager(objs)
+    val stager = Stager(allData)
     val editor = Editor()
     val drawer = Drawer(objs)
     val spoter = Spoter(stager,objs)
 
-    val gridPlace = byGame { Grid<TpPlace>() }
+
     val sizeFix: Map<TpPlace, Int> = mapOf(
             TpPlace.forest to 4,
             TpPlace.grass to 5,
@@ -36,14 +34,14 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
             TpPlace.water to 1
     )
     val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
-    val place = Place(pgser, tilesPlace, gridPlace, byGame { Grid<Map<TpPlace, Int>>() },drawer,editor)
+    val flater = Flater(pgser, tilesPlace, flats,drawer,editor)
 
     val sider = Sider(spoter,objs)
     val tracer = Tracer(r)
 
     val hider = Hider(sider)
     val shaper = Shaper(r,hider,editor,objs)
-    val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,byGame { Grid<Int>() })
+    val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,flats)
     val drawerPointControl = DrawerPointControl(drawer,sider,objs)
 
     val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
@@ -74,8 +72,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     inner class CmderUnitcraft(mission: Int?,val canEdit:Boolean) : CmderGame {
         val land = Land(mission, sizeFix)
         val pgser = land.pgser
-
-        var game = Any()
+        var allData:AllData by Delegates.notNull()
 
 
         init {
@@ -83,15 +80,16 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         }
 
         override fun reset() {
-            game = Any()
-            cur = game
-            curPgser = pgser
-            place.start(land)
+            allData = AllData()
+            for(pg in pgser){
+                allData.flats[pg] = Flat(Singl(pg))
+                allData.flats[pg].tpPlace = land.grid()[pg]!!
+                allData.flats[pg].fix = land.fixs()[pg]!!
+            }
         }
 
         override fun cmd(side: Side, cmd: String) {
-            cur = game
-            curPgser = pgser
+            cur = this
             if(side.isN) throw throw Err("side is neutral")
             if (cmd.isEmpty()) throw Violation("cmd is empty")
             val prm = Prm(pgser, cmd[1, cmd.length()].toString())
@@ -108,20 +106,17 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         }
 
         override fun state(): GameState {
-            cur = game
-            curPgser = pgser
+            cur = this
             return GameState(null, Side.values().map { it to snap(it).toJson() }.toMap(), null)
         }
 
         override fun cmdRobot(sideRobot:Side): String? {
-            cur = game
-            curPgser = pgser
+            cur = this
             return if (stager.sideTurn() == sideRobot) "e" else null
         }
 
         override fun land(): String {
-            cur = game
-            curPgser = pgser
+            cur = this
             throw UnsupportedOperationException()
         }
 

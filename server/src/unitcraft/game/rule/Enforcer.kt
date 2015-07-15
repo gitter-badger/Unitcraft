@@ -22,16 +22,23 @@ class Enforcer(r: Resource, val stager: Stager, val drawerVoin: DrawerVoin, spot
     fun canEnforce(pg: Pg) = objs().byPg(pg).byKind(kinds).filter { it[enforced] == null }.firstOrNull() != null
 
     fun enforce(pg: Pg) {
+        val aim = objs().byPg(pg).byKind(kinds).sortDescendingBy { it.shape.zetOrder }.firstOrNull()
+        if(spoter.hasSkil(obj)) {
+            val tag = TagEnforce(true)
+            drawer.onDraw(tag){ tls(tag.enforced) }
+            aim.tag(tag)
+        }
+
         objs().byPg(pg).byKind(kinds).sortDescendingBy { it.shape.zetOrder }.firstOrNull()?.let {
             it[enforced] = true
         }
     }
+
 }
 
+class TagEnforce(var enforced:Boolean? = null ):Tag()
 
-
-
-
+open class Tag
 
 
 

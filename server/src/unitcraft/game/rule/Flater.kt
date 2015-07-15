@@ -7,21 +7,20 @@ import unitcraft.server.Side
 import unitcraft.server.init
 import java.util.*
 
-class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Tile>>,val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>,val drawer:Drawer,val editor:Editor){
+class Flater(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Tile>>,val flats:() -> Flats,val drawer:Drawer,val editor:Editor){
     init{
         drawer.onDraw(PriorDraw.place){side, ctx ->
             for (pg in pgser()) {
-                val tp = grid()[pg]
-                ctx.drawTile(pg, tiles[tp]!![fixs()[pg]!![tp]!!])
+                val tp = flats()[pg].tpPlace
+                ctx.drawTile(pg, tiles[tp]!![flats()[pg].fix[tp]!!])
             }
         }
 
-        editor.onEdit(PriorDraw.place,TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> grid()[pg] = TpPlace.values()[num]},{false})
+        editor.onEdit(PriorDraw.place,TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> flats()[pg].tpPlace = TpPlace.values()[num]},{false})
     }
 
     fun start(land: Land) {
-        for ((pg, v) in land.grid()) grid().set(pg, v)
-        for ((pg, v) in land.fixs()) fixs().set(pg, v)
+
     }
 }
 //val hide : MutableSet<Any> = Collections.newSetFromMap(WeakHashMap<Any,Boolean>())
