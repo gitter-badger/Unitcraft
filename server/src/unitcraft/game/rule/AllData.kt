@@ -3,7 +3,6 @@ package unitcraft.game.rule
 import unitcraft.game.Grid
 import unitcraft.game.Pg
 import unitcraft.game.TpPlace
-import unitcraft.game.ZetOrder
 import unitcraft.server.Side
 import unitcraft.server.init
 import java.util.ArrayList
@@ -43,6 +42,10 @@ class Flats: ListHasShape<Flat>{
 fun List<Flat>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
 
 class Obj(shape: Shape):HasShape(shape) {
+    var side = Side.n
+    var isFresh = false
+    var flip = false
+    var life = 5
     override fun toString() = "Solid $shape $datas"
 }
 
@@ -55,14 +58,14 @@ class Objs: ListHasShape<Obj> {
 inline fun <reified T : Data,A:HasShape> List<A>.by() = filter { javaClass<T>().kotlin in it.datas }.map{it to it<T>()}
 fun List<Obj>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
 
-interface ListHasShape<H :HasShape>{
+interface ListHasShape<H :HasShape>:Iterable<H>{
     val list: ArrayList<H>
 
     fun add(obj: H) {
         list.add(obj)
     }
 
-    fun iterator() = list.iterator()
+    override fun iterator() = list.iterator()
     fun remove(obj: Obj) = list.remove(obj)
 
     inline final fun <reified T : Data> by() = list.by<T,H>()

@@ -9,7 +9,7 @@ class Hider(val sider:Sider) {
 //    val isVidPgs = ArrayList<(Pg)->Boolean>()
 
     fun isHided(obj:Obj,sideVid: Side):Boolean{
-         return obj.kind.name == "inviser" && sider.isEnemy(obj,sideVid)
+         return false
     }
 
     fun hide(obj: Obj,src:Any) {

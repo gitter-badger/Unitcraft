@@ -6,7 +6,7 @@ import java.util.*
 
 class Voiner(val r: Resource,
              val hider: Hider,
-             val drawerVoin: DrawerVoin,
+             val drawerObj: DrawerObj,
              val shaper: Shaper,
              val sider: Sider,
              val lifer: Lifer,
@@ -39,7 +39,7 @@ class Voiner(val r: Resource,
     fun add(kind: Kind,isFabric:Boolean = true,hasMove:Boolean = true) {
         kinds.add(kind)
         val tlsVoin = r.tlsVoin(kind.name)
-        drawerVoin.tlsVoins[kind] = tlsVoin
+        drawerObj.tlsVoins[kind] = tlsVoin
         shaper.addToEditor(kind,ZetOrder.voin, tlsVoin.neut)
         lifer.kinds.add(kind)
         sider.kinds.add(kind)

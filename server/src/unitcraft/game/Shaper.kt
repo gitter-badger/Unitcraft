@@ -11,33 +11,23 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
     val slotStopMove = ArrayList<(Move)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
 
-    private val kindsEditor = HashMap<ZetOrder, Pair<MutableList<Kind>, MutableList<Tile>>>().init{
-        for(zetOrder in ZetOrder.all)
-            this[zetOrder] = ArrayList<Kind>() to ArrayList<Tile>()
-    }
+    val tilesEditor = ArrayList<Tile>()
     val refinesEditor = ArrayList<(Obj,Pg,Side)->Unit>()
 
     init{
-        for(zetOrder in ZetOrder.all){
-            val pairList = kindsEditor[zetOrder]!!
-            editor.onEdit(zetOrder.toPriorDraw(),pairList.second, { pg, side, num ->
-                val shape = Singl(zetOrder, pg)
-                objClashed(shape).forEach { remove(it) }
-                val obj = Obj(pairList.first[num], shape)
-                refinesEditor.forEach{it(obj,pg,side)}
-                objs().add(obj)
-            },{pg ->
-                objs().lay(zetOrder,pg)?.let {
-                    remove(it)
-                } ?: false
-            })
-        }
+        editor.onEdit(PriorDraw.voin,tilesEditor, { pg, side, num ->
+            val shape = Singl(pg)
+            objClashed(shape).forEach { remove(it) }
+            val obj = Obj(shape)
+            refinesEditor.forEach{it(obj,pg,side)}
+            objs().add(obj)
+        },{pg ->
+            objs()[pg]?.let {
+                remove(it)
+            } ?: false
+        })
     }
 
-    //val creates = ArrayList<(Obj)->Unit>()
-//    val stopAim = exts.filterIsInstance<OnStopAim>()
-//    val arm = exts.filterIsInstance<OnArm>()
-//    val getBusys = exts.filterIsInstance<OnGetBusy>()
     /**
      * Возвращает доступность движения.
      * null - движение недоступно
@@ -60,18 +50,17 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
     }
 
     private fun objClashed(shape: Shape):List<Obj>{
-        val sameZetOrd = objs().byZetOrder(shape.zetOrder)
-        return sameZetOrd.filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
+        return objs().filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
     }
 
     fun canCreate(shape:Shape):Boolean{
         return objClashed(shape).isEmpty()
     }
 
-    fun create(kind:Kind,shape:Shape):Obj{
-        val obj = Obj(kind,shape)
+    fun create(shape:Shape):Obj{
+        val obj = Obj(shape)
         //creates.forEach{ it(obj) }
-        if(objClashed(shape).isNotEmpty()) throw Err("cant create obj with shape=$shape kind=$kind")
+        if(objClashed(shape).isNotEmpty()) throw Err("cant create obj with shape=$shape")
         objs().add(obj)
         return obj
     }
@@ -80,10 +69,9 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
         return objs().remove(obj)
     }
 
-    fun addToEditor(kind:Kind,zetOrder:ZetOrder,tile:Tile){
-        val (kinds,tiles) = kindsEditor[zetOrder]
-        kinds.add(kind)
-        tiles.add(tile)
+    fun addToEditor(tile:Tile,refine:(Obj,Pg,Side)->Unit){
+        tilesEditor.add(tile)
+        refinesEditor.add(refine)
     }
 }
 
@@ -92,14 +80,3 @@ class Move(
         val shapeTo: Shape,
         val sideVid: Side
 )
-
-enum class ZetOrder {
-    flat, voin, fly;
-
-    fun toPriorDraw() = PriorDraw.valueOf(this.name())
-
-    companion object{
-        val all = ZetOrder.values()
-        val reverse = ZetOrder.values().reverse()
-    }
-}

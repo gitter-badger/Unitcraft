@@ -6,40 +6,23 @@ import unitcraft.game.Spoter
 import unitcraft.game.Stager
 import java.util.ArrayList
 
-class Enforcer(r: Resource, val stager: Stager, val drawerVoin: DrawerVoin, spoter: Spoter, val objs: () -> Objs) {
-    private val enforced = "enforced"
+class Enforcer(r: Resource, val stager: Stager, val drawerObj: DrawerObj, val spoter: Spoter, val objs: () -> Objs) {
     val tls = r.tlsBool("enforced", "enforcedAlready")
-    val kinds = ArrayList<Kind>()
 
     init {
-        drawerVoin.tileStts.add { voin, side -> voin[enforced]?.let { tls(it as Boolean) } }
-        stager.onEndTurn { objs().forEach { it.remove(enforced) } }
-        spoter.listCanAkt.add { side, obj -> enforced(obj)==true }
+        drawerObj.tileStts.add { obj, side -> if(obj.has<Enforce>()) tls(obj<Enforce>().isOn) else null }
+        stager.onEndTurn { objs().forEach { it.remove<Enforce>() } }
+        spoter.listCanAkt.add { side, obj -> obj.has<Enforce>() && obj<Enforce>().isOn }
     }
 
-    private fun enforced(obj: Obj) = obj[enforced] as Boolean?
-
-    fun canEnforce(pg: Pg) = objs().byPg(pg).byKind(kinds).filter { it[enforced] == null }.firstOrNull() != null
+    fun canEnforce(pg: Pg) = objs()[pg]?.let{ it.has<Enforce>() }?:false
 
     fun enforce(pg: Pg) {
-        val aim = objs().byPg(pg).byKind(kinds).sortDescendingBy { it.shape.zetOrder }.firstOrNull()
-        if(spoter.hasSkil(obj)) {
-            val tag = TagEnforce(true)
-            drawer.onDraw(tag){ tls(tag.enforced) }
-            aim.tag(tag)
-        }
-
-        objs().byPg(pg).byKind(kinds).sortDescendingBy { it.shape.zetOrder }.firstOrNull()?.let {
-            it[enforced] = true
-        }
+        objs()[pg]?.data(Enforce(true))
     }
 
+    class Enforce(var isOn:Boolean):Data()
 }
-
-class TagEnforce(var enforced:Boolean? = null ):Tag()
-
-open class Tag
-
 
 
 

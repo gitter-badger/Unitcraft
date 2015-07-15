@@ -6,25 +6,30 @@ import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val drawer: DrawerPointControl, val shaper: Shaper, val objs: () -> Objs) {
-    val kinds = ArrayList<Kind>()
-    val kindsCanCapture = ArrayList<Kind>()
+class PointControl(val r: Resource,val stager: Stager, val sider: Sider,val drawer: DrawerFlat, val shaper: Shaper, val objs: () -> Objs) {
+
+    val tilesEditor = ArrayList<Tile>()
+    val refinesEditor = ArrayList<(Flat,Pg,Side)->Unit>()
 
     init{
         stager.onEndTurn {
-            for (point in objs().byKind(kinds))
-                for (voin in objs().byKind(kindsCanCapture))
-                    if (point.shape.pgs.intersect(voin.shape.pgs).isNotEmpty())
-                        sider.capture(voin,point)
+            for ((flat,point) in objs().by<Point>())
+                for (voin in objs())
+                    if (flat.shape.pgs.intersect(voin.shape.pgs).isNotEmpty())
+                        point.side = voin.side
         }
     }
 
-    fun add(kind:Kind) {
-        val tls = r.tlsObjSide(kind.name)
-        kinds.add(kind)
-        sider.kinds.add(kind)
-        drawer.regKind(kind, tls)
+    fun add(obj:Obj,name:String) {
+        val tls = r.tlsObjSide(name)
+        val p= Point(tls)
+        obj.data(p)
+        drawer.tlsFlat(obj, {side -> p.tls(p.side,side)})
         shaper.addToEditor(kind,ZetOrder.flat, tls.neut)
+    }
+
+    class Point(val tls:TlsObjOwn):Data(){
+        var side = Side.n
     }
 }
 
@@ -37,13 +42,12 @@ class Flag(val pointControl: PointControl) {
 
 class Mine(val pointControl: PointControl,val stager: Stager,val sider:Sider,val builder:Builder, val objs: () -> Objs) {
     init {
-        pointControl.add(KindMine)
         stager.onEndTurn {
-            val gold = objs().byKind(KindMine).filter{sider.side(it) == stager.sideTurn()}.size()
+            val gold = objs().by<Mine>().filter{it.first.side == stager.sideTurn()}.size()
             builder.plusGold(stager.sideTurn(),gold)
         }
     }
-    private object KindMine : Kind()
+    private object Mine : Data()
     //        endTurn(100){
     //            for((pg,flat) in flats) flat.side?.let{
     //                if(it == g.sideTurn) g.make(EfkGold(1,it))
@@ -58,29 +62,7 @@ class Hospital( val pointControl: PointControl) {
     private object KindHospital : Kind()
 }
 
-class DrawerPointControl(val drawer: Drawer,val sider:Sider, val objs: () -> Objs) {
-    private val tlsPointControls = HashMap<Kind, TlsObjOwn>()
-    private val kinds = ArrayList<Kind>()
 
-    init {
-        drawer.onDraw(PriorDraw.flat) { side, ctx ->
-            for (obj in objs().byKind(tlsPointControls.keySet())) {
-                val shape = obj.shape
-                when (shape) {
-                    is Singl -> {
-                        ctx.drawTile(shape.head, tlsPointControls[obj.kind](side, sider.side(obj)))
-                    }
-                    else -> throw Err("unknown shape=$shape")
-                }
-            }
-        }
-    }
-
-    fun regKind(kind: Kind, tlsObjOwn: TlsObjOwn) {
-        kinds.add(kind)
-        tlsPointControls[kind] = tlsObjOwn
-    }
-}
 
 //class EditorPointControl(val editor: Editor, val shaper: Shaper, val sider: Sider, val objs: () -> Objs) {
 //

@@ -12,7 +12,6 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     override fun createGame(mission: Int?) = CmderUnitcraft(mission,true)
 
     private var cur: CmderUnitcraft by Delegates.notNull()
-    val allDatas = WeakHashMap<CmderUnitcraft, AllData>()
 
     val pgser = { cur.pgser }
     val allData = {cur.allData}
@@ -22,7 +21,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val stager = Stager(allData)
     val editor = Editor()
     val drawer = Drawer(objs)
-    val spoter = Spoter(stager,objs)
+    val spoter = Spoter(stager,allData)
 
 
     val sizeFix: Map<TpPlace, Int> = mapOf(
@@ -42,11 +41,11 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val hider = Hider(sider)
     val shaper = Shaper(r,hider,editor,objs)
     val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,flats)
-    val drawerPointControl = DrawerPointControl(drawer,sider,objs)
+    val drawerPointControl = DrawerFlat(drawer,sider,objs)
 
     val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
 
-    val drawerVoin = DrawerVoin(r,drawer, hider,sider,spoter,objs)
+    val drawerVoin = DrawerObj(r,drawer, hider,sider,spoter,objs)
     val lifer = Lifer(r,drawerVoin,shaper)
     val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
     val skilerMove = SkilerMove(r,spoter,shaper)
