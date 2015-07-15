@@ -56,7 +56,7 @@ class Editor {
 
     }
 
-    fun onEdit(priorDraw:PriorDraw,tiles: List<Int>, editAdd: (Pg, Side, Int) -> Unit, editRemove: (Pg) -> Boolean) {
+    fun onEdit(priorDraw:PriorDraw,tiles: List<Tile>, editAdd: (Pg, Side, Int) -> Unit, editRemove: (Pg) -> Boolean) {
         edits.add(Edit(priorDraw,tiles,editAdd,editRemove))
     }
 
@@ -70,5 +70,5 @@ class Editor {
     private fun select(num: Int) = ranges.idxOfFirst { num in it }!!
     private fun idxRel(num: Int) = num - ranges[select(num)].start
 
-    class Edit(val priorDraw:PriorDraw,val tiles: List<Int>, val editAdd: (Pg, Side, Int) -> Unit, val editRemove: (Pg) -> Boolean)
+    class Edit(val priorDraw:PriorDraw,val tiles: List<Tile>, val editAdd: (Pg, Side, Int) -> Unit, val editRemove: (Pg) -> Boolean)
 }

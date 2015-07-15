@@ -12,7 +12,7 @@ class DrawerVoin(r: Resource, drawer: Drawer,hider:Hider,sider:Sider, spoter: Sp
     private val tileHide = r.tile("hide")
 
     val tlsVoins = HashMap<Kind, TlsVoin>()
-    val tileStts = ArrayList<(Obj, Side) -> Int?>()
+    val tileStts = ArrayList<(Obj, Side) -> Tile?>()
     val draws = ArrayList<(Obj, Side,CtxDraw) -> Unit>()
 
     init {
@@ -20,7 +20,7 @@ class DrawerVoin(r: Resource, drawer: Drawer,hider:Hider,sider:Sider, spoter: Sp
             for (obj in objs().byKind(tlsVoins.keySet())) {
                 val shape = obj.shape
                 ctx.drawTile(shape.head, tlsVoins[obj.kind](side, sider.side(obj), spoter.isFresh(obj)), if (obj["flip"] as Boolean? == true) hintTileFlip else null)
-                if (hider.isHided(obj,side)!=null) ctx.drawTile(shape.head, tileHide)
+                if (hider.isHided(obj,side)) ctx.drawTile(shape.head, tileHide)
                 draws.forEach{it(obj,side,ctx)}
                 tileStts.forEach { it(obj,side)?.let { ctx.drawTile(shape.head, it) } }
             }

@@ -14,17 +14,15 @@ class Enforcer(r: Resource, val stager: Stager, val drawerVoin: DrawerVoin, spot
     init {
         drawerVoin.tileStts.add { voin, side -> voin[enforced]?.let { tls(it as Boolean) } }
         stager.onEndTurn { objs().forEach { it.remove(enforced) } }
-        spoter.listCanAkt.add { side, obj -> enforced(obj) }
+        spoter.listCanAkt.add { side, obj -> enforced(obj)==true }
     }
 
-    private fun enforced(obj: Obj) = (obj[enforced] as Boolean?) ?: false
-
+    private fun enforced(obj: Obj) = obj[enforced] as Boolean?
 
     fun canEnforce(pg: Pg) = objs().byPg(pg).byKind(kinds).filter { it[enforced] == null }.firstOrNull() != null
 
-
     fun enforce(pg: Pg) {
-        objs().byPg(pg).byKind(kinds).sortBy { it.shape.zetOrder }.firstOrNull()?.let {
+        objs().byPg(pg).byKind(kinds).sortDescendingBy { it.shape.zetOrder }.firstOrNull()?.let {
             it[enforced] = true
         }
     }

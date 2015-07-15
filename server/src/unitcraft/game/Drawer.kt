@@ -57,7 +57,7 @@ enum class PriorDraw {
 class CtxDraw(val sideVid: Side) {
     val dabOnGrids = ArrayList<DabOnGrid>()
 
-    fun drawTile(pg: Pg, tile: Int, hint: Int? = null) {
+    fun drawTile(pg: Pg, tile: Tile, hint: Int? = null) {
         dabOnGrids.add(DabOnGrid(pg, DabTile(tile, hint)))
     }
 

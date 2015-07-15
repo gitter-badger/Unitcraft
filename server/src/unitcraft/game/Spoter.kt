@@ -81,15 +81,12 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
 
 
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
-        val sloys = ArrayList<Sloy>()
-        for(skil in skilsObj(obj)){
-            val isOn = if(sideVid == stager.sideTurn() && isFresh(obj)) listCanAkt.any{it(sideVid,obj)} else false
-            val r =  Raise(obj.shape.pgs,isOn)
+        val isOn = if(sideVid == stager.sideTurn() && isFresh(obj)) listCanAkt.any{it(sideVid,obj)} else false
+        val r =  Raise(obj.shape.pgs,isOn)
+        for(skil in skilsObj(obj))
             for(p in skil.akts(sideVid,obj))
                 r.addAkt(p)
-            sloys.addAll(r.sloys())
-        }
-        return sloys
+        return r.sloys()
     }
 
     fun isFresh(obj: Obj) = (obj[freshed] as Boolean?) ?: false
@@ -107,23 +104,6 @@ class Spoter(val stager: Stager,val objs:()-> Objs) {
 interface Skil{
     fun akts(sideVid: Side,obj:Obj):List<Akt>
 }
-
-//class Spot(val pgSpot: Pg, val isOn: Boolean) {
-//    val raises = ArrayList<Raise>()
-//
-//    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
-//        raises.last().add(pgAkt, tlsAkt, fn)
-//    }
-//
-//    fun addRaise() {
-//        raises.add(Raise(pgSpot, isOn))
-//    }
-//
-//    fun sloys(): List<Sloy> {
-//        // TODO схлопнуть, если нет пересечений
-//        return raises.flatMap { it.sloys() }
-//    }
-//}
 
 class Raise(val pgsErr: List<Pg>, val isOn: Boolean) {
     private val listSloy = ArrayList<Sloy>()

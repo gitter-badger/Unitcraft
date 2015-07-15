@@ -15,6 +15,7 @@ class Stager(val objs: () -> Objs) {
 
     fun endTurn() {
         endTurns.forEach { it(objs().sideTurn) }
+
         objs().sideTurn = objs().sideTurn.vs
     }
 }

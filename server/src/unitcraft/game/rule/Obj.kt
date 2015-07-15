@@ -3,6 +3,7 @@ package unitcraft.game.rule
 import unitcraft.game.Pg
 import unitcraft.game.ZetOrder
 import unitcraft.server.Side
+import unitcraft.server.init
 import java.util.ArrayList
 import java.util.HashMap
 import kotlin.reflect.KClass
@@ -45,7 +46,10 @@ class Objs {
     private val list = ArrayList<Obj>()
     var sideTurn: Side = Side.a
     val bonus = HashMap<Side, Int>()
-    val point = HashMap<Side, Int>()
+    val point = HashMap<Side, Int>().init{
+        put(Side.a,15)
+        put(Side.b,15)
+    }
     var objAktLast: Obj? = null
 
     fun remove(obj: Obj) = list.remove(obj)

@@ -11,9 +11,9 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
     val slotStopMove = ArrayList<(Move)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
 
-    private val kindsEditor = HashMap<ZetOrder, Pair<MutableList<Kind>, MutableList<Int>>>().init{
+    private val kindsEditor = HashMap<ZetOrder, Pair<MutableList<Kind>, MutableList<Tile>>>().init{
         for(zetOrder in ZetOrder.all)
-            this[zetOrder] = ArrayList<Kind>() to ArrayList<Int>()
+            this[zetOrder] = ArrayList<Kind>() to ArrayList<Tile>()
     }
     val refinesEditor = ArrayList<(Obj,Pg,Side)->Unit>()
 
@@ -22,7 +22,7 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
             val pairList = kindsEditor[zetOrder]!!
             editor.onEdit(zetOrder.toPriorDraw(),pairList.second, { pg, side, num ->
                 val shape = Singl(zetOrder, pg)
-                objClashed(shape)?.let { remove(it) }
+                objClashed(shape).forEach { remove(it) }
                 val obj = Obj(pairList.first[num], shape)
                 refinesEditor.forEach{it(obj,pg,side)}
                 objs().add(obj)
@@ -45,31 +45,33 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
      */
     fun canMove(move: Move): (()->Boolean)? {
         if(slotStopMove.any{it(move)}) return null
-        val obj = objClashed(move.shapeTo) ?: return {true}
-        return hider.isHided(obj,move.sideVid)?.let{ {it();false} }
+        val objs = objClashed(move.shapeTo)
+        if(objs.isEmpty()) return {true}
+        val objHided = objs.filter{hider.isHided(it,move.sideVid)}
+        if(objHided.isEmpty()) return null
+        return { hider.reveal(objHided);false}
     }
 
     fun move(move: Move) {
-        if(objClashed(move.shapeTo)!=null) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
+        if(objClashed(move.shapeTo).isNotEmpty()) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
         val shapeFrom = move.obj.shape
         move.obj.shape = move.shapeTo
         slotMoveAfter.forEach{it(shapeFrom,move)}
     }
 
-    // TODO must return list
-    private fun objClashed(shape: Shape):Obj?{
+    private fun objClashed(shape: Shape):List<Obj>{
         val sameZetOrd = objs().byZetOrder(shape.zetOrder)
-        return sameZetOrd.firstOrNull{obj -> shape.pgs.any{it in obj.shape.pgs}}
+        return sameZetOrd.filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
     }
 
     fun canCreate(shape:Shape):Boolean{
-        return objClashed(shape)==null
+        return objClashed(shape).isEmpty()
     }
 
     fun create(kind:Kind,shape:Shape):Obj{
         val obj = Obj(kind,shape)
         //creates.forEach{ it(obj) }
-        if(objClashed(shape)!=null) throw Err("cant create obj with shape=$shape kind=$kind")
+        if(objClashed(shape).isNotEmpty()) throw Err("cant create obj with shape=$shape kind=$kind")
         objs().add(obj)
         return obj
     }
@@ -78,7 +80,7 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
         return objs().remove(obj)
     }
 
-    fun addToEditor(kind:Kind,zetOrder:ZetOrder,tile:Int){
+    fun addToEditor(kind:Kind,zetOrder:ZetOrder,tile:Tile){
         val (kinds,tiles) = kindsEditor[zetOrder]
         kinds.add(kind)
         tiles.add(tile)

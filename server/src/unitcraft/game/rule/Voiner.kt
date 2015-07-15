@@ -53,7 +53,7 @@ class Voiner(val r: Resource,
 class Builder(r: Resource,val lifer: Lifer,val sider: Sider, val spoter: Spoter,val shaper:Shaper,val objs:()->Objs):Skil{
     private val kindsBuild = HashMap<Kind,Pair<(Obj)-> List<Pg>,(Obj)->Unit>>()
     private val kindsFabrik = ArrayList<Kind>()
-    val tilesFabrik = ArrayList<Int>()
+    val tilesFabrik = ArrayList<Tile>()
     val tlsAkt = TlsAkt(r.tile("build",Resource.effectAkt),r.tile("build",Resource.effectAktOff))
     val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
     val price = 5
@@ -80,7 +80,7 @@ class Builder(r: Resource,val lifer: Lifer,val sider: Sider, val spoter: Spoter,
         kindsBuild[kind] = zone to refine
     }
 
-    fun addFabric(kind:Kind,tile:Int,prior:Int){
+    fun addFabric(kind:Kind,tile:Tile,prior:Int){
         kindsFabrik.add(kind)
         tilesFabrik.add(tile)
     }

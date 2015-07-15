@@ -44,7 +44,7 @@ class DabOnGrid(val pg:Pg,val dab: Dab): JSONAware{
 }
 
 // какой тайл и как рисовать
-class DabTile(val tile:Int,val hint:Int? = null) : Dab() {
+class DabTile(val tile:Tile,val hint:Int? = null) : Dab() {
     override fun toJSONString() = jsonObj {
         set("tile", tile)
         if(hint!=null) set("hint", hint)

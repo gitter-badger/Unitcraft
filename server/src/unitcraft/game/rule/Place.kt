@@ -7,7 +7,7 @@ import unitcraft.server.Side
 import unitcraft.server.init
 import java.util.*
 
-class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Int>>,val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>,val drawer:Drawer,val editor:Editor){
+class Place(val pgser:()->Pgser,val tiles: Map<TpPlace, List<Tile>>,val grid:() -> Grid<TpPlace>,val fixs:() -> Grid<Map<TpPlace, Int>>,val drawer:Drawer,val editor:Editor){
     init{
         drawer.onDraw(PriorDraw.place){side, ctx ->
             for (pg in pgser()) {

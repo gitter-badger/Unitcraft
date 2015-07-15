@@ -88,7 +88,7 @@ class ServerCdn() : NanoHTTPD(8000) {
     private fun loadImgsTile(){
         val namesUnused = File(dirTiles).files().map { it.name }.toArrayList()
         namesUnused.remove("maskPlace.png")
-        for (tile in res.tiles) {
+        for (tile in res.resTiles) {
             println(tile)
             val file = fileFromTile(tile)
             if (!file.isFile()) throw Err("Tile ${tile.name} not found")
@@ -138,13 +138,13 @@ class ServerCdn() : NanoHTTPD(8000) {
         File(dirOut, "server.js").writeText(sb.toString(), "UTF-8")
     }
 
-    private fun fileFromTile(tile:Tile) = File(dirTiles + tile.name + ".png")
+    private fun fileFromTile(resTile: ResTile) = File(dirTiles + resTile.name + ".png")
 
     private fun createTileset(qdmn: Int,dirOut:File){
-        val img = BufferedImage(50 * qdmn * 2, (res.tiles.size() / 50 + (if (res.tiles.size() % 50 > 0) 1 else 0)) * qdmn * 2, BufferedImage.TYPE_INT_ARGB)
+        val img = BufferedImage(50 * qdmn * 2, (res.resTiles.size() / 50 + (if (res.resTiles.size() % 50 > 0) 1 else 0)) * qdmn * 2, BufferedImage.TYPE_INT_ARGB)
         val g = img.createGraphics()
 
-        for ((ind, tile) in res.tiles.withIndex()) {
+        for ((ind, tile) in res.resTiles.withIndex()) {
             val ctx = CtxEffectImpl(imgsTile[tile.name]!!, qdmn, maskPlace)
             ctx.(tile.effect.op)()
             g.drawImage(ctx.img, ind % 50 * qdmn * 2, ind / 50 * qdmn * 2, null)

@@ -12,7 +12,7 @@ import kotlin.reflect.*
 import kotlin.reflect.jvm.java
 
 class Resource {
-    val tiles = ArrayList<Tile>()
+    val resTiles = ArrayList<ResTile>()
     val hintTiles = ArrayList<HintTile>()
     val hintTexts = ArrayList<HintText>()
     val buildiks = ArrayList<Int>()
@@ -46,15 +46,14 @@ class Resource {
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
-    // TODO refactor Int to Tile
-    fun tile(tile: String, effect: Effect = effectStandard):Int {
-        val t = Tile(tile, effect)
-        val idx = tiles.indexOf(t)
+    fun tile(tile: String, effect: Effect = effectStandard):Tile {
+        val t = ResTile(tile, effect)
+        val idx = resTiles.indexOf(t)
         if(idx==-1){
-            tiles.add(t)
-            return tiles.lastIndex
+            resTiles.add(t)
+            return Tile(resTiles.lastIndex)
         }else{
-            return idx
+            return Tile(idx)
         }
     }
 
@@ -155,26 +154,30 @@ class Resource {
 //    }
 }
 
-open class TlsObjOwn(val neut:Int,val ally:Int,val enemy:Int){
+open class TlsObjOwn(val neut:Tile,val ally:Tile,val enemy:Tile){
     fun invoke(side:Side, sideOwn: Side) =
             if(sideOwn.isN) neut else if(sideOwn == side) ally else enemy
 }
 
-class TlsVoin(val neut: Int, val ally: TlsBool, val enemy: TlsBool){
+class TlsVoin(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){
     fun invoke(side:Side, sideOwn: Side,isFresh:Boolean) =
             if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
 }
 
-class TlsAkt(val aktOn:Int,val aktOff:Int){
+class TlsAkt(val aktOn:Tile,val aktOff:Tile){
     fun invoke(isOn: Boolean) = if(isOn) aktOn else aktOff
 }
 
-class TlsBool(val tileTrue:Int,val tileFalse:Int){
+class TlsBool(val tileTrue:Tile,val tileFalse:Tile){
     fun invoke(b: Boolean) = if(b) tileTrue else tileFalse
 }
 
-data class Tile(val name: String, val effect: Effect) {
+data class ResTile(val name: String, val effect: Effect) {
     override fun toString() = name+"+"+effect.name
+}
+
+data class Tile(val num:Int):JSONAware{
+    override fun toJSONString()=num.toString()
 }
 
 data class HintTile(val script: String)

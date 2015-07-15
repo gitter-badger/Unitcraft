@@ -11,14 +11,15 @@ import kotlin.properties.Delegates
 class Unitcraft(r: Resource = Resource()) : CreatorGame {
     override fun createGame(mission: Int?) = CmderUnitcraft(mission,true)
 
-    private var cur: WeakReference<Pgser> by Delegates.notNull()
+    private var cur: Any by Delegates.notNull()
+    private var curPgser: Pgser by Delegates.notNull()
 
     private fun byGame<T : Any>(obj: () -> T): () -> T {
         val map = WeakHashMap<Any, T>()
-        return { map.getOrPut(cur.get(), obj) }
+        return { map.getOrPut(cur, obj) }
     }
 
-    val pgser = { cur.get()!! }
+    val pgser = { curPgser }
     val objs = byGame{Objs()}
     val stager = Stager(objs)
     val editor = Editor()
@@ -40,22 +41,22 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val sider = Sider(spoter,objs)
     val tracer = Tracer(r)
 
+    val hider = Hider(sider)
+    val shaper = Shaper(r,hider,editor,objs)
+    val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,byGame { Grid<Int>() })
+    val drawerPointControl = DrawerPointControl(drawer,sider,objs)
+
+    val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
+
+    val drawerVoin = DrawerVoin(r,drawer, hider,sider,spoter,objs)
+    val lifer = Lifer(r,drawerVoin,shaper)
+    val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
+    val skilerMove = SkilerMove(r,spoter,shaper)
+    val builder = Builder(r,lifer,sider,spoter, shaper,objs)
+    val voiner = Voiner(r,hider,drawerVoin, shaper, sider, lifer, enforcer,spoter,pointControl, builder,skilerMove)
+
     init {
-        val hider = Hider()
-        val shaper = Shaper(r,hider,editor,objs)
-        val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,byGame { Grid<Int>() })
-
         Catapult(r, drawer, spoter,shaper,objs)
-
-        val drawerPointControl = DrawerPointControl(drawer,sider,objs)
-        val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
-
-        val drawerVoin = DrawerVoin(r,drawer, hider,sider,spoter,objs)
-        val lifer = Lifer(r,drawerVoin,shaper)
-        val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
-        val skilerMove = SkilerMove(r,spoter,shaper)
-        val builder = Builder(r,lifer,sider,spoter, shaper,objs)
-        val voiner = Voiner(r,hider,drawerVoin, shaper, sider, lifer, enforcer,spoter,pointControl, builder,skilerMove)
 
         Mine(pointControl,stager,sider,builder,objs)
         Hospital(pointControl)
@@ -74,7 +75,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         val land = Land(mission, sizeFix)
         val pgser = land.pgser
 
-        var game:WeakReference<Pgser> by Delegates.notNull()
+        var game = Any()
 
 
         init {
@@ -82,13 +83,15 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         }
 
         override fun reset() {
-            game = WeakReference(pgser)
+            game = Any()
             cur = game
+            curPgser = pgser
             place.start(land)
         }
 
         override fun cmd(side: Side, cmd: String) {
             cur = game
+            curPgser = pgser
             if(side.isN) throw throw Err("side is neutral")
             if (cmd.isEmpty()) throw Violation("cmd is empty")
             val prm = Prm(pgser, cmd[1, cmd.length()].toString())
@@ -106,16 +109,19 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
         override fun state(): GameState {
             cur = game
+            curPgser = pgser
             return GameState(null, Side.values().map { it to snap(it).toJson() }.toMap(), null)
         }
 
         override fun cmdRobot(sideRobot:Side): String? {
             cur = game
+            curPgser = pgser
             return if (stager.sideTurn() == sideRobot) "e" else null
         }
 
         override fun land(): String {
             cur = game
+            curPgser = pgser
             throw UnsupportedOperationException()
         }
 
