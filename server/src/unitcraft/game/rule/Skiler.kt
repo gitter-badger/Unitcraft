@@ -5,45 +5,41 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
-class SkilerMove(r: Resource, spoter: Spoter,val shaper: Shaper):Skil{
+class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
     val tlsAktMove = r.tlsAktMove
     val kinds = ArrayList<Kind>()
-    val fuel = "move.fuel"
 
     init{
-        spoter.listSkil.add{ if(it.kind in kinds) this else null }
         spoter.listOnTire.add{obj ->
-            refuel(obj)
+            if(obj.has<SkilMove>()) obj<SkilMove>().refuel()
         }
     }
 
-    private fun fuel(obj:Obj):Int{
-        return (obj[fuel] as Int?)?:3
+    fun getSkil(fuelMax:Int):Data{
+        return SkilMove(fuelMax, mover,tlsAktMove)
     }
 
-    private fun refuel(obj:Obj){
-        obj[fuel] = 3
-    }
+    class SkilMove(var fuelMax:Int,val mover: Mover,val tlsAktMove:TlsAkt):Data(),Skil{
+        var fuel = fuelMax
 
-    private fun minusFuel(obj:Obj) {
-        val fl = fuel(obj)
-        if(fl<=0) throw Err("fuel=$fl <= 0")
-        obj[fuel] = fl - 1
-    }
-
-    override fun akts(sideVid: Side, obj: Obj): List<AktSimple> {
-        val list = ArrayList<AktSimple>()
-        if(fuel(obj)>0) for(pg in obj.shape.head.near) {
-            val move = Move(obj, obj.shape.headTo(pg), sideVid)
-            val can = shaper.canMove(move)
-            if (can!=null) list.add(AktSimple(pg, tlsAktMove) {
-                if(can()) {
-                    shaper.move(move)
-                    minusFuel(obj)
-                }
-            })
+        fun refuel(){
+            fuel = fuelMax
         }
-        return list
+
+        override fun akts(sideVid: Side, obj: Obj): List<AktSimple> {
+            val list = ArrayList<AktSimple>()
+            if(fuel>0) for(pg in obj.shape.head.near) {
+                val move = Move(obj, obj.shape.headTo(pg), sideVid)
+                val can = mover.canMove(move)
+                if (can!=null) list.add(AktSimple(pg, tlsAktMove) {
+                    if(can()) {
+                        mover.move(move)
+                        fuel -= 1
+                    }
+                })
+            }
+            return list
+        }
     }
 }
 

@@ -3,10 +3,10 @@ package unitcraft.game.rule
 import unitcraft.game.Drawer
 import unitcraft.game.PriorDraw
 import unitcraft.game.Resource
-import unitcraft.game.Shaper
+import unitcraft.game.Mover
 import java.util.*
 
-class Lifer(r: Resource,drawer: Drawer,val shaper: Shaper) {
+class Lifer(r: Resource,drawer: Drawer,val mover: Mover) {
     private val hintTextLife = r.hintTextLife
 
     fun heal(obj:Obj,value:Int){

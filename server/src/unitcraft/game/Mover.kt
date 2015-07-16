@@ -7,26 +7,9 @@ import unitcraft.server.init
 import java.util.*
 import kotlin.properties.Delegates
 
-class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) {
+class Mover(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) {
     val slotStopMove = ArrayList<(Move)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
-
-    val tilesEditor = ArrayList<Tile>()
-    val refinesEditor = ArrayList<(Obj,Pg,Side)->Unit>()
-
-    init{
-        editor.onEdit(PriorDraw.obj,tilesEditor, { pg, side, num ->
-            val shape = Singl(pg)
-            objClashed(shape).forEach { remove(it) }
-            val obj = Obj(shape)
-            refinesEditor.forEach{it(obj,pg,side)}
-            objs().add(obj)
-        },{pg ->
-            objs()[pg]?.let {
-                remove(it)
-            } ?: false
-        })
-    }
 
     /**
      * Возвращает доступность движения.
@@ -63,15 +46,6 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
         if(objClashed(shape).isNotEmpty()) throw Err("cant create obj with shape=$shape")
         objs().add(obj)
         return obj
-    }
-
-    fun remove(obj:Obj):Boolean{
-        return objs().remove(obj)
-    }
-
-    fun addToEditor(tile:Tile,refine:(Obj,Pg,Side)->Unit){
-        tilesEditor.add(tile)
-        refinesEditor.add(refine)
     }
 }
 

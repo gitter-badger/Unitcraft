@@ -36,8 +36,8 @@ class Resource {
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
 
-    fun tlsObjSide(name:String) = TlsObjOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
-    fun tlsVoin(name:String) = TlsVoin(
+    fun tlsObjSide(name:String) = TlsFlatOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
+    fun tlsVoin(name:String) = TlsSolid(
             tile(name,effectNeut),
             TlsBool(tile(name,effectFriend),tile(name,effectFriendTired)),
             TlsBool(tile(name,effectEnemy),tile(name,effectEnemyTired))
@@ -154,12 +154,12 @@ class Resource {
 //    }
 }
 
-open class TlsObjOwn(val neut:Tile,val ally:Tile,val enemy:Tile){
+open class TlsFlatOwn(val neut:Tile,val ally:Tile,val enemy:Tile){
     fun invoke(sideVid:Side, sideOwn: Side) =
             if(sideOwn.isN) neut else if(sideOwn == sideVid) ally else enemy
 }
 
-class TlsVoin(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){
+class TlsSolid(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){
     fun invoke(side:Side, sideOwn: Side,isFresh:Boolean) =
             if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
 }

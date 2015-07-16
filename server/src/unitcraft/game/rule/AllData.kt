@@ -3,7 +3,9 @@ package unitcraft.game.rule
 import unitcraft.game.Grid
 import unitcraft.game.Pg
 import unitcraft.game.TpPlace
+import unitcraft.server.Err
 import unitcraft.server.Side
+import unitcraft.server.exclude
 import unitcraft.server.init
 import java.util.ArrayList
 import java.util.HashMap
@@ -39,8 +41,6 @@ class Flats: ListHasShape<Flat>{
     fun get(pg: Pg) = list.byPg(pg)!!
 }
 
-fun List<Flat>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
-
 class Obj(shape: Shape):HasShape(shape) {
     var side = Side.n
     var isFresh = false
@@ -56,12 +56,14 @@ class Objs: ListHasShape<Obj> {
 }
 
 inline fun <reified T : Data,A:HasShape> List<A>.by() = filter { javaClass<T>().kotlin in it.datas }.map{it to it<T>()}
-fun List<Obj>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
+fun <H:HasShape> List<H>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
+fun <H:HasShape> List<H>.byClash(shape: Shape) = filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
 
-interface ListHasShape<H :HasShape>:Iterable<H>{
+interface ListHasShape<H:HasShape>:Iterable<H>{
     val list: ArrayList<H>
 
     fun add(obj: H) {
+        if(byClash(obj.shape).isNotEmpty()) throw Err("obj=$obj clash")
         list.add(obj)
     }
 
@@ -69,6 +71,7 @@ interface ListHasShape<H :HasShape>:Iterable<H>{
     fun remove(obj: H) = list.remove(obj)
 
     inline final fun <reified T : Data> by() = list.by<T,H>()
+    fun byClash(shape: Shape) = list.byClash(shape)
 }
 
 abstract class Shape(val head: Pg) {
@@ -97,17 +100,17 @@ abstract class Kind {
 abstract class Data
 
 open class HasData{
-    val datas = HashMap<KClass<out Data>, Data>()
+    val datas = ArrayList<Data>()
 
     fun data(data: Data) {
-        datas[data.javaClass.kotlin] = data
+        datas.add(data)
     }
 
-    inline fun <reified T : Data> has(): Boolean = datas[javaClass<T>().kotlin] != null
+    inline fun <reified T : Data> has(): Boolean = datas.filterIsInstance<T>().isNotEmpty()
 
-    inline fun <reified T : Data> remove() = datas.remove(javaClass<T>().kotlin)
+    inline fun <reified T : Data> remove() = datas.exclude{it is T}
 
-    inline fun <reified T : Data> invoke(): T = datas[javaClass<T>().kotlin] as T
+    inline fun <reified T : Data> invoke(): T = datas.first{it is T} as T
 }
 
 open class HasShape(var shape:Shape):HasData(){

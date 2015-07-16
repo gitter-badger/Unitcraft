@@ -1,7 +1,6 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
-import unitcraft.game.rule.Inviser
 import unitcraft.land.Land
 import unitcraft.server.*
 import java.lang.ref.WeakReference
@@ -40,14 +39,14 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val tracer = Tracer(r)
 
 
-    val shaper = Shaper(r,hider,editor,objs)
+    val shaper = Mover(r,hider,editor,objs)
     val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,flats)
 
     val lifer = Lifer(r,drawer,shaper)
     val enforcer = Enforcer(r,stager,drawer,spoter,objs)
     val skilerMove = SkilerMove(r,spoter,shaper)
     val builder = Builder(r,lifer,sider,spoter, shaper,objs)
-    val voiner = Voiner(r,hider,drawer, shaper, sider, lifer, enforcer,spoter,flater, builder,skilerMove)
+    val voiner = Solider(r, hider, drawer, editor, sider, lifer, enforcer, spoter, shaper, builder, skilerMove,objs)
 
     init {
         Forest(r,flater)
@@ -58,13 +57,13 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         Hospital(r,flater)
         Flag(r,flater)
 
-        Electric(r, voiner)
+//        Electric(r, voiner)
         Telepath(r, enforcer,voiner,spoter)
-        Staziser(r, stazis,voiner,spoter)
-        Inviser(voiner, hider, sider,  stager,objs)
-        Imitator(spoter,voiner,objs)
-        Redeployer(voiner,builder)
-        Warehouse(voiner,builder, lifer)
+//        Staziser(r, stazis,voiner,spoter)
+//        Inviser(voiner, hider, sider,  stager,objs)
+//        Imitator(spoter,voiner,objs)
+//        Redeployer(voiner,builder)
+//        Warehouse(voiner,builder, lifer)
     }
 
     inner class CmderUnitcraft(mission: Int?,val canEdit:Boolean) : CmderGame {

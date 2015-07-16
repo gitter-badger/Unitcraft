@@ -7,9 +7,7 @@ import java.util.ArrayList
 import java.util.HashMap
 
 class Drawer(r:Resource,val hider:Hider,val pgser:()->Pgser,val allData: () -> AllData) {
-    private val hintTileFlip = r.hintTileFlip
-    private val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
-    private val tileHide = r.tile("hide")
+
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 
     val drawFlats = ArrayList<(Flat, Side,CtxDraw) -> Unit>()
@@ -39,18 +37,11 @@ class Drawer(r:Resource,val hider:Hider,val pgser:()->Pgser,val allData: () -> A
         }
     }
 
-    class SelTileFlat(val tile:(Side)->Tile):Data()
-
     private fun drawObjs(side: Side, ctx: CtxDraw) {
         for (obj in allData().objs) {
-            val tls = obj<SelTlsObj>().tls()
-            ctx.drawTile(obj.head(), tls(side, obj.side, obj.isFresh), if (obj.flip) hintTileFlip else null)
-            if (hider.isHided(obj,side)) ctx.drawTile(obj.head(), tileHide)
             drawObjs.forEach{it(obj,side,ctx)}
         }
     }
-
-    class SelTlsObj(val tls:()->TlsVoin):Data()
 
 }
 

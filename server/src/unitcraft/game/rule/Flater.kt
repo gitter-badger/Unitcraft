@@ -90,7 +90,7 @@ class Grass(r:Resource,val flater:Flater){
 
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val shaper: Shaper, val flats: () -> Flats) : Skil {
+class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val mover: Mover, val flats: () -> Flats) : Skil {
     val tlsAkt = r.tlsAkt("catapult")
 
     init {
@@ -106,10 +106,10 @@ class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val shap
     override fun akts(sideVid: Side, obj: Obj) =
             obj.shape.head.all.map { pg ->
                 val move = Move(obj, obj.shape.headTo(pg), sideVid)
-                val can = shaper.canMove(move)
+                val can = mover.canMove(move)
                 if (can != null) AktSimple(pg, tlsAkt) {
                     if (can()) {
-                        shaper.move(move)
+                        mover.move(move)
                         spoter.tire(obj)
                     }
                 } else null
@@ -129,7 +129,7 @@ class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val shap
     //        }
 }
 
-abstract class DataPoint(val tls:TlsObjOwn):DataTile(){
+abstract class DataPoint(val tls: TlsFlatOwn):DataTile(){
     var side = Side.n
     override fun tile(sideVid:Side)=tls(side,sideVid)
 }
@@ -139,7 +139,7 @@ class Flag(r: Resource,val flater: Flater) {
         val tls = r.tlsObjSide("flag")
         flater.add(tls.neut){Flag(tls)}
     }
-    private class Flag(tls:TlsObjOwn) : DataPoint(tls)
+    private class Flag(tls: TlsFlatOwn) : DataPoint(tls)
 }
 
 class Mine(r: Resource,val flater: Flater,val stager: Stager,val builder:Builder, val flats: () -> Flats) {
@@ -148,10 +148,10 @@ class Mine(r: Resource,val flater: Flater,val stager: Stager,val builder:Builder
         flater.add(tls.neut){Mine(tls)}
         stager.onEndTurn {
             val gold = flats().by<Mine>().filter{it.second.side == stager.sideTurn()}.size()
-            builder.plusGold(stager.sideTurn(),gold)
+//            builder.plusGold(stager.sideTurn(),gold)
         }
     }
-    private class Mine(tls:TlsObjOwn) : DataPoint(tls)
+    private class Mine(tls: TlsFlatOwn) : DataPoint(tls)
 }
 
 class Hospital(r: Resource, val flater: Flater) {
@@ -159,5 +159,5 @@ class Hospital(r: Resource, val flater: Flater) {
         val tls = r.tlsObjSide("hospital")
         flater.add(tls.neut){Hospital(tls)}
     }
-    private class Hospital(tls:TlsObjOwn) : DataPoint(tls)
+    private class Hospital(tls: TlsFlatOwn) : DataPoint(tls)
 }
