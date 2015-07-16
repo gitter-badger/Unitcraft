@@ -66,7 +66,7 @@ interface ListHasShape<H :HasShape>:Iterable<H>{
     }
 
     override fun iterator() = list.iterator()
-    fun remove(obj: Obj) = list.remove(obj)
+    fun remove(obj: H) = list.remove(obj)
 
     inline final fun <reified T : Data> by() = list.by<T,H>()
 }

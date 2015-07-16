@@ -1,16 +1,13 @@
 package unitcraft.game.rule
 
-import unitcraft.game.Pg
-import unitcraft.game.Resource
-import unitcraft.game.Spoter
-import unitcraft.game.Stager
+import unitcraft.game.*
 import java.util.ArrayList
 
-class Enforcer(r: Resource, val stager: Stager, val drawerObj: DrawerObj, val spoter: Spoter, val objs: () -> Objs) {
+class Enforcer(r: Resource, val stager: Stager, val drawer: Drawer, val spoter: Spoter, val objs: () -> Objs) {
     val tls = r.tlsBool("enforced", "enforcedAlready")
 
     init {
-        drawerObj.tileStts.add { obj, side -> if(obj.has<Enforce>()) tls(obj<Enforce>().isOn) else null }
+        drawer.drawObjs.add { obj,side,ctx  -> if(obj.has<Enforce>()) ctx.drawTile(obj.head(),tls(obj<Enforce>().isOn)) }
         stager.onEndTurn { objs().forEach { it.remove<Enforce>() } }
         spoter.listCanAkt.add { side, obj -> obj.has<Enforce>() && obj<Enforce>().isOn }
     }

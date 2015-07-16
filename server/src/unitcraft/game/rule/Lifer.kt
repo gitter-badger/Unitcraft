@@ -6,7 +6,7 @@ import unitcraft.game.Resource
 import unitcraft.game.Shaper
 import java.util.*
 
-class Lifer(r: Resource,drawer: DrawerObj,val shaper: Shaper) {
+class Lifer(r: Resource,drawer: Drawer,val shaper: Shaper) {
     private val hintTextLife = r.hintTextLife
 
     fun heal(obj:Obj,value:Int){
@@ -18,8 +18,8 @@ class Lifer(r: Resource,drawer: DrawerObj,val shaper: Shaper) {
     }
 
     init{
-        drawer.draws.add {obj,side,ctx ->
-            ctx.drawText(obj.shape.head, obj.life, hintTextLife)
+        drawer.drawObjs.add {obj,side,ctx ->
+            ctx.drawText(obj.head(), obj.life, hintTextLife)
         }
     }
 }

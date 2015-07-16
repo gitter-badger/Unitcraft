@@ -55,7 +55,7 @@ class Editor {
     fun editDestroy(pg: Pg) {
 
     }
-
+    //editor.onEdit(PriorDraw.place,TpPlace.values().map{tiles[it]!!.first()},{pg,side,num -> flats()[pg].tpPlace = unitcraft.game.TpPlace.values()[num]},{false})
     fun onEdit(priorDraw:PriorDraw,tiles: List<Tile>, editAdd: (Pg, Side, Int) -> Unit, editRemove: (Pg) -> Boolean) {
         edits.add(Edit(priorDraw,tiles,editAdd,editRemove))
     }

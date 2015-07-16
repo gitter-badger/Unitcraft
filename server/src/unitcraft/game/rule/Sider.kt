@@ -12,36 +12,26 @@ class Sider(spoter: Spoter,val objs: () -> Objs){
     val kinds = ArrayList<Kind>()
 
     init{
-        spoter.listCanAkt.add { side, obj -> side(obj) == side }
+        spoter.listCanAkt.add { side, obj -> obj.side == side }
     }
-
-    fun side(obj:Obj) = (obj[side] as Side?)?:Side.n
 
     fun change(obj:Obj,side:Side){
-        obj[this.side]=side
+        obj.side=side
     }
 
-    fun capture(obj:Obj,target:Obj){
-        target[side] = side(obj)
-    }
-
-    fun isEnemy(obj:Obj,side:Side) = side(obj) == side.vs
-    fun isAlly(obj:Obj,side:Side) = side(obj) == side
+    fun isEnemy(obj:Obj,side:Side) = obj.side == side.vs
+    fun isAlly(obj:Obj,side:Side) = obj.side == side
 
     fun editChange(pg: Pg, sideVid: Side) {
-        objs().byPg(pg).byKind(kinds).firstOrNull()?.let {
-            change(it,when (side(it)) {
+        objs()[pg]?.let {
+            change(it,when (it.side) {
                 Side.n -> sideVid
                 sideVid -> sideVid.vs
                 sideVid.vs -> Side.n
-                else -> throw Err("unknown side=${side(it)}")
+                else -> throw Err("unknown side=${it.side}")
             })
         }
     }
 
-    fun objsSide(side:Side) = objs().byKind(kinds).filter{side(it)==side}
-}
-
-class HasAffil{
-    val side = Side.n
+    fun objsSide(side:Side) = objs().filter{it.side==side}
 }

@@ -20,7 +20,8 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     val stager = Stager(allData)
     val editor = Editor()
-    val drawer = Drawer(objs)
+    val hider = Hider()
+    val drawer = Drawer(r,hider,pgser,allData)
     val spoter = Spoter(stager,allData)
 
 
@@ -32,32 +33,30 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
             TpPlace.sand to 4,
             TpPlace.water to 1
     )
-    val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
-    val flater = Flater(pgser, tilesPlace, flats,drawer,editor)
+    //val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
+    val flater = Flater(r,pgser,stager,  allData, drawer,editor)
 
     val sider = Sider(spoter,objs)
     val tracer = Tracer(r)
 
-    val hider = Hider(sider)
+
     val shaper = Shaper(r,hider,editor,objs)
     val stazis = Stazis(r, stager,editor,drawer,spoter, shaper,flats)
-    val drawerPointControl = DrawerFlat(drawer,sider,objs)
 
-    val pointControl = PointControl(r,stager,sider,drawerPointControl,shaper,objs)
-
-    val drawerVoin = DrawerObj(r,drawer, hider,sider,spoter,objs)
-    val lifer = Lifer(r,drawerVoin,shaper)
-    val enforcer = Enforcer(r,stager,drawerVoin,spoter,objs)
+    val lifer = Lifer(r,drawer,shaper)
+    val enforcer = Enforcer(r,stager,drawer,spoter,objs)
     val skilerMove = SkilerMove(r,spoter,shaper)
     val builder = Builder(r,lifer,sider,spoter, shaper,objs)
-    val voiner = Voiner(r,hider,drawerVoin, shaper, sider, lifer, enforcer,spoter,pointControl, builder,skilerMove)
+    val voiner = Voiner(r,hider,drawer, shaper, sider, lifer, enforcer,spoter,flater, builder,skilerMove)
 
     init {
-        Catapult(r, drawer, spoter,shaper,objs)
+        Forest(r,flater)
+        Grass(r,flater)
+        Catapult(r, flater, spoter,shaper,flats)
 
-        Mine(pointControl,stager,sider,builder,objs)
-        Hospital(pointControl)
-        Flag(pointControl)
+        Mine(r,flater,stager,builder,flats)
+        Hospital(r,flater)
+        Flag(r,flater)
 
         Electric(r, voiner)
         Telepath(r, enforcer,voiner,spoter)
@@ -81,9 +80,11 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         override fun reset() {
             allData = AllData()
             for(pg in pgser){
-                allData.flats[pg] = Flat(Singl(pg))
-                allData.flats[pg].tpPlace = land.grid()[pg]!!
-                allData.flats[pg].fix = land.fixs()[pg]!!
+                //val flat = Flat(Singl(pg))
+                //val tpPlace = land.grid()[pg]!!
+                //drawer.tileFlat(flat,{tilesPlace[tpPlace]!![0]})
+                allData.flats.add(Flat(Singl(pg)))
+                //allData.flats[pg].fix = land.fixs()[pg]!!
             }
         }
 

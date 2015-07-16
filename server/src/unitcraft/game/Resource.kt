@@ -155,8 +155,8 @@ class Resource {
 }
 
 open class TlsObjOwn(val neut:Tile,val ally:Tile,val enemy:Tile){
-    fun invoke(side:Side, sideOwn: Side) =
-            if(sideOwn.isN) neut else if(sideOwn == side) ally else enemy
+    fun invoke(sideVid:Side, sideOwn: Side) =
+            if(sideOwn.isN) neut else if(sideOwn == sideVid) ally else enemy
 }
 
 class TlsVoin(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){

@@ -15,7 +15,7 @@ class Shaper(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) 
     val refinesEditor = ArrayList<(Obj,Pg,Side)->Unit>()
 
     init{
-        editor.onEdit(PriorDraw.voin,tilesEditor, { pg, side, num ->
+        editor.onEdit(PriorDraw.obj,tilesEditor, { pg, side, num ->
             val shape = Singl(pg)
             objClashed(shape).forEach { remove(it) }
             val obj = Obj(shape)

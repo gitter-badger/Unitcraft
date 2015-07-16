@@ -4,7 +4,7 @@ import unitcraft.game.Pg
 import unitcraft.server.Side
 import java.util.*
 
-class Hider(val sider:Sider) {
+class Hider {
 //    val hides = ArrayList<(Obj)->Boolean>()
 //    val isVidPgs = ArrayList<(Pg)->Boolean>()
 
