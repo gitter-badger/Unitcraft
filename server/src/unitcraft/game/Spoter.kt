@@ -63,7 +63,7 @@ class Spoter(val stager: Stager,val allData:()-> AllData) {
         allData().objAktLast?.let{ if(obj!=it) tire(it) }
     }
 
-    private fun skilsOwnObj(obj:Obj)=listSkil.map{it(obj)}.filterNotNull().filter{skil -> slotStopSkils.any{it(obj,skil)}}
+    private fun skilsOwnObj(obj:Obj)=(obj.get<Skil>()+listSkil.map{it(obj)}.filterNotNull()).filter{skil -> slotStopSkils.any{it(obj,skil)}}
 
     private fun skilsObj(obj:Obj)=
         (skilsOwnObj(obj) + listSkilByCopy.flatMap{it(obj)}.flatMap{skilsOwnObj(it)}).distinct()
@@ -84,7 +84,7 @@ class Spoter(val stager: Stager,val allData:()-> AllData) {
     }
 }
 
-interface Skil{
+interface Skil:Data{
     fun akts(sideVid: Side,obj:Obj):List<Akt>
 }
 

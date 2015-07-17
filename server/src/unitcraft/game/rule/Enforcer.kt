@@ -18,7 +18,7 @@ class Enforcer(r: Resource, val stager: Stager, val drawer: Drawer, val spoter: 
         objs()[pg]?.data(Enforce(true))
     }
 
-    class Enforce(var isOn:Boolean):Data()
+    class Enforce(var isOn:Boolean):Data
 }
 
 

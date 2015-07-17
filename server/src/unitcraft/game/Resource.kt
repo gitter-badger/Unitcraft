@@ -36,7 +36,7 @@ class Resource {
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
 
-    fun tlsObjSide(name:String) = TlsFlatOwn(tile(name),tile(name,effectControlAlly),tile(name,effectControlEnemy))
+    fun tlsFlatOwn(name:String) = TlsFlatOwn(tile(name,effectFlat),tile(name,effectControlAlly),tile(name,effectControlEnemy))
     fun tlsVoin(name:String) = TlsSolid(
             tile(name,effectNeut),
             TlsBool(tile(name,effectFriend),tile(name,effectFriendTired)),
@@ -124,16 +124,22 @@ class Resource {
             place()
         }
 
+        val effectFlat = Effect("controlAlly") {
+            fit()
+            extend()
+            flat(Color(150, 150, 150))
+        }
+
         val effectControlAlly = Effect("controlAlly") {
             fit()
             extend()
-            glow(Color(50, 200, 50,150))
+            flat(Color(50, 150, 50))
         }
 
         val effectControlEnemy = Effect("controlEnemy") {
             fit()
             extend()
-            glow(Color(200, 50, 50,150))
+            flat(Color(150, 50, 50))
         }
     }
 //    companion object {
@@ -196,6 +202,6 @@ interface CtxEffect{
     fun light(color: Color)
     fun place()
     fun shadow(color: Color)
-    fun glow(color: Color)
+    fun flat(color: Color)
     fun opacity(procent:Int)
 }

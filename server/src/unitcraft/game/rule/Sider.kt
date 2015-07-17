@@ -9,8 +9,6 @@ import java.util.*
 class Sider(spoter: Spoter,val objs: () -> Objs){
     private val side = "side"
 
-    val kinds = ArrayList<Kind>()
-
     init{
         spoter.listCanAkt.add { side, obj -> obj.side == side }
     }

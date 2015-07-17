@@ -2,7 +2,6 @@ package unitcraft.game.rule
 
 import unitcraft.game.Grid
 import unitcraft.game.Pg
-import unitcraft.game.TpPlace
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.exclude
@@ -30,8 +29,7 @@ class AllData{
 }
 
 class Flat(shape: Shape):HasShape(shape){
-    var tpPlace = TpPlace.grass
-    var fix:Map<TpPlace, Int> by Delegates.notNull()
+    override fun toString() = "Flat $shape $datas"
 }
 
 class Flats: ListHasShape<Flat>{
@@ -93,11 +91,7 @@ data class Quadr(head: Pg) : Shape(head) {
     override fun near() = listOf(head.up, head.lf, head.dw?.lf, head.dw?.dw, head.rt?.up, head.rt?.rt).filterNotNull()
 }
 
-abstract class Kind {
-    val name = this.javaClass.getSimpleName().substring(4).decapitalize()
-}
-
-abstract class Data
+interface Data
 
 open class HasData{
     val datas = ArrayList<Data>()
@@ -111,6 +105,8 @@ open class HasData{
     inline fun <reified T : Data> remove() = datas.exclude{it is T}
 
     inline fun <reified T : Data> invoke(): T = datas.first{it is T} as T
+
+    inline fun <reified T : Data> get() = datas.filterIsInstance<T>()
 }
 
 open class HasShape(var shape:Shape):HasData(){

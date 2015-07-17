@@ -4,14 +4,16 @@ import java.util.ArrayList
 import kotlin.properties.Delegates
 import java.util.HashMap
 import unitcraft.game.*
+import unitcraft.game.rule.Flat
 import unitcraft.server.*
 import unitcraft.land.Random
 import kotlin.reflect.jvm.java
 
-class Land(val mission: Int?,sizeFix:Map<TpPlace, Int>){
+class Land(mapFlatAll:Map<TpFlat,List<(Flat)-> Unit>>,val mission: Int?){
+
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
-    val sideFirst = if(r.nextBoolean()) Side.a else Side.b
+    val mapFlat = mapFlatAll.mapValues { selRnd(it.value) }
     val yr = 9 + r.nextInt(7)
     val xr = if(yr==15) 15 else yr + r.nextInt(15-yr)
     val pgser = Pgser(xr,yr)
@@ -28,17 +30,6 @@ class Land(val mission: Int?,sizeFix:Map<TpPlace, Int>){
         }
     }
 
-
-    val fixs2 = HashMap<Pg, Map<TpPlace, Int>>().init{
-        for(pg in pgs){
-            val map = HashMap<TpPlace, Int>()
-            for(tp in TpPlace.values()){
-                map[tp] = r.nextInt(sizeFix[tp]!!)
-            }
-            this[pg] = map
-        }
-    }
-
     init {
         Algs.prod(this)
     }
@@ -50,7 +41,6 @@ class Land(val mission: Int?,sizeFix:Map<TpPlace, Int>){
     fun pg(pg:unitcraft.game.Pg) = pg(pg.x,pg.y)
 
     fun place(pg:unitcraft.game.Pg) = TpPlace.valueOf(pg(pg.x,pg.y).tpPlace.name())
-    fun fixs(pg:unitcraft.game.Pg) = fixs2[pg(pg.x,pg.y)]
 
     fun isIn(x: Int, y: Int): Boolean {
         return x >= 0 && x < xr && y >= 0 && y < yr
@@ -76,12 +66,24 @@ class Land(val mission: Int?,sizeFix:Map<TpPlace, Int>){
         return grid
     }
 
-    fun fixs():Grid<Map<TpPlace, Int>>{
-        val fixs = Grid<Map<TpPlace, Int>>()
-        for (pg in pgser.pgs) fixs[pg] = fixs(pg)
-        return fixs
-    }
+    fun flat(pg:unitcraft.game.Pg) = mapFlat[tpFlatFromTpPlace(pg(pg).tpPlace)]?:mapFlat[TpFlat.none]!!
 
+    private fun tpFlatFromTpPlace(tp:TpPlace)=
+        when(tp){
+            TpPlace.grass -> TpFlat.none
+            TpPlace.mount -> TpFlat.solid
+            TpPlace.forest,TpPlace.sand,TpPlace.hill -> TpFlat.wild
+            TpPlace.water -> TpFlat.liquid
+        }
+
+}
+
+enum class TpPlace {
+    grass, mount, forest, sand, hill, water
+}
+
+enum class TpFlat{
+    none, solid, liquid, wild, special, flag
 }
 
 class Pg(val land:Land,val x:Int,val y:Int){

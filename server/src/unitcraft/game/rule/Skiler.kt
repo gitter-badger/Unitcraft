@@ -7,7 +7,6 @@ import java.util.*
 
 class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
     val tlsAktMove = r.tlsAktMove
-    val kinds = ArrayList<Kind>()
 
     init{
         spoter.listOnTire.add{obj ->
@@ -15,11 +14,11 @@ class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
         }
     }
 
-    fun getSkil(fuelMax:Int):Data{
-        return SkilMove(fuelMax, mover,tlsAktMove)
+    fun add(obj:Obj,fuelMax:Int){
+        obj.data(SkilMove(fuelMax, mover,tlsAktMove))
     }
 
-    class SkilMove(var fuelMax:Int,val mover: Mover,val tlsAktMove:TlsAkt):Data(),Skil{
+    class SkilMove(var fuelMax:Int,val mover: Mover,val tlsAktMove:TlsAkt):Skil{
         var fuel = fuelMax
 
         fun refuel(){

@@ -22,8 +22,7 @@ class Solider(val r: Resource,
     private val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
     private val tileHide = r.tile("hide")
     val tilesEditor = ArrayList<Tile>()
-    val createDatas = ArrayList<() -> List<Data>>()
-    val refinesEditor = ArrayList<(Obj, Pg, Side) -> Unit>()
+    val creates = ArrayList<(Obj) -> Unit>()
 
     init {
         editor.onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
@@ -33,8 +32,7 @@ class Solider(val r: Resource,
             obj.flip = pg.x > pg.pgser.xr / 2
             obj.side = side
             obj.isFresh = true
-            createDatas[num]().forEach { obj.data(it) }
-            refinesEditor.forEach { it(obj, pg, side) }
+            creates[num](obj)
             objs().add(obj)
         }, { pg ->
             objs()[pg]?.let {
@@ -53,14 +51,14 @@ class Solider(val r: Resource,
         }
     }
 
-    fun add(tile: Tile, isFabric: Boolean = true, hasMove: Boolean = true,createData:() -> List<Data>) {
+    fun add(tile: Tile, isFabric: Boolean = true, hasMove: Boolean = true, create:(Obj) -> Unit) {
         tilesEditor.add(tile)
-        createDatas.add(if (hasMove) {-> createData() + skilerMove.getSkil(3) } else createData)
+        creates.add(if (hasMove) {obj -> create(obj); skilerMove.add(obj,3) } else create)
 //        if (isFabric) builder.addFabric(kind, tlsVoin.neut, kind.hashCode())
     }
 }
 
-abstract class DataTlsSolid:Data(){
+abstract class DataTlsSolid:Data{
     abstract fun tlsSolid(): TlsSolid
 }
 
@@ -74,12 +72,15 @@ class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val sp
         val tlsAkt = r.tlsAkt("telepath")
         val kind = Telepath(tls)
         val skil = SkilTelepath(enforcer, spoter, tlsAkt)
-        solider.add(tls.neut){ listOf(kind,skil) }
+        solider.add(tls.neut){
+            it.data(kind)
+            it.data(skil)
+        }
     }
 
     private class Telepath(tlsSolid:TlsSolid) : DataTlsSolidFix(tlsSolid)
 
-    class SkilTelepath(val enforcer:Enforcer,val spoter:Spoter,val tlsAkt:TlsAkt):Data(),Skil{
+    class SkilTelepath(val enforcer:Enforcer,val spoter:Spoter,val tlsAkt:TlsAkt):Skil{
         override fun akts(sideVid: Side, obj: Obj) =
                 obj.shape.head.near.filter { enforcer.canEnforce(it) }.map {
                     AktSimple(it, tlsAkt) {
@@ -99,6 +100,31 @@ class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val sp
     //
     //    }
 }
+
+class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Spoter) {
+    init {
+        val tls = r.tlsVoin("staziser")
+        val tlsAkt = r.tlsAkt("staziser")
+        val staziser = Staziser(tls)
+        solider.add(tls.neut){
+            it.data(staziser)
+            it.data(SkilStaziser(tlsAkt))
+        }
+    }
+
+    private class Staziser(tlsSolid:TlsSolid) : DataTlsSolidFix(tlsSolid)
+
+    inner class SkilStaziser(val tlsAkt:TlsAkt) : Skil{
+        override fun akts(sideVid: Side, obj: Obj) =
+                obj.shape.head.near.filter { it !in stazis }.map {
+                    AktSimple(it, tlsAkt) {
+                        stazis.plant(it)
+                        spoter.tire(obj)
+                    }
+                }
+    }
+}
+
 /*
 class Electric(r: Resource, solider: Solider) {
     val tlsAkt = r.tlsAkt("electric")
@@ -198,55 +224,6 @@ class Warehouse(solider: Solider, builder: Builder, val lifer: Lifer) {
     }
 
     private object KindWarehouse : Kind()
-}
-
-class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Spoter) : Skil {
-    val tlsAkt = r.tlsAkt("staziser")
-    val tlsMove = r.tlsAktMove
-
-    init {
-        solider.add(KindStaziser)
-        spoter.listSkil.add { if (it.kind == KindStaziser) this else null }
-    }
-
-    override fun akts(sideVid: Side, obj: Obj) =
-            obj.shape.head.near.filter { it !in stazis }.map {
-                AktSimple(it, tlsAkt) {
-                    stazis.plant(it)
-                    spoter.tire(obj)
-                }
-            }
-
-    private object KindStaziser : Kind()
-    //    fun spot(pgSpot: Pg,pgSrc: Pg, sideVid: Side, s: Spot) {
-    //        grid()[pgSrc]?.let { voin ->
-    //            for (pgNear in pgSpot.near) {
-    //                if(arm.canSkil(pgSpot, pgNear, sideVid)){
-    //                    s.add(pgNear, tlsAkt) {
-    //                        stazis.plant(pgNear)
-    //                        voin.energy = 0
-    //                    }
-    //                }
-    //            }
-    //            for (pgNear in pgSpot.near) {
-    //                val reveal = arm.canMove(Move(pgSpot, pgNear, ZetOrder.unit, false, sideVid))
-    //                if (reveal != null) {
-    //                    s.add(pgNear, tlsMove) {
-    //                        if (reveal()) {
-    //                            move(voin,pgSpot,pgNear)
-    //                            voin.energy -= 1
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-
-    //    private fun move(voin:VoinSimple,pgFrom:Pg,pgTo:Pg){
-    //        grid().move(pgFrom, pgTo)
-    //        val xd = pgFrom.x - pgTo.x
-    //        if (xd != 0) voin.flip = xd > 0
-    //    }
 }
 */
 class Builder(r: Resource, val lifer: Lifer, val sider: Sider, val spoter: Spoter, val mover: Mover, val objs: () -> Objs) {

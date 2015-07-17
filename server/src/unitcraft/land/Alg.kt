@@ -1,6 +1,6 @@
 package unitcraft.land
 
-import unitcraft.game.TpPlace.*
+import unitcraft.land.TpPlace.*
 import java.util.HashMap
 import java.util.ArrayList
 import unitcraft.server.init

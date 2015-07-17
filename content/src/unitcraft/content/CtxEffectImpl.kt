@@ -101,18 +101,13 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         }
     }
 
-    override fun glow(color: Color) {
-        val sizeShadow = size / 5
-        var circle = image(img.getWidth(), img.getHeight()) {
-            it.setColor(color)
-            it.fillOval(size/2,size/2,size,size)
-        }
-        circle = getGaussianBlurFilter(sizeShadow, true).filter(circle, null)
-        circle = getGaussianBlurFilter(sizeShadow, false).filter(circle, null)
+    override fun flat(color: Color) {
         img = image(img.getWidth(), img.getHeight()) {
-            it.drawImage(circle, 0, 0, null)
+            it.setColor(color)
+            it.fillRect(size/2,size/2,size, size)
             it.drawImage(img, 0, 0, null)
         }
+        place()
     }
 
     override fun shadow(color: Color) {

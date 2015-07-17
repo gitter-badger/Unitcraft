@@ -27,7 +27,7 @@ class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Dr
 
     fun contains(pg:Pg) = flats()[pg].has<Stazis>()
 
-    class Stazis:Data(){
+    class Stazis:Data{
         var value = 5
     }
 }
