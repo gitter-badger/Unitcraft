@@ -42,26 +42,3 @@ class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
     }
 }
 
-//class SkilMove(val tls:TlsAkt): Skil {
-//    override fun preAkts(pgSpot:Pg,sideVid: Side,obj:Obj): List<PreAkt> {
-//        pgSpot.near.map{PreAkt(pg,tls){
-//            i
-//        }}
-//    }
-//}
-//
-//class SkilMove(r:Resource,val shaper: Shaper){
-//    val tlsMove = r.tlsAktMove
-//    fun pgs(pgSpot:Pg,obj:Obj,sideVid:Side,r:Raise){
-//        for(pg in pgSpot.near) {
-//            val shapeTo = obj.shape.copy(head=pg)
-//            val can = shaper.canMove(Move(obj, shapeTo, sideVid))
-//            if (can!=null)
-//                r.add(pg, tlsMove) {
-//                    if(can()) obj.shape = shapeTo
-//                }
-//        }
-//    }
-//}
-
-

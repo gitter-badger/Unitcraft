@@ -3,7 +3,6 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.server.Side
 import java.util.ArrayList
-import java.util.HashMap
 
 class Solider(val r: Resource,
               val hider: Hider,
@@ -39,11 +38,11 @@ class Solider(val r: Resource,
                 objs().remove(it)
             } ?: false
         })
-        drawer.drawObjs.add{obj,side,ctx ->
-            if(obj.has<DataTlsSolid>()) {
+        drawer.drawObjs.add { obj, side, ctx ->
+            if (obj.has<DataTlsSolid>()) {
                 ctx.drawTile(obj.head(), obj<DataTlsSolid>().tlsSolid()(side, obj.side, obj.isFresh), if (obj.flip) hintTileFlip else null)
             }
-            if (hider.isHided(obj,side)) ctx.drawTile(obj.head(), tileHide)
+            if (hider.isHided(obj, side)) ctx.drawTile(obj.head(), tileHide)
         }
         mover.slotMoveAfter.add { shapeFrom, move ->
             val d = shapeFrom.head.x - move.shapeTo.head.x
@@ -51,18 +50,18 @@ class Solider(val r: Resource,
         }
     }
 
-    fun add(tile: Tile, isFabric: Boolean = true, hasMove: Boolean = true, create:(Obj) -> Unit) {
+    fun add(tile: Tile, isFabric: Boolean = true, hasMove: Boolean = true, create: (Obj) -> Unit) {
         tilesEditor.add(tile)
-        creates.add(if (hasMove) {obj -> create(obj); skilerMove.add(obj,3) } else create)
-//        if (isFabric) builder.addFabric(kind, tlsVoin.neut, kind.hashCode())
+        creates.add(if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create)
+        //        if (isFabric) builder.addFabric(kind, tlsVoin.neut, kind.hashCode())
     }
 }
 
-abstract class DataTlsSolid:Data{
+abstract class DataTlsSolid : Data {
     abstract fun tlsSolid(): TlsSolid
 }
 
-open class DataTlsSolidFix(val tls:TlsSolid) : DataTlsSolid(){
+open class DataTlsSolidFix(val tls: TlsSolid) : DataTlsSolid() {
     override fun tlsSolid() = tls
 }
 
@@ -72,15 +71,15 @@ class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val sp
         val tlsAkt = r.tlsAkt("telepath")
         val kind = Telepath(tls)
         val skil = SkilTelepath(enforcer, spoter, tlsAkt)
-        solider.add(tls.neut){
+        solider.add(tls.neut) {
             it.data(kind)
             it.data(skil)
         }
     }
 
-    private class Telepath(tlsSolid:TlsSolid) : DataTlsSolidFix(tlsSolid)
+    private class Telepath(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 
-    class SkilTelepath(val enforcer:Enforcer,val spoter:Spoter,val tlsAkt:TlsAkt):Skil{
+    class SkilTelepath(val enforcer: Enforcer, val spoter: Spoter, val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
                 obj.shape.head.near.filter { enforcer.canEnforce(it) }.map {
                     AktSimple(it, tlsAkt) {
@@ -106,15 +105,15 @@ class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Sp
         val tls = r.tlsVoin("staziser")
         val tlsAkt = r.tlsAkt("staziser")
         val staziser = Staziser(tls)
-        solider.add(tls.neut){
+        solider.add(tls.neut) {
             it.data(staziser)
             it.data(SkilStaziser(tlsAkt))
         }
     }
 
-    private class Staziser(tlsSolid:TlsSolid) : DataTlsSolidFix(tlsSolid)
+    private class Staziser(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 
-    inner class SkilStaziser(val tlsAkt:TlsAkt) : Skil{
+    inner class SkilStaziser(val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
                 obj.shape.head.near.filter { it !in stazis }.map {
                     AktSimple(it, tlsAkt) {
@@ -226,29 +225,19 @@ class Warehouse(solider: Solider, builder: Builder, val lifer: Lifer) {
     private object KindWarehouse : Kind()
 }
 */
-class Builder(r: Resource, val lifer: Lifer, val sider: Sider, val spoter: Spoter, val mover: Mover, val objs: () -> Objs) {
+class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Mover, val objs: () -> Objs) {
     //    private val kindsBuild = HashMap<Kind, Pair<(Obj) -> List<Pg>, (Obj) -> Unit>>()
     //    private val kindsFabrik = ArrayList<Kind>()
     //    val tilesFabrik = ArrayList<Tile>()
-    //    val tlsAkt = TlsAkt(r.tile("build", Resource.effectAkt), r.tile("build", Resource.effectAktOff))
-    //    val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
-    //    val price = 5
-    //
+    val tlsAkt = TlsAkt(r.tile("build", Resource.effectAkt), r.tile("build", Resource.effectAktOff))
+    val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
+    val price = 5
+
     //    init {
     //        spoter.listSkil.add { obj -> if (obj.kind in kindsBuild) this else null }
     //    }
     //
-    //    override fun akts(sideVid: Side, obj: Obj): List<Akt> {
-    //        val dabs = tilesFabrik.map { listOf(DabTile(it), DabText(price.toString(), hintText)) }
-    //        return kindsBuild[obj.kind].first(obj).filter { mover.canCreate(Singl(ZetOrder.voin, it)) }.
-    //                map { pg ->
-    //                    AktOpt(pg, tlsAkt, dabs) {
-    //                        val objCreated = mover.create(kindsFabrik[it], Singl(ZetOrder.voin, pg))
-    //                        kindsBuild[obj.kind].second(objCreated)
-    //                        lifer.damage(obj, price)
-    //                    }
-    //                }
-    //    }
+
     //
     //    fun plusGold(side: Side, value: Int) {
     //        sider.objsSide(side).byKind(kindsBuild.keySet()).forEach { lifer.heal(it, value) }
@@ -262,4 +251,26 @@ class Builder(r: Resource, val lifer: Lifer, val sider: Sider, val spoter: Spote
     //        kindsFabrik.add(kind)
     //        tilesFabrik.add(tile)
     //    }
+
+    inner class SkilBuild(val zone: (Obj) -> List<Pg>, val buildiks: List<Buildik>) : Skil {
+        override fun akts(sideVid: Side, obj: Obj): List<Akt> {
+            val dabs = buildiks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
+            val akts = ArrayList<AktOpt>()
+            for (pg in zone(obj)) {
+                val can = mover.canBulid(Singl(pg), sideVid)
+                if (can != null) {
+                    akts.add(AktOpt(pg, tlsAkt, dabs) {
+                        if(can()) {
+                            val objCreated = Obj(Singl(pg))
+                            buildiks[it].create(objCreated)
+                            lifer.damage(obj, price)
+                        }
+                    })
+                }
+            }
+            return akts
+        }
+    }
+
+    class Buildik(val tile: Tile, val create: (Obj) -> Unit)
 }

@@ -7,8 +7,9 @@ import unitcraft.server.init
 import java.util.*
 import kotlin.properties.Delegates
 
-class Mover(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) {
+class Mover(r:Resource,val editor: Editor,val objs:()-> Objs) {
     val slotStopMove = ArrayList<(Move)->Boolean>()
+    val slotStopBuild = ArrayList<(Shape)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
 
     /**
@@ -18,34 +19,35 @@ class Mover(r:Resource,val hider: Hider,val editor: Editor,val objs:()-> Objs) {
      */
     fun canMove(move: Move): (()->Boolean)? {
         if(slotStopMove.any{it(move)}) return null
-        val objs = objClashed(move.shapeTo)
+        val objs = objs().byClash(move.shapeTo)
         if(objs.isEmpty()) return {true}
-        val objHided = objs.filter{hider.isHided(it,move.sideVid)}
+        val objHided = objs.filter{isHided(it,move.sideVid)}
         if(objHided.isEmpty()) return null
-        return { hider.reveal(objHided);false}
+        return { reveal(objHided);false}
+    }
+
+    fun canBulid(shape: Shape,sideVid:Side): (()->Boolean)? {
+        if(slotStopBuild.any{it(shape)}) return null
+        val objs = objs().byClash(shape)
+        if(objs.isEmpty()) return {true}
+        val objHided = objs.filter{isHided(it,sideVid)}
+        if(objHided.isEmpty()) return null
+        return { reveal(objHided);false}
     }
 
     fun move(move: Move) {
-        if(objClashed(move.shapeTo).isNotEmpty()) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
+        if(objs().byClash(move.shapeTo).isNotEmpty()) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
         val shapeFrom = move.obj.shape
         move.obj.shape = move.shapeTo
         slotMoveAfter.forEach{it(shapeFrom,move)}
     }
 
-    private fun objClashed(shape: Shape):List<Obj>{
-        return objs().filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
+    fun isHided(obj:Obj,sideVid: Side):Boolean{
+        return false
     }
 
-    fun canCreate(shape:Shape):Boolean{
-        return objClashed(shape).isEmpty()
-    }
-
-    fun create(shape:Shape):Obj{
-        val obj = Obj(shape)
-        //creates.forEach{ it(obj) }
-        if(objClashed(shape).isNotEmpty()) throw Err("cant create obj with shape=$shape")
-        objs().add(obj)
-        return obj
+    fun reveal(objs: List<Obj>) {
+        println("reveal: "+objs)
     }
 }
 
@@ -54,3 +56,5 @@ class Move(
         val shapeTo: Shape,
         val sideVid: Side
 )
+
+//TODO мовер и хидер одно целое
