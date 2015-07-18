@@ -31,5 +31,5 @@ class Sider(spoter: Spoter,val objs: () -> Objs){
         }
     }
 
-    fun objsSide(side:Side) = objs().filter{it.side==side}
+
 }

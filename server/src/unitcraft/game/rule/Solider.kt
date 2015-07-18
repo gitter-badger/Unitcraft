@@ -5,7 +5,6 @@ import unitcraft.server.Side
 import java.util.ArrayList
 
 class Solider(val r: Resource,
-              val hider: Hider,
               val drawer: Drawer,
               val editor: Editor,
               val sider: Sider,
@@ -42,7 +41,7 @@ class Solider(val r: Resource,
             if (obj.has<DataTlsSolid>()) {
                 ctx.drawTile(obj.head(), obj<DataTlsSolid>().tlsSolid()(side, obj.side, obj.isFresh), if (obj.flip) hintTileFlip else null)
             }
-            if (hider.isHided(obj, side)) ctx.drawTile(obj.head(), tileHide)
+            if (mover.isHided(obj, side)) ctx.drawTile(obj.head(), tileHide)
         }
         mover.slotMoveAfter.add { shapeFrom, move ->
             val d = shapeFrom.head.x - move.shapeTo.head.x
@@ -52,8 +51,9 @@ class Solider(val r: Resource,
 
     fun add(tile: Tile, isFabric: Boolean = true, hasMove: Boolean = true, create: (Obj) -> Unit) {
         tilesEditor.add(tile)
-        creates.add(if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create)
-        //        if (isFabric) builder.addFabric(kind, tlsVoin.neut, kind.hashCode())
+        val crt = if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create
+        creates.add(crt)
+        if (isFabric) builder.addFabrik(0, tile, crt)
     }
 }
 
@@ -119,6 +119,37 @@ class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Sp
                     AktSimple(it, tlsAkt) {
                         stazis.plant(it)
                         spoter.tire(obj)
+                    }
+                }
+    }
+}
+
+class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter: Spoter, val objs: () -> Objs) {
+    val tlsAkt = r.tlsAkt("redeployer")
+
+    init {
+        val tls = r.tlsVoin("redeployer")
+        val dataTls = Redeployer(tls)
+        val skil = SkilRedeployer()
+        solider.add(tls.neut,false) {
+            it.data(dataTls)
+            it.data(skil)
+            builder.add(it, { it.near() }, {})
+        }
+
+    }
+
+    private class Redeployer(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
+
+    inner class SkilRedeployer() : Skil {
+        override fun akts(sideVid: Side, obj: Obj) =
+                obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false }.map {
+                    AktSimple(it, tlsAkt) {
+                        objs()[it]?.let {
+                            objs().remove(it)
+                            builder.plusGold(it.side, 5)
+                            spoter.tire(obj)
+                        }
                     }
                 }
     }
@@ -206,16 +237,6 @@ class Imitator(val spoter: Spoter, solider: Solider, val objs: () -> Objs) {
     //    }
 }
 
-class Redeployer(solider: Solider, builder: Builder) {
-    init {
-        solider.add(KindRedeployer, false, false)
-        builder.add(KindRedeployer, { it.near() }, {})
-
-    }
-
-    private object KindRedeployer : Kind()
-}
-
 class Warehouse(solider: Solider, builder: Builder, val lifer: Lifer) {
     init {
         solider.add(KindWarehouse, false)
@@ -232,37 +253,32 @@ class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Move
     val tlsAkt = TlsAkt(r.tile("build", Resource.effectAkt), r.tile("build", Resource.effectAktOff))
     val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
     val price = 5
+    val fabriks = ArrayList<Fabrik>()
 
-    //    init {
-    //        spoter.listSkil.add { obj -> if (obj.kind in kindsBuild) this else null }
-    //    }
-    //
+    fun plusGold(side: Side, value: Int) {
+        objs().objsSide(side).by<SkilBuild, Obj>().forEach { lifer.heal(it.first, value) }
+    }
 
-    //
-    //    fun plusGold(side: Side, value: Int) {
-    //        sider.objsSide(side).byKind(kindsBuild.keySet()).forEach { lifer.heal(it, value) }
-    //    }
-    //
-    //    fun add(kind: Kind, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
-    //        kindsBuild[kind] = zone to refine
-    //    }
-    //
-    //    fun addFabric(kind: Kind, tile: Tile, prior: Int) {
-    //        kindsFabrik.add(kind)
-    //        tilesFabrik.add(tile)
-    //    }
+    fun add(obj: Obj, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
+        obj.data(SkilBuild(zone, fabriks))
+    }
 
-    inner class SkilBuild(val zone: (Obj) -> List<Pg>, val buildiks: List<Buildik>) : Skil {
+    fun addFabrik(prior: Int, tile: Tile, create: (Obj) -> Unit) {
+        fabriks.add(Fabrik(prior, tile, create))
+    }
+
+    inner class SkilBuild(val zone: (Obj) -> List<Pg>, val fabriks: List<Fabrik>) : Skil {
         override fun akts(sideVid: Side, obj: Obj): List<Akt> {
-            val dabs = buildiks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
+            val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
             val akts = ArrayList<AktOpt>()
             for (pg in zone(obj)) {
                 val can = mover.canBulid(Singl(pg), sideVid)
                 if (can != null) {
                     akts.add(AktOpt(pg, tlsAkt, dabs) {
-                        if(can()) {
+                        if (can()) {
                             val objCreated = Obj(Singl(pg))
-                            buildiks[it].create(objCreated)
+                            fabriks[it].create(objCreated)
+                            objs().add(objCreated)
                             lifer.damage(obj, price)
                         }
                     })
@@ -272,5 +288,6 @@ class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Move
         }
     }
 
-    class Buildik(val tile: Tile, val create: (Obj) -> Unit)
+    class Fabrik(val prior: Int, val tile: Tile, val create: (Obj) -> Unit)
 }
+

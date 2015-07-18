@@ -2,7 +2,6 @@ package unitcraft.game
 
 import unitcraft.game.rule.*
 import unitcraft.land.Land
-import unitcraft.land.TpFlat
 import unitcraft.server.*
 import kotlin.properties.Delegates
 
@@ -18,8 +17,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     val stager = Stager(allData)
     val editor = Editor()
-    val hider = Hider()
-    val drawer = Drawer(r, hider, pgser, allData)
+    val drawer = Drawer(pgser, allData)
     val spoter = Spoter(stager, allData)
 
 
@@ -32,20 +30,20 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     //            TpPlace.water to 1
     //    )
     //val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
-    val flater:Flater = Flater(r, stager, allData, drawer, editor)
+    val flater: Flater = Flater(r, stager, allData, drawer, editor)
 
     val sider = Sider(spoter, objs)
     val tracer = Tracer(r)
 
 
-    val shaper = Mover(r, hider, editor, objs)
+    val shaper = Mover(r, editor, objs)
     val stazis = Stazis(r, stager, editor, drawer, spoter, shaper, flats)
 
     val lifer = Lifer(r, drawer, shaper)
     val enforcer = Enforcer(r, stager, drawer, spoter, objs)
     val skilerMove = SkilerMove(r, spoter, shaper)
-    val builder = Builder(r, lifer, sider, spoter, shaper, objs)
-    val voiner = Solider(r, hider, drawer, editor, sider, lifer, enforcer, spoter, shaper, builder, skilerMove, objs)
+    val builder = Builder(r, lifer, spoter, shaper, objs)
+    val voiner = Solider(r, drawer, editor, sider, lifer, enforcer, spoter, shaper, builder, skilerMove, objs)
 
     init {
         Forest(r, flater)
@@ -59,10 +57,10 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
         //        Electric(r, voiner)
         Telepath(r, enforcer, voiner, spoter)
-        Staziser(r, stazis,voiner,spoter)
+        Staziser(r, stazis, voiner, spoter)
         //        Inviser(voiner, hider, sider,  stager,objs)
         //        Imitator(spoter,voiner,objs)
-        //        Redeployer(voiner,builder)
+        Redeployer(r, voiner, builder, spoter, objs)
         //        Warehouse(voiner,builder, lifer)
     }
 
@@ -78,7 +76,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
         override fun reset() {
             allData = AllData()
-            for(pg in pgser){
+            for (pg in pgser) {
                 val flat = Flat(Singl(pg))
                 land.flat(pg)(flat)
                 allData.flats.add(flat)

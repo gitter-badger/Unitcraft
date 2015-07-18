@@ -6,7 +6,7 @@ import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class Drawer(r:Resource,val hider:Hider,val pgser:()->Pgser,val allData: () -> AllData) {
+class Drawer(val pgser:()->Pgser,val allData: () -> AllData) {
 
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 

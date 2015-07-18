@@ -12,7 +12,7 @@ class Enforcer(r: Resource, val stager: Stager, val drawer: Drawer, val spoter: 
         spoter.listCanAkt.add { side, obj -> obj.has<Enforce>() && obj<Enforce>().isOn }
     }
 
-    fun canEnforce(pg: Pg) = objs()[pg]?.let{ it.has<Enforce>() }?:false
+    fun canEnforce(pg: Pg) = objs()[pg]?.let{ !it.has<Enforce>() }?:false
 
     fun enforce(pg: Pg) {
         objs()[pg]?.data(Enforce(true))

@@ -50,12 +50,15 @@ class Obj(shape: Shape):HasShape(shape) {
 class Objs: ListHasShape<Obj> {
     override val list = ArrayList<Obj>()
 
+    fun objsSide(side:Side) = list.objsSide(side)
+
     fun get(pg: Pg) = list.byPg(pg)
 }
 
-inline fun <reified T : Data,A:HasShape> List<A>.by() = filter { javaClass<T>().kotlin in it.datas }.map{it to it<T>()}
+inline fun <reified T : Data,A:HasShape> List<A>.by() = filter { it.has<T>() }.map{it to it<T>()}
 fun <H:HasShape> List<H>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
 fun <H:HasShape> List<H>.byClash(shape: Shape) = filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
+fun List<Obj>.objsSide(side:Side) = filter{it.side==side}
 
 interface ListHasShape<H:HasShape>:Iterable<H>{
     val list: ArrayList<H>
@@ -100,7 +103,7 @@ open class HasData{
         datas.add(data)
     }
 
-    inline fun <reified T : Data> has(): Boolean = datas.filterIsInstance<T>().isNotEmpty()
+    inline fun <reified T : Data> has(): Boolean = datas.firstOrNull{it is T}!=null
 
     inline fun <reified T : Data> remove() = datas.exclude{it is T}
 
