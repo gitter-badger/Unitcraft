@@ -65,18 +65,12 @@ open class DataTileFix(val tile:Tile) : DataTile(){
     override fun tile(sideVid:Side) = tile
 }
 
-class Forest(r:Resource,val flater:Flater){
+class Forest(r:Resource,val flater:Flater,mover:Mover,flats:()->Flats){
     init{
         val tiles = r.tlsList(4,"forest",Resource.effectPlace)
         flater.add(tiles[0],TpFlat.wild){it.data(DataForest(randomTile(tiles)))}
-        // скрыть врагов в лесу
-        //            for ((pg,place) in places) if (place == TpPlace.forest){
-        //                 g.info(MsgVoin(pg)).all.forEach{
-        //                    val efk = EfkHide(pg, g.sideTurn.vs, it)
-        //                    if (!g.stop(efk)) hide.add(it)
-        //                }
-        //            }
-        //        }
+        mover.slotHide.add { flats()[it.head()].has<DataForest>()}
+        mover.slotMoveAfter.add{ shapeFrom,move -> mover.rehide() }
     }
     class DataForest(tile:Tile) : DataTileFix(tile)
 }
@@ -139,7 +133,7 @@ class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val move
 
 abstract class DataPoint(val tls: TlsFlatOwn):DataTile(){
     var side = Side.n
-    override fun tile(sideVid:Side)=tls(side,sideVid)
+    override fun tile(sideVid:Side)=tls(sideVid,side)
 }
 
 class Flag(r: Resource,val flater: Flater) {

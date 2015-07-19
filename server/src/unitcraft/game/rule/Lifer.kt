@@ -1,13 +1,10 @@
 package unitcraft.game.rule
 
-import unitcraft.game.Drawer
-import unitcraft.game.PriorDraw
-import unitcraft.game.Resource
-import unitcraft.game.Mover
+import unitcraft.game.*
 import java.util.*
 
-class Lifer(r: Resource,drawer: Drawer,val mover: Mover) {
-    private val hintTextLife = r.hintTextLife
+class Lifer(r: Resource,drawer: Drawer,val objs: ()->Objs) {
+    private val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
 
     fun heal(obj:Obj,value:Int){
         obj.life += value
@@ -15,6 +12,17 @@ class Lifer(r: Resource,drawer: Drawer,val mover: Mover) {
 
     fun damage(obj:Obj,value:Int){
         obj.life -= value
+        if(obj.life<=0) objs().remove(obj)
+    }
+
+    fun damage(pg:Pg,value:Int){
+        objs()[pg]?.let{
+            damage(it,value)
+        }
+    }
+
+    fun canDamage(pg: Pg):Boolean{
+        return objs()[pg]!=null
     }
 
     init{

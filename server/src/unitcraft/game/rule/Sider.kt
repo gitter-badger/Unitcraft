@@ -20,16 +20,7 @@ class Sider(spoter: Spoter,val objs: () -> Objs){
     fun isEnemy(obj:Obj,side:Side) = obj.side == side.vs
     fun isAlly(obj:Obj,side:Side) = obj.side == side
 
-    fun editChange(pg: Pg, sideVid: Side) {
-        objs()[pg]?.let {
-            change(it,when (it.side) {
-                Side.n -> sideVid
-                sideVid -> sideVid.vs
-                sideVid.vs -> Side.n
-                else -> throw Err("unknown side=${it.side}")
-            })
-        }
-    }
+
 
 
 }

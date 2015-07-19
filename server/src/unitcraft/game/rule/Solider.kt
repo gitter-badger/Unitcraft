@@ -1,6 +1,7 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.ArrayList
 
@@ -14,10 +15,13 @@ class Solider(val r: Resource,
               val mover: Mover,
               val builder: Builder,
               val skilerMove: SkilerMove,
-              objs: () -> Objs
+              val objs: () -> Objs
 ) {
-    private val hintTileFlip = r.hintTileFlip
+    private val hintTileFlipHide = r.hintTile("ctx.translate(rTile,0);ctx.scale(-1,1);ctx.globalAlpha=0.7;")
+    private val hintTileFlip = r.hintTile("ctx.translate(rTile,0);ctx.scale(-1,1);")
+    private val hintTileHide = r.hintTile("ctx.globalAlpha=0.7;")
     private val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
+
     private val tileHide = r.tile("hide")
     val tilesEditor = ArrayList<Tile>()
     val creates = ArrayList<(Obj) -> Unit>()
@@ -39,9 +43,9 @@ class Solider(val r: Resource,
         })
         drawer.drawObjs.add { obj, side, ctx ->
             if (obj.has<DataTlsSolid>()) {
-                ctx.drawTile(obj.head(), obj<DataTlsSolid>().tlsSolid()(side, obj.side, obj.isFresh), if (obj.flip) hintTileFlip else null)
+                ctx.drawTile(obj.head(), obj<DataTlsSolid>().tlsSolid()(side, obj.side, obj.isFresh), hint(obj,side))
             }
-            if (mover.isHided(obj, side)) ctx.drawTile(obj.head(), tileHide)
+            if (!obj.isVid(side)) ctx.drawTile(obj.head(), tileHide)
         }
         mover.slotMoveAfter.add { shapeFrom, move ->
             val d = shapeFrom.head.x - move.shapeTo.head.x
@@ -54,6 +58,27 @@ class Solider(val r: Resource,
         val crt = if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create
         creates.add(crt)
         if (isFabric) builder.addFabrik(0, tile, crt)
+    }
+
+    fun editChange(pg: Pg, sideVid: Side) {
+        objs()[pg]?.let {
+            it.side = when (it.side) {
+                Side.n -> sideVid
+                sideVid -> sideVid.vs
+                sideVid.vs -> Side.n
+                else -> throw Err("unknown side=${it.side}")
+            }
+        }
+    }
+
+    private fun hint(obj:Obj,side:Side):Int?{
+        val hided = !obj.isVid(side.vs)
+        return when{
+            obj.flip && hided -> hintTileFlipHide
+            obj.flip -> hintTileFlip
+            hided -> hintTileHide
+            else -> null
+        }
     }
 }
 
@@ -81,7 +106,7 @@ class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val sp
 
     class SkilTelepath(val enforcer: Enforcer, val spoter: Spoter, val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
-                obj.shape.head.near.filter { enforcer.canEnforce(it) }.map {
+                obj.near().filter { enforcer.canEnforce(it,sideVid) }.map {
                     AktSimple(it, tlsAkt) {
                         enforcer.enforce(it)
                         spoter.tire(obj)
@@ -98,6 +123,8 @@ class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val sp
     //            }
     //
     //    }
+
+
 }
 
 class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Spoter) {
@@ -115,7 +142,7 @@ class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Sp
 
     inner class SkilStaziser(val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
-                obj.shape.head.near.filter { it !in stazis }.map {
+                obj.near().filter { it !in stazis }.map {
                     AktSimple(it, tlsAkt) {
                         stazis.plant(it)
                         spoter.tire(obj)
@@ -136,7 +163,6 @@ class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter
             it.data(skil)
             builder.add(it, { it.near() }, {})
         }
-
     }
 
     private class Redeployer(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
@@ -153,6 +179,22 @@ class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter
                     }
                 }
     }
+}
+
+class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerHit, val objs: () -> Objs) {
+    init {
+        val tls = r.tlsVoin("inviser")
+        val dataTls = Inviser(tls)
+        solider.add(tls.neut,false) {
+            it.data(dataTls)
+            it.data(DataInviser)
+            skilerHit.add(it)
+        }
+        mover.slotHide.add { it.has<DataInviser>() }
+    }
+
+    private object DataInviser : Data
+    private class Inviser(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 }
 
 /*
@@ -199,29 +241,6 @@ class Electric(r: Resource, solider: Solider) {
     }
 }
 
-class Inviser(solider: Solider, val hider: Hider, val sider: Sider, val stager: Stager, val objs: () -> Objs) {
-    init {
-        solider.add(KindInviser)
-        stager.onEndTurn { side ->
-            for (obj in objs().byKind(KindInviser)) {
-                if (sider.isEnemy(obj, side)) hider.hide(obj, this)
-            }
-        }
-    }
-
-    private object KindInviser : Kind()
-    //    val hide : MutableSet<VoinStd> = Collections.newSetFromMap(WeakHashMap<VoinStd,Boolean>())
-
-    //    make<EfkUnhide>(0) {
-    //        //voins[pg]?.let{hide.remove(it)}
-    //    }
-    //
-    //    info<MsgIsHided>(0){
-    //        if(voin in hide) yes()
-    //    }
-    //
-}
-
 class Imitator(val spoter: Spoter, solider: Solider, val objs: () -> Objs) {
     init {
         solider.add(KindImitator)
@@ -256,7 +275,7 @@ class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Move
     val fabriks = ArrayList<Fabrik>()
 
     fun plusGold(side: Side, value: Int) {
-        objs().objsSide(side).by<SkilBuild, Obj>().forEach { lifer.heal(it.first, value) }
+        objs().bySide(side).by<SkilBuild, Obj>().forEach { lifer.heal(it.first, value) }
     }
 
     fun add(obj: Obj, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
@@ -277,6 +296,7 @@ class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Move
                     akts.add(AktOpt(pg, tlsAkt, dabs) {
                         if (can()) {
                             val objCreated = Obj(Singl(pg))
+                            objCreated.side = obj.side
                             fabriks[it].create(objCreated)
                             objs().add(objCreated)
                             lifer.damage(obj, price)

@@ -17,7 +17,6 @@ class Resource {
     val hintTexts = ArrayList<HintText>()
     val buildiks = ArrayList<Int>()
 
-    val hintTileFlip = hintTile("ctx.translate(rTile,0);ctx.scale(-1,1);")
     val hintTileDeploy = hintTile("")
     val hintTileDead = hintTile("")
     val hintTileTouch = hintTile("ctx.translate(0.3*rTile,0);ctx.translate(0.1*rTile,-0.1*rTile);ctx.scale(0.7,0.7);")
@@ -25,7 +24,6 @@ class Resource {
     val hintTileTurnL = hintTile("")
     val hintTileTurnD = hintTile("")
 
-    val hintTextLife = hintText("ctx.fillStyle = 'white';")
     val hintTextNeutral = hintText("ctx.fillStyle = 'yellow';")
 
     val hintTextRedPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")

@@ -36,17 +36,18 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val tracer = Tracer(r)
 
 
-    val shaper = Mover(r, editor, objs)
+    val shaper = Mover(r, stager, objs)
     val stazis = Stazis(r, stager, editor, drawer, spoter, shaper, flats)
 
-    val lifer = Lifer(r, drawer, shaper)
+    val lifer = Lifer(r, drawer, objs)
     val enforcer = Enforcer(r, stager, drawer, spoter, objs)
     val skilerMove = SkilerMove(r, spoter, shaper)
+    val skilerHit = SkilerHit(r, lifer, spoter)
     val builder = Builder(r, lifer, spoter, shaper, objs)
-    val voiner = Solider(r, drawer, editor, sider, lifer, enforcer, spoter, shaper, builder, skilerMove, objs)
+    val solider = Solider(r, drawer, editor, sider, lifer, enforcer, spoter, shaper, builder, skilerMove, objs)
 
     init {
-        Forest(r, flater)
+        Forest(r, flater, shaper, flats)
         Grass(r, flater)
         Water(r, flater)
         Catapult(r, flater, spoter, shaper, flats)
@@ -56,11 +57,11 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         Flag(r, flater)
 
         //        Electric(r, voiner)
-        Telepath(r, enforcer, voiner, spoter)
-        Staziser(r, stazis, voiner, spoter)
-        //        Inviser(voiner, hider, sider,  stager,objs)
+        Telepath(r, enforcer, solider, spoter)
+        Staziser(r, stazis, solider, spoter)
+        Inviser(r, solider, shaper, skilerHit, objs)
         //        Imitator(spoter,voiner,objs)
-        Redeployer(r, voiner, builder, spoter, objs)
+        Redeployer(r, solider, builder, spoter, objs)
         //        Warehouse(voiner,builder, lifer)
     }
 
@@ -138,7 +139,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         private fun editChange(side: Side, prm: Prm) {
             ensureTest()
             prm.ensureSize(2)
-            editor.editChange(prm.pg(0), side)
+            solider.editChange(prm.pg(0), side)
         }
 
         private fun akt(side: Side, prm: Prm) {

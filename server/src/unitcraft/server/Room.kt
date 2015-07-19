@@ -181,4 +181,7 @@ enum class Side {
     }
 
     val isN: Boolean by Delegates.lazy { this == n }
+    companion object{
+        val ab = listOf(Side.a,Side.b).requireNoNulls()
+    }
 }

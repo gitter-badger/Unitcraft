@@ -42,3 +42,21 @@ class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
     }
 }
 
+class SkilerHit(r:Resource,val lifer:Lifer,val spoter: Spoter){
+    val tlsAkt = r.tlsAkt("hit")
+
+    fun add(obj:Obj){
+        obj.data(SkilHit())
+    }
+
+    inner class SkilHit() : Skil {
+        override fun akts(sideVid: Side, obj: Obj) =
+                obj.near().filter { lifer.canDamage(it) }.map {
+                    AktSimple(it, tlsAkt) {
+                        lifer.damage(it,1)
+                        spoter.tire(obj)
+                    }
+                }
+    }
+}
+

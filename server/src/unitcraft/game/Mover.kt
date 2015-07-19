@@ -7,10 +7,19 @@ import unitcraft.server.init
 import java.util.*
 import kotlin.properties.Delegates
 
-class Mover(r:Resource,val editor: Editor,val objs:()-> Objs) {
+class Mover(r:Resource,val stager: Stager,val objs:()-> Objs) {
     val slotStopMove = ArrayList<(Move)->Boolean>()
     val slotStopBuild = ArrayList<(Shape)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
+    val slotHide = ArrayList<(Obj)->Boolean>()
+
+    init{
+        stager.onStartTurn {
+            objs().forEach { obj ->
+               obj.hide = slotHide.any{it(obj)}
+            }
+        }
+    }
 
     /**
      * Возвращает доступность движения.
@@ -19,18 +28,18 @@ class Mover(r:Resource,val editor: Editor,val objs:()-> Objs) {
      */
     fun canMove(move: Move): (()->Boolean)? {
         if(slotStopMove.any{it(move)}) return null
-        val objs = objs().byClash(move.shapeTo)
-        if(objs.isEmpty()) return {true}
-        val objHided = objs.filter{isHided(it,move.sideVid)}
-        if(objHided.isEmpty()) return null
-        return { reveal(objHided);false}
+        return canBusy(move.shapeTo,move.sideVid)
     }
 
     fun canBulid(shape: Shape,sideVid:Side): (()->Boolean)? {
         if(slotStopBuild.any{it(shape)}) return null
+        return canBusy(shape,sideVid)
+    }
+
+    private fun canBusy(shape:Shape,sideVid:Side):(()->Boolean)?{
         val objs = objs().byClash(shape)
         if(objs.isEmpty()) return {true}
-        val objHided = objs.filter{isHided(it,sideVid)}
+        val objHided = objs.filter{it.hide && it.side==sideVid.vs}
         if(objHided.isEmpty()) return null
         return { reveal(objHided);false}
     }
@@ -39,16 +48,26 @@ class Mover(r:Resource,val editor: Editor,val objs:()-> Objs) {
         if(objs().byClash(move.shapeTo).isNotEmpty()) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
         val shapeFrom = move.obj.shape
         move.obj.shape = move.shapeTo
+        for(side in Side.ab) {
+            val pgsWt = pgsWatch(side)
+            objs().filter { it.shape.pgs.intersect(pgsWt).isNotEmpty() }.forEach { it.hide = false }
+        }
         slotMoveAfter.forEach{it(shapeFrom,move)}
     }
 
-    fun isHided(obj:Obj,sideVid: Side):Boolean{
-        return false
+    private fun pgsWatch(side:Side) = objs().bySide(side).flatMap { it.near() }.distinct()
+
+    fun rehide(){
+        objs().forEach { obj ->
+            if (!slotHide.any { it(obj) }) obj.hide = false
+        }
     }
 
     fun reveal(objs: List<Obj>) {
-        println("reveal: "+objs)
+        objs.forEach { it.hide = false }
     }
+
+    class CanHide(var can:Boolean) : Data
 }
 
 class Move(

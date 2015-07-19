@@ -1,6 +1,7 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.server.Side
 import java.util.ArrayList
 
 class Enforcer(r: Resource, val stager: Stager, val drawer: Drawer, val spoter: Spoter, val objs: () -> Objs) {
@@ -12,7 +13,7 @@ class Enforcer(r: Resource, val stager: Stager, val drawer: Drawer, val spoter: 
         spoter.listCanAkt.add { side, obj -> obj.has<Enforce>() && obj<Enforce>().isOn }
     }
 
-    fun canEnforce(pg: Pg) = objs()[pg]?.let{ !it.has<Enforce>() }?:false
+    fun canEnforce(pg: Pg,sideVid: Side) = objs()[pg]?.let{ it.isVid(sideVid) && !it.has<Enforce>() }?:false
 
     fun enforce(pg: Pg) {
         objs()[pg]?.data(Enforce(true))

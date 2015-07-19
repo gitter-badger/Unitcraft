@@ -44,13 +44,18 @@ class Obj(shape: Shape):HasShape(shape) {
     var isFresh = false
     var flip = false
     var life = 5
+    var hide = false
+
+    fun isVid(sideVid:Side) = side.isN || side==sideVid || !hide
+
+
     override fun toString() = "Solid $shape $datas"
 }
 
 class Objs: ListHasShape<Obj> {
     override val list = ArrayList<Obj>()
 
-    fun objsSide(side:Side) = list.objsSide(side)
+    fun bySide(side:Side) = list.bySide(side)
 
     fun get(pg: Pg) = list.byPg(pg)
 }
@@ -58,7 +63,7 @@ class Objs: ListHasShape<Obj> {
 inline fun <reified T : Data,A:HasShape> List<A>.by() = filter { it.has<T>() }.map{it to it<T>()}
 fun <H:HasShape> List<H>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
 fun <H:HasShape> List<H>.byClash(shape: Shape) = filter{obj -> shape.pgs.any{it in obj.shape.pgs}}
-fun List<Obj>.objsSide(side:Side) = filter{it.side==side}
+fun List<Obj>.bySide(side:Side) = filter{it.side==side}
 
 interface ListHasShape<H:HasShape>:Iterable<H>{
     val list: ArrayList<H>
@@ -110,6 +115,8 @@ open class HasData{
     inline fun <reified T : Data> invoke(): T = datas.first{it is T} as T
 
     inline fun <reified T : Data> get() = datas.filterIsInstance<T>()
+
+    inline fun <reified T : Data> orPut(v:()->T) = if(has<T>()) invoke<T>() else v().init{data(v())}
 }
 
 open class HasShape(var shape:Shape):HasData(){
