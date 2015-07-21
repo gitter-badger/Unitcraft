@@ -50,6 +50,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         Forest(r, flater, shaper, flats)
         Grass(r, flater)
         Water(r, flater)
+        Sand(r, flater)
         Catapult(r, flater, spoter, shaper, flats)
 
         Mine(r, flater, stager, builder, flats)

@@ -18,7 +18,7 @@ class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
 
     override fun toString() = "$x $y"
 
-    override fun compareTo(other: Pg) = x * pgser.yr + y - other.x * pgser.yr + other.y
+    override fun compareTo(other: Pg) = x * pgser.yr + y - (other.x * pgser.yr + other.y)
 }
 
 class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{

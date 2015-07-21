@@ -69,6 +69,14 @@ open class HasTileFlatFix(val tile:Tile) : HasTileFlat{
     override fun tile(sideVid:Side,flat:Flat) = tile
 }
 
+class Sand(r:Resource,val flater:Flater){
+    init{
+        val tiles = r.tlsList(4,"sand",Resource.effectPlace)
+        flater.add(tiles[0],TpFlat.wild){it.data(DataSand(randomTile(tiles)))}
+    }
+    class DataSand(tile:Tile) : HasTileFlatFix(tile)
+}
+
 class Forest(r:Resource,val flater:Flater,mover:Mover,flats:()->Flats){
     init{
         val tiles = r.tlsList(4,"forest",Resource.effectPlace)
