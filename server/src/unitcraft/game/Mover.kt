@@ -75,5 +75,3 @@ class Move(
         val shapeTo: Shape,
         val sideVid: Side
 )
-
-//TODO мовер и хидер одно целое

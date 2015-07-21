@@ -13,7 +13,7 @@ function redrawGrid(){
                 for(var x=-xgLeft;x<ui.game.dmn.xr+xgRight;x++){
                     for(var y=-ygUp;y<ui.game.dmn.yr+ygDown;y++){
                         if(x<0 || y<0)
-                            drawDabOnGrid(ctx,dabsEdge[ui.game.edge],{x,y},ui.tileset,ui.tile());
+                            drawDabOnGrid(ctx,ui.game.edge,{x,y},ui.tileset,ui.tile());
                     }
                 }
             },
@@ -21,7 +21,7 @@ function redrawGrid(){
                 for (var x = -xgLeft; x < ui.game.dmn.xr + xgRight; x++) {
                     for (var y = -ygUp; y < ui.game.dmn.yr + ygDown; y++) {
                         if (y >= 0 && x >= ui.game.dmn.xr || x >= 0 && y >= ui.game.dmn.yr)
-                            drawDabOnGrid(ctx, dabsEdge[ui.game.edge],{x, y},ui.tileset,ui.tile());
+                            drawDabOnGrid(ctx, ui.game.edge,{x, y},ui.tileset,ui.tile());
                     }
                 }
             }
@@ -54,7 +54,7 @@ function redrawAkter(){
         var pst = ui.pstGrid();
         ctx.translate(pst.x, pst.y);
         drawDrawing(ctx,ui.akts,ui.tileset,ui.tile());
-        drawDabOnGrid(ctx,dabFocus,ui.focus.pg,ui.tileset,ui.tile());
+        drawDabOnGrid(ctx,ui.game.focus,ui.focus.pg,ui.tileset,ui.tile());
         ctx.restore();
     }
 }

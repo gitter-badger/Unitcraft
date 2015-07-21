@@ -28,9 +28,6 @@ class Resource {
 
     val hintTextRedPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
 
-    val tileFocus = tile("focus")
-    val tileEdgeTurn = tile("edgeTurn", effectPlace)
-    val tileEdgeWait = tile("edgeWait", effectPlace)
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
 

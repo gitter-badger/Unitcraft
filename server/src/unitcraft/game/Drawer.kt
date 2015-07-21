@@ -38,7 +38,8 @@ class Drawer(val pgser:()->Pgser,val allData: () -> AllData) {
     }
 
     private fun drawObjs(side: Side, ctx: CtxDraw) {
-        for (obj in allData().objs) {
+        for ((obj,ht) in allData().objs.by<HasTile>()) {
+            ctx.drawTile(obj.head(), ht.tile(side,obj), ht.hint(side,obj))
             drawObjs.forEach{it(obj,side,ctx)}
         }
     }
@@ -63,4 +64,9 @@ class CtxDraw(val sideVid: Side) {
     fun drawText(pg: Pg, value: Int, hint: Int? = null) {
         drawText(pg, value.toString(), hint)
     }
+}
+
+interface HasTile : Data{
+    fun tile(sideVid: Side, obj: Obj):Tile
+    fun hint(sideVid: Side, obj: Obj):Int?
 }

@@ -118,11 +118,6 @@ class ServerCdn() : NanoHTTPD(8000) {
         sb.appendln()
         sb.appendln()
 
-        val edges = listOf(DabTile(res.tileEdgeTurn),DabTile(res.tileEdgeWait))
-        sb.appendln("var dabsEdge ="+ JSONValue.toJSONString(edges)+";")
-        sb.appendln("var dabFocus ="+ DabTile(res.tileFocus).toJSONString()+";")
-        sb.appendln()
-
         res.hintTiles.map{"function(ctx,rTile){${it.script}}"}.joinTo(sb,",\n","var hintTile = [","];");
         sb.appendln()
         sb.appendln()

@@ -1,10 +1,10 @@
 var ws = null;
-var isLocal = location.hostname=="localhost";
+var isLocal = location.hostname == "localhost";
 
 $(function () {
     if (!isOkCanvasAndWs()) return;
 
-    var second = Kefir.interval(1000,null);
+    var second = Kefir.interval(1000, null);
     var server = initServer();
     var dmnCanvas = initDmnCanvas();
     var keyboard = initKeyboard();
@@ -47,7 +47,7 @@ function onDmnCanvas(dmn, ui) {
         if (panelset) ui.panelset = panelset;
         ui.fireGrid();
         ui.fireAkter();
-    }else{
+    } else {
         ui.fireGrid();
         ui.fireAkter();
     }
@@ -56,15 +56,15 @@ function onDmnCanvas(dmn, ui) {
 }
 
 function onCmdScale(cmdScale, ui) {
-    var scale = cmdScale != null ? clamp(ui.scale + cmdScale, 0, listQdmnTile.length-1) : ui.scaleBest();
+    var scale = cmdScale != null ? clamp(ui.scale + cmdScale, 0, listQdmnTile.length - 1) : ui.scaleBest();
     updateScale(scale, ui);
 }
 
 function onKey(key, ui) {
     if (key === "Enter") {
-        if(ui.game.canEndTurn) endTurn(ui);
+        endTurn(ui);
     } else if (key === "w") {
-        ui.fireAkt("w");
+        if (ui.game.stage === "turn") ui.fireAkt("w");
     } else if (key === "q") {
         ui.fireCmd("t");
     }
@@ -73,7 +73,7 @@ function onKey(key, ui) {
 var keyTestToCmd = {"x": "r", "c": "c", "v": "d"};
 
 function onKeyTest([key,pst], ui) {
-    if(ui.game.opterTest==null) return;
+    if (ui.game.opterTest == null) return;
     var pg = ui.pgFromPst(pst);
     if (key === "z") {
         if (ui.opts != null) {
@@ -88,8 +88,8 @@ function onKeyTest([key,pst], ui) {
         }
     } else if (ui.opts == null) {
         var akt = key === "a" ?
-            "z" + strPg(pg) + " " + (ui.numOpterTestLast == null ? 0 : ui.numOpterTestLast) :
-            keyTestToCmd[key] + strPg(pg);
+        "z" + strPg(pg) + " " + (ui.numOpterTestLast == null ? 0 : ui.numOpterTestLast) :
+        keyTestToCmd[key] + strPg(pg);
         ui.fireAkt(akt);
     }
 }
@@ -99,12 +99,12 @@ function onClick(click, ui) {
         onClickOpter(click, ui);
     } else {
         var num = ui.numFromPstOnToolbar(click);
-        if (num!=null) {
-            onClickToolbar(num,ui);
+        if (num != null) {
+            onClickToolbar(num, ui);
         } else {
             var pg = ui.pgFromPst(click);
             if (pg) {
-                onClickGrid(pg,ui);
+                onClickGrid(pg, ui);
             } else {
                 ui.clearFocus();
                 ui.fireAkter();
@@ -113,22 +113,22 @@ function onClick(click, ui) {
     }
 }
 
-function endTurn(ui){
-    if(ui.game.canEndTurn) ui.fireAkt("e");
+function endTurn(ui) {
+    if (ui.game.stage === "turn") ui.fireAkt("e");
 }
 
-function onClickToolbar(num,ui){
-    if(num==0){
+function onClickToolbar(num, ui) {
+    if (num == 0) {
         endTurn(ui);
-    }else if(num==1){
-        if(ui.status=="online") ws.send("p1 1");
-        else if(ui.status=="queue" || ui.status=="macth" || ui.status=="invite") ws.send("d");
-    }else if(num==2){
+    } else if (num == 1) {
+        if (ui.status == "online") ws.send("p1 1");
+        else if (ui.status == "queue" || ui.status == "macth" || ui.status == "invite") ws.send("d");
+    } else if (num == 2) {
         // открыть чат
     }
 }
 
-function onClickOpter(click,ui){
+function onClickOpter(click, ui) {
     var num = ui.numFromPstOnOpter(click);
     if (num != null && num < ui.opts.length) {
         ui.fireAkt(ui.aktSelect(num));
@@ -137,7 +137,7 @@ function onClickOpter(click,ui){
     ui.fireOpter();
 }
 
-function onClickGrid(pg,ui){
+function onClickGrid(pg, ui) {
     var focus = ui.focus;
     if (focus) {
         var sloy = ui.game.spots[strPg(focus.pg)][focus.idx];
@@ -188,12 +188,12 @@ function onMemo(memo, ui) {
 }
 
 function onTileset(tileset, ui) {
-    if (ui.tileset == null || ui.tile()== tileset.step) {
+    if (ui.tileset == null || ui.tile() == tileset.step) {
         ui.tileset = tileset;
         ui.fireGrid();
         ui.fireAkter();
     }
-    if (ui.tilesetOpter == null || (ui.opts!=null && ui.qdmnTileOpter() == tileset.step)) {
+    if (ui.tilesetOpter == null || (ui.opts != null && ui.qdmnTileOpter() == tileset.step)) {
         ui.tilesetOpter = tileset;
         ui.fireOpter();
     }
@@ -206,10 +206,10 @@ function onPanelset(panelset, ui) {
     }
 }
 
-function onSecond(_,ui){
-    if (ui.game==null) return;
+function onSecond(_, ui) {
+    if (ui.game == null) return;
     ui.fireClock();
-    if(ui.game.stage!="win" && ui.game.stage!="winEnemy" && ui.intervalElapsed()>=ui.game.clock[1]){
+    if (ui.game.stage != "win" && ui.game.stage != "winEnemy" && ui.intervalElapsed() >= ui.game.clock[1]) {
         ui.fireCmd("r");
     }
 }
@@ -264,8 +264,8 @@ function createUI(tileset, panelset, streamUi) {
             var xr = this.dmn.xr;
             var yr = this.dmn.yr;
             var xrTb = ui.qdmnPanel();
-            var xrGrid = this.tile()* ui.game.dmn.xr;
-            var yrGrid = this.tile()* ui.game.dmn.yr;
+            var xrGrid = this.tile() * ui.game.dmn.xr;
+            var yrGrid = this.tile() * ui.game.dmn.yr;
             var xSm = 0;
             if (xrTb * 2 + xrGrid <= xr) {
                 xSm = 0;
@@ -278,7 +278,7 @@ function createUI(tileset, panelset, streamUi) {
         },
         pstToolbar() {
             var pstGrid = ui.pstGrid();
-            return {x: Math.max(0,pstGrid.x - ui.qdmnPanel()), y: Math.max(0,pstGrid.y)};
+            return {x: Math.max(0, pstGrid.x - ui.qdmnPanel()), y: Math.max(0, pstGrid.y)};
         },
         updateFocus(pg) {
             this.focus = {pg, idx: 0};
@@ -301,26 +301,29 @@ function createUI(tileset, panelset, streamUi) {
         qdmnTileOpter(){
             var dmn = this.dmnOpter();
             var qdmnXExact = (ui.dmn.xr - ui.qdmnPanel()) / dmn.xr;
-            var qdmnX = R.minBy(qdmn => qdmnXExact-qdmn,R.filter(qdmn => qdmn<=qdmnXExact,listQdmnTile)) || listQdmnTile[0];
-            var qdmnYExact = ui.dmn.yr/dmn.yr;
-            var qdmnY = R.minBy(qdmn => qdmnYExact-qdmn,R.filter(qdmn => qdmn<=qdmnYExact,listQdmnTile)) || listQdmnTile[0];
-            return Math.min(qdmnX,qdmnY);
+            var qdmnX = R.minBy(qdmn => qdmnXExact - qdmn, R.filter(qdmn => qdmn <= qdmnXExact, listQdmnTile)) || listQdmnTile[0];
+            var qdmnYExact = ui.dmn.yr / dmn.yr;
+            var qdmnY = R.minBy(qdmn => qdmnYExact - qdmn, R.filter(qdmn => qdmn <= qdmnYExact, listQdmnTile)) || listQdmnTile[0];
+            return Math.min(qdmnX, qdmnY);
         },
         dmnOpter() {
             var xr = 5;
             return {xr, yr: div(ui.opts.length, xr) + sign(ui.opts.length % xr)};
         },
         numFromPstOnOpter(pst) {
-            return isPstInRect(pst,this.pstOpter(),scaleDmn(this.dmnOpter(),this.qdmnTileOpter()))?
-                div(pst.x-this.pstOpter().x, this.qdmnTileOpter()) + div(pst.y-this.pstOpter().y, this.qdmnTileOpter()) * this.dmnOpter().xr:null;
+            return isPstInRect(pst, this.pstOpter(), scaleDmn(this.dmnOpter(), this.qdmnTileOpter())) ?
+            div(pst.x - this.pstOpter().x, this.qdmnTileOpter()) + div(pst.y - this.pstOpter().y, this.qdmnTileOpter()) * this.dmnOpter().xr : null;
         },
         numFromPstOnToolbar(pst){
-            return isPstInRect(pst,this.pstToolbar(),scaleDmn({xr:1,yr:4},this.qdmnPanel()))?div(pst.y-this.pstToolbar().y,this.qdmnPanel()):null;
+            return isPstInRect(pst, this.pstToolbar(), scaleDmn({
+                xr: 1,
+                yr: 4
+            }, this.qdmnPanel())) ? div(pst.y - this.pstToolbar().y, this.qdmnPanel()) : null;
         },
         isAcceptFromPstOnToolbar(pst){
             var qdmn = this.qdmnPanel();
             var pstTb = this.pstToolbar();
-            return isPstInRect(pst,{xr:pstTb.x+qdmn,yr:pstTb.y+qdmn},{xr:qdmn,yr:qdmn});
+            return isPstInRect(pst, {xr: pstTb.x + qdmn, yr: pstTb.y + qdmn}, {xr: qdmn, yr: qdmn});
         },
         pstOpter() {
             var dmn = this.dmnOpter();
@@ -336,13 +339,13 @@ function createUI(tileset, panelset, streamUi) {
         },
         scaleBest() {
             var qdmnXExact = (ui.dmn.xr - ui.qdmnPanel()) / ui.game.dmn.xr;
-            var qdmnX = R.minBy(qdmn => qdmnXExact-qdmn,R.filter(qdmn => qdmn<=qdmnXExact,listQdmnTile)) || listQdmnTile[0];
-            var qdmnYExact = ui.dmn.yr/ui.game.dmn.yr;
-            var qdmnY = R.minBy(qdmn => qdmnYExact-qdmn,R.filter(qdmn => qdmn<=qdmnYExact,listQdmnTile)) || listQdmnTile[0];
-            return R.indexOf(Math.min(qdmnX,qdmnY),listQdmnTile);
+            var qdmnX = R.minBy(qdmn => qdmnXExact - qdmn, R.filter(qdmn => qdmn <= qdmnXExact, listQdmnTile)) || listQdmnTile[0];
+            var qdmnYExact = ui.dmn.yr / ui.game.dmn.yr;
+            var qdmnY = R.minBy(qdmn => qdmnYExact - qdmn, R.filter(qdmn => qdmn <= qdmnYExact, listQdmnTile)) || listQdmnTile[0];
+            return R.indexOf(Math.min(qdmnX, qdmnY), listQdmnTile);
         },
         intervalElapsed(){
-            return Date.now()-this.instant;
+            return Date.now() - this.instant;
         },
         storeTileset: storeImages(tileset, "tile"),
         storePanelset: storeImages(panelset, "panel"),
@@ -350,19 +353,19 @@ function createUI(tileset, panelset, streamUi) {
             console.log("lock");
         },
         fireGrid() {
-            emitter.emit([grid,this]);
+            emitter.emit([grid, this]);
         },
         fireAkter() {
-            emitter.emit([akter,this]);
+            emitter.emit([akter, this]);
         },
         fireOpter() {
-            emitter.emit([opter,this]);
+            emitter.emit([opter, this]);
         },
         fireToolbar() {
-            emitter.emit([toolbar.redraw,this]);
+            emitter.emit([toolbar.redraw, this]);
         },
         fireClock() {
-            emitter.emit([toolbar.redrawClock,this]);
+            emitter.emit([toolbar.redrawClock, this]);
         },
         fireAkt(akt) {
             this.lock();
@@ -377,7 +380,8 @@ function createUI(tileset, panelset, streamUi) {
     streamUi.scan((ui, fn) => {
         fn(ui);
         return ui;
-    }, ui).onValue(()=> {});
+    }, ui).onValue(()=> {
+    });
 }
 
 function createEmitter() {
@@ -420,7 +424,7 @@ function initServer() {
         ws.onerror = em.error;
         ws.onclose = () => showFatal("Cant connect to server");
     });
-    if(isLocal) messages.onValue(msg => console.log(msg.length <= 50 ? msg : msg.substring(0, 50) + "..."));
+    if (isLocal) messages.onValue(msg => console.log(msg.length <= 50 ? msg : msg.substring(0, 50) + "..."));
     return {
         msg(tp) {
             return messages.filter(R.compose(R.eq(tp), R.nthChar(0))).map(R.substringFrom(1));
@@ -446,7 +450,9 @@ function createPing(server, keyboard) {
 
 function initMemo(server) {
     var sizeMemo = 10;
-    return server.msg("g").map(JSON.parse).onValue(game => {if(game.err) showErr()}).slidingWindow(sizeMemo);
+    return server.msg("g").map(JSON.parse).onValue(game => {
+        if (game.err) showErr()
+    }).slidingWindow(sizeMemo);
 }
 
 function initStatus(server) {

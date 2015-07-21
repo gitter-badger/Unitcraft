@@ -48,7 +48,7 @@ class Room(val log: Log, val send: Sender, val idPrim: Id, val idSec: Id?, val b
                     log.error(e)
                     "e"
                 } ?: break
-                aktAndSend(Side.b, cmdRobot)
+                aktAndSend(sides[idPrim].vs, cmdRobot)
                 if (state.sideWin != null) break
             }
         }

@@ -42,9 +42,6 @@ class Solider(val r: Resource,
             } ?: false
         })
         drawer.drawObjs.add { obj, side, ctx ->
-            if (obj.has<DataTlsSolid>()) {
-                ctx.drawTile(obj.head(), obj<DataTlsSolid>().tlsSolid()(side, obj.side, obj.isFresh), hint(obj,side))
-            }
             if (!obj.isVid(side)) ctx.drawTile(obj.head(), tileHide)
         }
         mover.slotMoveAfter.add { shapeFrom, move ->
@@ -60,6 +57,10 @@ class Solider(val r: Resource,
         if (isFabric) builder.addFabrik(0, tile, crt)
     }
 
+    fun addTls(obj:Obj,tlsSolid:TlsSolid){
+        obj.data(HasTlsSolid(tlsSolid))
+    }
+
     fun editChange(pg: Pg, sideVid: Side) {
         objs()[pg]?.let {
             it.side = when (it.side) {
@@ -71,38 +72,31 @@ class Solider(val r: Resource,
         }
     }
 
-    private fun hint(obj:Obj,side:Side):Int?{
-        val hided = !obj.isVid(side.vs)
-        return when{
-            obj.flip && hided -> hintTileFlipHide
-            obj.flip -> hintTileFlip
-            hided -> hintTileHide
-            else -> null
+    inner class HasTlsSolid(val tlsSolid:TlsSolid) : HasTile {
+        override fun tile(sideVid: Side, obj: Obj) = tlsSolid(sideVid, obj.side, obj.isFresh)
+
+        override fun hint(sideVid: Side, obj: Obj):Int?{
+            val hided = !obj.isVid(sideVid.vs)
+            return when{
+                obj.flip && hided -> hintTileFlipHide
+                obj.flip -> hintTileFlip
+                hided -> hintTileHide
+                else -> null
+            }
         }
     }
-}
-
-abstract class DataTlsSolid : Data {
-    abstract fun tlsSolid(): TlsSolid
-}
-
-open class DataTlsSolidFix(val tls: TlsSolid) : DataTlsSolid() {
-    override fun tlsSolid() = tls
 }
 
 class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val spoter: Spoter) {
     init {
         val tls = r.tlsVoin("telepath")
         val tlsAkt = r.tlsAkt("telepath")
-        val kind = Telepath(tls)
         val skil = SkilTelepath(enforcer, spoter, tlsAkt)
         solider.add(tls.neut) {
-            it.data(kind)
+            solider.addTls(it,tls)
             it.data(skil)
         }
     }
-
-    private class Telepath(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 
     class SkilTelepath(val enforcer: Enforcer, val spoter: Spoter, val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
@@ -131,14 +125,11 @@ class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Sp
     init {
         val tls = r.tlsVoin("staziser")
         val tlsAkt = r.tlsAkt("staziser")
-        val staziser = Staziser(tls)
         solider.add(tls.neut) {
-            it.data(staziser)
+            solider.addTls(it,tls)
             it.data(SkilStaziser(tlsAkt))
         }
     }
-
-    private class Staziser(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 
     inner class SkilStaziser(val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
@@ -156,16 +147,13 @@ class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter
 
     init {
         val tls = r.tlsVoin("redeployer")
-        val dataTls = Redeployer(tls)
         val skil = SkilRedeployer()
         solider.add(tls.neut,false) {
-            it.data(dataTls)
+            solider.addTls(it,tls)
             it.data(skil)
             builder.add(it, { it.near() }, {})
         }
     }
-
-    private class Redeployer(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 
     inner class SkilRedeployer() : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
@@ -184,9 +172,8 @@ class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter
 class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerHit, val objs: () -> Objs) {
     init {
         val tls = r.tlsVoin("inviser")
-        val dataTls = Inviser(tls)
         solider.add(tls.neut,false) {
-            it.data(dataTls)
+            solider.addTls(it,tls)
             it.data(DataInviser)
             skilerHit.add(it)
         }
@@ -194,7 +181,6 @@ class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerH
     }
 
     private object DataInviser : Data
-    private class Inviser(tlsSolid: TlsSolid) : DataTlsSolidFix(tlsSolid)
 }
 
 /*
@@ -266,9 +252,6 @@ class Warehouse(solider: Solider, builder: Builder, val lifer: Lifer) {
 }
 */
 class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Mover, val objs: () -> Objs) {
-    //    private val kindsBuild = HashMap<Kind, Pair<(Obj) -> List<Pg>, (Obj) -> Unit>>()
-    //    private val kindsFabrik = ArrayList<Kind>()
-    //    val tilesFabrik = ArrayList<Tile>()
     val tlsAkt = TlsAkt(r.tile("build", Resource.effectAkt), r.tile("build", Resource.effectAktOff))
     val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
     val price = 5
@@ -280,6 +263,7 @@ class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Move
 
     fun add(obj: Obj, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
         obj.data(SkilBuild(zone, fabriks))
+        lifer.change(obj,50)
     }
 
     fun addFabrik(prior: Int, tile: Tile, create: (Obj) -> Unit) {

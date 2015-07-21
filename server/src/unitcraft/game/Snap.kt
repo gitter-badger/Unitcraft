@@ -13,8 +13,9 @@ class Snap(
         val grid: List<DabOnGrid>,
         val spots: Map<Pg, List<Sloy>>,
         val traces: List<DabOnGrid>,
-        val canEndTurn: Boolean,
         val stage: Stage,
+        val edge:DabTile,
+        val focus:DabTile,
         val opterTest:Opter?
 ) {
 
@@ -26,8 +27,8 @@ class Snap(
         put("grid",grid)
         put("spots",spots)
         put("traces", traces)
-        put("edge", if(canEndTurn) 0 else 1)
-        put("canEndTurn", canEndTurn)
+        put("edge", edge)
+        put("focus",focus)
         put("vpoint",listOf(15,7))
         put("stage",stage.toString())
         if(opterTest!=null) put("opterTest",opterTest)

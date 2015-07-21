@@ -25,6 +25,10 @@ class Lifer(r: Resource,drawer: Drawer,val objs: ()->Objs) {
         return objs()[pg]!=null
     }
 
+    fun change(obj:Obj, value:Int){
+        obj.life = value
+    }
+
     init{
         drawer.drawObjs.add {obj,side,ctx ->
             ctx.drawText(obj.head(), obj.life, hintTextLife)

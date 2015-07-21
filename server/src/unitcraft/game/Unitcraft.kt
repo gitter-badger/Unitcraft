@@ -15,7 +15,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
     val objs = { cur.allData.objs }
     val flats = { cur.allData.flats }
 
-    val stager = Stager(allData)
+    val stager = Stager(r,allData)
     val editor = Editor()
     val drawer = Drawer(pgser, allData)
     val spoter = Spoter(stager, allData)
@@ -103,7 +103,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
         override fun state(): GameState {
             cur = this
-            return GameState(null, Side.values().map { it to snap(it).toJson() }.toMap(), null)
+            return GameState(null, Side.ab.map { it to snap(it).toJson() }.toMap(), null)
         }
 
         override fun cmdRobot(sideRobot: Side): String? {
@@ -167,7 +167,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
                 pgser.yr,
                 drawer.draw(side),
                 spoter.spots(side),
-                tracer.traces(side), side == stager.sideTurn(), Stage.turn, if (canEdit) editor.opterTest else null
+                tracer.traces(side), stager.stage(side), stager.edge(side), stager.focus, if (canEdit) editor.opterTest else null
         )
     }
 }
