@@ -6,8 +6,7 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.exclude
 import unitcraft.server.init
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.kotlin
 import kotlin.properties.Delegates
@@ -35,6 +34,7 @@ class Flat(shape: Shape):HasShape(shape){
 class Flats: ListHasShape<Flat>{
     override val list = ArrayList<Flat>()
 
+    fun sort() = list.init{ Collections.sort(list,compareBy { it.head() }) }
 
     fun get(pg: Pg) = list.byPg(pg)!!
 }
@@ -54,6 +54,8 @@ class Obj(shape: Shape):HasShape(shape) {
 
 class Objs: ListHasShape<Obj> {
     override val list = ArrayList<Obj>()
+
+    fun sort():List<Obj> = list.init{ Collections.sort(list,compareBy { it.head() }) }
 
     fun bySide(side:Side) = list.bySide(side)
 

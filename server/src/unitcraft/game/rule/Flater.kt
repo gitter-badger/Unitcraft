@@ -1,6 +1,7 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.land
 import unitcraft.land.Land
 import unitcraft.land.TpFlat
 import unitcraft.server.Side
@@ -12,7 +13,7 @@ import kotlin.properties.Delegates
 class Flater(val r:Resource,val stager: Stager,val allData:() -> AllData,val drawer:Drawer,val editor:Editor){
     val tilesEditor = ArrayList<Tile>()
     val creates = ArrayList<(Flat)->Unit>()
-    val landTps = HashMap<TpFlat,MutableList<(Flat)->Unit>>()
+    private val landTps = HashMap<TpFlat,MutableList<(Flat)->Unit>>()
     fun flats() = allData().flats
 
     init{
@@ -22,11 +23,6 @@ class Flater(val r:Resource,val stager: Stager,val allData:() -> AllData,val dra
             creates[num](flat)
             flats().add(flat)
         },{pg-> false})
-        drawer.drawFlats.add{flat,side,ctx ->
-            if(flat.has<DataTile>()){
-                ctx.drawTile(flat.head(),flat<DataTile>().tile(side))
-            }
-        }
         stager.onEndTurn {
             for ((flat,point) in allData().flats.by<DataPoint>())
                 for (voin in allData().objs)
@@ -34,15 +30,23 @@ class Flater(val r:Resource,val stager: Stager,val allData:() -> AllData,val dra
                         point.side = voin.side
         }
     }
-    fun add(tileEditor:Tile,tpLand:TpFlat, create:(Flat)->Unit) {
+
+    fun add(tileEditor:Tile, tpFlat:TpFlat, create:(Flat)->Unit) {
         tilesEditor.add(tileEditor)
         creates.add(create)
-        landTps.getOrPut(tpLand){ArrayList<(Flat)->Unit>()}.add(create)
+        landTps.getOrPut(tpFlat){ArrayList<(Flat)->Unit>()}.add(create)
     }
-}
 
-abstract class DataTile:Data{
-    abstract fun tile(sideVid:Side):Tile
+    fun maxFromTpFlat() = landTps.mapValues { it.value.size() }
+
+    fun reset(flatsL: ArrayList<land.Flat>) {
+        val flats = allData().flats
+        for(flatL in flatsL){
+            val flat = Flat(flatL.shape)
+            landTps[flatL.tpFlat][flatL.num](flat)
+            flats.add(flat)
+        }
+    }
 }
 
 //val hide : MutableSet<Any> = Collections.newSetFromMap(WeakHashMap<Any,Boolean>())
@@ -61,8 +65,8 @@ abstract class DataTile:Data{
 
 fun randomTile(tiles:List<Tile>) = tiles[Any().hashCode()%tiles.size()]
 
-open class DataTileFix(val tile:Tile) : DataTile(){
-    override fun tile(sideVid:Side) = tile
+open class HasTileFlatFix(val tile:Tile) : HasTileFlat{
+    override fun tile(sideVid:Side,flat:Flat) = tile
 }
 
 class Forest(r:Resource,val flater:Flater,mover:Mover,flats:()->Flats){
@@ -72,7 +76,7 @@ class Forest(r:Resource,val flater:Flater,mover:Mover,flats:()->Flats){
         mover.slotHide.add { flats()[it.head()].has<DataForest>()}
         mover.slotMoveAfter.add{ shapeFrom,move -> mover.rehide() }
     }
-    class DataForest(tile:Tile) : DataTileFix(tile)
+    class DataForest(tile:Tile) : HasTileFlatFix(tile)
 }
 
 class Grass(r:Resource,val flater:Flater){
@@ -80,7 +84,7 @@ class Grass(r:Resource,val flater:Flater){
         val tiles = r.tlsList(5,"grass",Resource.effectPlace)
           flater.add(tiles[0],TpFlat.none){it.data(DataGrass(randomTile(tiles)))}
     }
-    class DataGrass(tile:Tile) : DataTileFix(tile)
+    class DataGrass(tile:Tile) : HasTileFlatFix(tile)
 }
 
 class Water(r:Resource,val flater:Flater){
@@ -88,7 +92,7 @@ class Water(r:Resource,val flater:Flater){
         val tiles = r.tlsList(1,"water",Resource.effectPlace)
         flater.add(tiles[0],TpFlat.liquid){it.data(DataWater(randomTile(tiles)))}
     }
-    class DataWater(tile:Tile) : DataTileFix(tile)
+    class DataWater(tile:Tile) : HasTileFlatFix(tile)
 }
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
@@ -118,7 +122,7 @@ class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val move
             }.filterNotNull()
 
 
-    private class Catapult(tile:Tile) : DataTileFix(tile)
+    private class Catapult(tile:Tile) : HasTileFlatFix(tile)
     //        info<MsgSpot>(20) {
     //            if (pgSrc in flats) g.voin(pgSpot,side)?.let {
     //                val tggl = g.info(MsgTgglRaise(pgSpot, it))
@@ -131,17 +135,19 @@ class Catapult(val r: Resource, val flater: Flater, val spoter: Spoter, val move
     //        }
 }
 
-abstract class DataPoint(val tls: TlsFlatOwn):DataTile(){
-    var side = Side.n
-    override fun tile(sideVid:Side)=tls(sideVid,side)
+abstract class DataPoint(val tls: TlsFlatOwn):HasTileFlat{
+    open var side = Side.n
+    override fun tile(sideVid:Side,flat:Flat)=tls(sideVid,side)
 }
 
 class Flag(r: Resource,val flater: Flater) {
     init {
         val tls = r.tlsFlatOwn("flag")
-        flater.add(tls.neut,TpFlat.flag){it.data(Flag(tls))}
+        flater.add(tls.neut,TpFlat.flag){it.data(DataFlag(tls))}
     }
-    private class Flag(tls: TlsFlatOwn) : DataPoint(tls)
+    private class DataFlag(tls: TlsFlatOwn):DataPoint(tls){
+        override var side by Delegates.vetoable(Side.n){ prop,sideOld,sideNew -> sideNew!=Side.n }
+    }
 }
 
 class Mine(r: Resource,val flater: Flater,val stager: Stager,val builder:Builder, val flats: () -> Flats) {

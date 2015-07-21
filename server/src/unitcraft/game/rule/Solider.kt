@@ -1,9 +1,12 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.land
+import unitcraft.land.TpFlat
+import unitcraft.land.TpSolid
 import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.ArrayList
+import java.util.*
 
 class Solider(val r: Resource,
               val drawer: Drawer,
@@ -25,6 +28,7 @@ class Solider(val r: Resource,
     private val tileHide = r.tile("hide")
     val tilesEditor = ArrayList<Tile>()
     val creates = ArrayList<(Obj) -> Unit>()
+    private val landTps = HashMap<TpSolid, MutableList<(Obj) -> Unit>>()
 
     init {
         editor.onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
@@ -50,11 +54,12 @@ class Solider(val r: Resource,
         }
     }
 
-    fun add(tile: Tile, isFabric: Boolean = true, hasMove: Boolean = true, create: (Obj) -> Unit) {
+    fun add(tile: Tile, tpSolid: TpSolid? = null, isFabric: Boolean = true, hasMove: Boolean = true, create: (Obj) -> Unit) {
         tilesEditor.add(tile)
         val crt = if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create
         creates.add(crt)
         if (isFabric) builder.addFabrik(0, tile, crt)
+        if(tpSolid!=null) landTps.getOrPut(tpSolid){ArrayList<(Obj)->Unit>()}.add(create)
     }
 
     fun addTls(obj:Obj,tlsSolid:TlsSolid){
@@ -72,7 +77,17 @@ class Solider(val r: Resource,
         }
     }
 
-    inner class HasTlsSolid(val tlsSolid:TlsSolid) : HasTile {
+    fun maxFromTpSolid() = landTps.mapValues { it.value.size() }
+
+    fun reset(solidsL: ArrayList<land.Solid>) {
+        for(solidL in solidsL){
+            val solid = Obj(solidL.shape)
+            landTps[solidL.tpSolid][solidL.num](solid)
+            objs().add(solid)
+        }
+    }
+
+    inner class HasTlsSolid(val tlsSolid:TlsSolid) : HasTileObj {
         override fun tile(sideVid: Side, obj: Obj) = tlsSolid(sideVid, obj.side, obj.isFresh)
 
         override fun hint(sideVid: Side, obj: Obj):Int?{
@@ -142,13 +157,27 @@ class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Sp
     }
 }
 
+class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerHit, val objs: () -> Objs) {
+    init {
+        val tls = r.tlsVoin("inviser")
+        solider.add(tls.neut) {
+            solider.addTls(it,tls)
+            it.data(DataInviser)
+            skilerHit.add(it)
+        }
+        mover.slotHide.add { it.has<DataInviser>() }
+    }
+
+    private object DataInviser : Data
+}
+
 class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter: Spoter, val objs: () -> Objs) {
     val tlsAkt = r.tlsAkt("redeployer")
 
     init {
         val tls = r.tlsVoin("redeployer")
         val skil = SkilRedeployer()
-        solider.add(tls.neut,false) {
+        solider.add(tls.neut,TpSolid.builder,false) {
             solider.addTls(it,tls)
             it.data(skil)
             builder.add(it, { it.near() }, {})
@@ -169,18 +198,14 @@ class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter
     }
 }
 
-class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerHit, val objs: () -> Objs) {
+class Warehouse(r: Resource,solider: Solider, builder: Builder, val lifer: Lifer) {
     init {
-        val tls = r.tlsVoin("inviser")
-        solider.add(tls.neut,false) {
+        val tls = r.tlsVoin("warehouse")
+        solider.add(tls.neut,TpSolid.builder,false) {
             solider.addTls(it,tls)
-            it.data(DataInviser)
-            skilerHit.add(it)
+            builder.add(it, { it.further() }, {lifer.heal(it,2)})
         }
-        mover.slotHide.add { it.has<DataInviser>() }
     }
-
-    private object DataInviser : Data
 }
 
 /*
@@ -240,15 +265,6 @@ class Imitator(val spoter: Spoter, solider: Solider, val objs: () -> Objs) {
     //    fun spotByCopy(pgSpot: Pg): List<Pg> {
     //        return pgSpot.near
     //    }
-}
-
-class Warehouse(solider: Solider, builder: Builder, val lifer: Lifer) {
-    init {
-        solider.add(KindWarehouse, false)
-        builder.add(KindWarehouse, { it.further() }, { lifer.heal(it, 1) })
-    }
-
-    private object KindWarehouse : Kind()
 }
 */
 class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Mover, val objs: () -> Objs) {

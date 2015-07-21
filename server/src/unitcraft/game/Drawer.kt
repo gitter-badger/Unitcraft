@@ -6,7 +6,7 @@ import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class Drawer(val pgser:()->Pgser,val allData: () -> AllData) {
+class Drawer(val allData: () -> AllData) {
 
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 
@@ -30,15 +30,14 @@ class Drawer(val pgser:()->Pgser,val allData: () -> AllData) {
     }
 
     private fun drawFlats(side: Side,ctx: CtxDraw){
-        val flats = allData().flats
-        for (pg in pgser()) {
-            val flat = flats[pg]
+        for ((flat,ht) in allData().flats.sort().by<HasTileFlat,Flat>()) {
+            ctx.drawTile(flat.head(), ht.tile(side,flat))
             drawFlats.forEach{it(flat,side,ctx)}
         }
     }
 
     private fun drawObjs(side: Side, ctx: CtxDraw) {
-        for ((obj,ht) in allData().objs.by<HasTile>()) {
+        for ((obj,ht) in allData().objs.sort().by<HasTileObj,Obj>()) {
             ctx.drawTile(obj.head(), ht.tile(side,obj), ht.hint(side,obj))
             drawObjs.forEach{it(obj,side,ctx)}
         }
@@ -66,7 +65,11 @@ class CtxDraw(val sideVid: Side) {
     }
 }
 
-interface HasTile : Data{
+interface HasTileObj : Data{
     fun tile(sideVid: Side, obj: Obj):Tile
     fun hint(sideVid: Side, obj: Obj):Int?
+}
+
+interface HasTileFlat : Data{
+    fun tile(sideVid: Side, flat: Flat):Tile
 }

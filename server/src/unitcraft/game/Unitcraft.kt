@@ -17,7 +17,7 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
     val stager = Stager(r,allData)
     val editor = Editor()
-    val drawer = Drawer(pgser, allData)
+    val drawer = Drawer(allData)
     val spoter = Spoter(stager, allData)
 
 
@@ -62,11 +62,11 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
         Inviser(r, solider, shaper, skilerHit, objs)
         //        Imitator(spoter,voiner,objs)
         Redeployer(r, solider, builder, spoter, objs)
-        //        Warehouse(voiner,builder, lifer)
+        Warehouse(r,solider,builder, lifer)
     }
 
     inner class CmderUnitcraft(mission: Int?, val canEdit: Boolean) : CmderGame {
-        val land = Land(flater.landTps, mission)
+        val land = Land(flater.maxFromTpFlat(),solider.maxFromTpSolid(), mission)
         val pgser = land.pgser
         var allData: AllData by Delegates.notNull()
 
@@ -77,11 +77,9 @@ class Unitcraft(r: Resource = Resource()) : CreatorGame {
 
         override fun reset() {
             allData = AllData()
-            for (pg in pgser) {
-                val flat = Flat(Singl(pg))
-                land.flat(pg)(flat)
-                allData.flats.add(flat)
-            }
+            cur = this
+            flater.reset(land.flats)
+            solider.reset(land.solids)
         }
 
         override fun cmd(side: Side, cmd: String) {

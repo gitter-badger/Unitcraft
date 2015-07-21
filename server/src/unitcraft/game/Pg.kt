@@ -6,7 +6,7 @@ import unitcraft.land.Land
 import unitcraft.server.init
 import java.util.*
 
-class Pg(val pgser: Pgser,val x:Int, val y:Int){
+class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
 
     val up by Delegates.lazy { pgser.pgOrNull(x,y-1) }
     val rt by Delegates.lazy { pgser.pgOrNull(x+1,y) }
@@ -17,6 +17,8 @@ class Pg(val pgser: Pgser,val x:Int, val y:Int){
     val all by Delegates.lazy { pgser.pgs}
 
     override fun toString() = "$x $y"
+
+    override fun compareTo(other: Pg) = x * pgser.yr + y - other.x * pgser.yr + other.y
 }
 
 class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{
