@@ -26,14 +26,28 @@ class Land(maxTpFlat:Map<TpFlat,Int>, maxTpSolid:Map<TpSolid,Int>,val mission: I
 
     init {
         for(pg in pgser) {
-            if(pg == pgser.pg(1, 1)) flats.add(Flat(pg, wild, 0))
-            else if(pg == pgser.pg(2, 2)) flats.add(Flat(pg, wild, 1))
-            else if(pg == pgser.pg(3, 3)) flats.add(Flat(pg, flag, 0))
-            else flats.add(Flat(pg, none, 0))
+            addFlat(pg, none, 0)
+        }
+
+        Algs.spot(this).forEach {
+            addFlat(it, wild, 0)
+        }
+
+        Algs.spot(this).forEach {
+            addFlat(it, wild, 1)
+        }
+
+        Algs.spot(this).forEach {
+            addFlat(it, flag, 0)
         }
 
         solids.add(Solid(pgser.pg(0,3),builder,0))
         solids.add(Solid(pgser.pg(xl,yl-3),builder,1))
+    }
+
+    fun addFlat(pg:Pg,tpFlat:TpFlat,idx:Int){
+        flats.idxOfFirst() { it.pg == pg }?.let{ flats.remove(it) }
+        flats.add(Flat(pg, tpFlat, idx))
     }
 
     fun pgRnd() = selRnd(pgser.pgs)
@@ -49,6 +63,7 @@ class Land(maxTpFlat:Map<TpFlat,Int>, maxTpSolid:Map<TpSolid,Int>,val mission: I
     fun isEdge(pg:Pg) = pg.x==0 || pg.x==xl || pg.y==0 || pg.y==yl
 
     fun isCorner(pg:Pg) = pg.x==0 && pg.y==0 || pg.x==xl && pg.y==0 || pg.x==xl && pg.y==yl || pg.x==0 && pg.y==yl
+
 }
 
 enum class TpFlat{
@@ -64,4 +79,29 @@ class Flat(val pg:Pg,val tpFlat:TpFlat,val num:Int){
 }
 class Solid(val pg:Pg,val tpSolid:TpSolid,val num:Int){
     val shape = Singl(pg)
+}
+
+class PrmAlg(val land:Land,val pgs:MutableList<Pg>){
+    fun add(pg:Pg){
+        pgs.add(pg)
+    }
+
+    fun pgRnd() = land.selRnd(land.pgser.pgs)
+}
+
+fun createAlg(fn:PrmAlg.()->Unit):(Land)->List<Pg>{
+    return {land:Land ->
+        val lst = ArrayList<Pg>()
+        val p = PrmAlg(land,lst)
+        p.fn()
+        lst
+    }
+}
+
+object Algs{
+    val spot = createAlg{
+       repeat(5){
+           add(pgRnd())
+       }
+    }
 }
