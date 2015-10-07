@@ -10,19 +10,19 @@ class ServerJavaWebSocket(val server: Server, val addr: InetSocketAddress) : Web
     val connToWs = HashMap<WebSocket, WsJws>()
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
-        println("open " + conn.getRemoteSocketAddress().getAddress().getHostAddress())
+        println("open " + conn.remoteSocketAddress.address.hostAddress)
         val wsJws = WsJws(conn)
         connToWs[conn] = wsJws
         server.onOpen(wsJws)
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
-        server.onClose(connToWs[conn])
+        server.onClose(connToWs[conn]!!)
         connToWs.remove(conn)
     }
 
     override fun onMessage(conn: WebSocket, message: String) {
-        server.onMsg(connToWs[conn], message)
+        server.onMsg(connToWs[conn]!!, message)
     }
 
     override fun onError(conn: WebSocket, ex: Exception) {
@@ -40,6 +40,6 @@ class WsJws(val conn: WebSocket) : Ws() {
         conn.close()
     }
 
-    override val isLocal = conn.getRemoteSocketAddress().getAddress().isLoopbackAddress()
+    override val isLocal = conn.remoteSocketAddress.address.isLoopbackAddress
 }
 

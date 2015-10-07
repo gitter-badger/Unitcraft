@@ -12,7 +12,6 @@ import java.nio.file.WatchKey
 import java.nio.file.WatchService
 import java.util.*
 import kotlin.concurrent.thread
-import kotlin.platform.platformStatic
 
 class WatchDir(dirs:List<File>,val onModify:(File) -> Unit) {
     val dirByKey = HashMap<WatchKey,Path>(2)
@@ -27,7 +26,7 @@ class WatchDir(dirs:List<File>,val onModify:(File) -> Unit) {
                 val key = watcher.take()
                 for (event in key.pollEvents()) {
                     val name = (event as WatchEvent<Path>).context()
-                    onModify(dirByKey[key].resolve(name).toFile())
+                    onModify(dirByKey[key]!!.resolve(name).toFile())
                 }
                 key.reset()
             }

@@ -26,14 +26,14 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
 
     override fun extend() {
         img = image(sizeExtend) {
-            it.drawImage(img, (sizeExtend - img.getWidth()) / 2, (sizeExtend - img.getHeight()) / 2, null)
+            it.drawImage(img, (sizeExtend - img.width) / 2, (sizeExtend - img.height) / 2, null)
         }
     }
 
     override fun extendBottom() {
         img = image(sizeExtend) {
             val qua = sizeExtend / 4
-            it.drawImage(img, qua + (qua * 2 - img.getWidth()) / 2, qua * 3 - img.getHeight(), null)
+            it.drawImage(img, qua + (qua * 2 - img.width) / 2, qua * 3 - img.height, null)
         }
     }
 
@@ -42,8 +42,8 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         img = image(sizeExtend) {
             val imgLight = image(sizeExtend) {
                 it.drawImage(img, 0, 0, null)
-                it.setComposite(AlphaComposite.SrcIn);
-                it.setColor(color);
+                it.composite = AlphaComposite.SrcIn;
+                it.color = color;
                 it.fillRect(0, 0, sizeExtend, sizeExtend);
             }
             it.drawImage(imgLight, lightSize, lightSize, null)
@@ -63,7 +63,7 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         val mask = prepareMask()
         img = image(sizeExtend) {
             it.drawImage(img, 0, 0, null)
-            it.setComposite(AlphaComposite.DstIn)
+            it.composite = AlphaComposite.DstIn
             it.drawImage(mask, 0, 0, null)
         }
     }
@@ -95,15 +95,15 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
 
     override fun opacity(procent: Int) {
         if(procent <0 || procent >100) throw Err("invalid opacity=$procent")
-        img = image(img.getWidth(), img.getHeight()) {
-            it.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, procent.toFloat()/100));
+        img = image(img.width, img.height) {
+            it.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, procent.toFloat()/100);
             it.drawImage(img, 0, 0, null)
         }
     }
 
     override fun flat(color: Color) {
-        img = image(img.getWidth(), img.getHeight()) {
-            it.setColor(color)
+        img = image(img.width, img.height) {
+            it.color = color
             it.fillRect(size/2,size/2,size, size)
             it.drawImage(img, 0, 0, null)
         }
@@ -113,19 +113,19 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
     override fun shadow(color: Color) {
         val sizeShadow = size / 10
         val imgShadow = createDropShadow(sizeShadow, color)
-        img = image(img.getWidth(), img.getHeight()) {
+        img = image(img.width, img.height) {
             it.drawImage(imgShadow, sizeShadow / 2, sizeShadow / 2, null)
             it.drawImage(img, 0, 0, null)
         }
     }
 
     private fun createDropShadow(sizeShadow: Int, color: Color): BufferedImage {
-        val xr = img.getWidth() + 4 * sizeShadow
-        val yr = img.getHeight() + 4 * sizeShadow
+        val xr = img.width + 4 * sizeShadow
+        val yr = img.height + 4 * sizeShadow
         var imgShadow = image(xr, yr) {
             it.drawImage(img, 0, 0, null)
-            it.setComposite(AlphaComposite.SrcIn);
-            it.setColor(color);
+            it.composite = AlphaComposite.SrcIn;
+            it.color = color;
             it.fillRect(0, 0, xr, yr);
         }
         imgShadow = getGaussianBlurFilter(sizeShadow, true).filter(imgShadow, null)
@@ -170,32 +170,32 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         // сохраняет пропорции
         fun resize(img: BufferedImage, sz: Int): BufferedImage {
             val op = ResampleOp(DimensionConstrain.createMaxDimension(sz, sz))
-            op.setFilter(ResampleFilters.getLanczos3Filter())
+            op.filter = ResampleFilters.getLanczos3Filter()
             return op.filter(img, null)
         }
 
         // масштабирует img так, что его меньшая сторона равна sz
         // затем обрезает до квадрата со стороной sz
         private fun resizeToSquare(img: BufferedImage, sz: Int): BufferedImage {
-            val fct = Math.max(sz.toFloat() / img.getWidth(), sz.toFloat() / img.getHeight())
+            val fct = Math.max(sz.toFloat() / img.width, sz.toFloat() / img.height)
             val op = ResampleOp(DimensionConstrain.createRelativeDimension(fct))
-            op.setFilter(ResampleFilters.getLanczos3Filter())
+            op.filter = ResampleFilters.getLanczos3Filter()
             val imgRsz = op.filter(img, null)
             return image(sz) {
-                it.drawImage(imgRsz, (sz - imgRsz.getWidth()) / 2, (sz - imgRsz.getHeight()) / 2, null)
+                it.drawImage(imgRsz, (sz - imgRsz.width) / 2, (sz - imgRsz.height) / 2, null)
             }
         }
 
         private fun invertAlpha(rgba: Int): Int {
             val c = Color(rgba, true)
-            val a = c.getAlpha()
+            val a = c.alpha
             val aa = when {
                 a == 255 -> 0
                 a == 0 -> 255
                 a > 0 -> 255
                 else -> a
             }
-            return Color(0, 0, 0, aa).getRGB()
+            return Color(0, 0, 0, aa).rgb
         }
     }
 }

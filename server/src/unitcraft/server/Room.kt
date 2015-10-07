@@ -43,12 +43,12 @@ class Room(val log: Log, val send: Sender, val idPrim: Id, val idSec: Id?, val b
         if (isVsRobot && state.sideWin == null) {
             while (true) {
                 val cmdRobot = try {
-                    cmder.cmdRobot(sides[idPrim].vs)
+                    cmder.cmdRobot(sides[idPrim]!!.vs)
                 } catch(e: Throwable) {
                     log.error(e)
                     "e"
                 } ?: break
-                aktAndSend(sides[idPrim].vs, cmdRobot)
+                aktAndSend(sides[idPrim]!!.vs, cmdRobot)
                 if (state.sideWin != null) break
             }
         }
@@ -72,7 +72,7 @@ class Room(val log: Log, val send: Sender, val idPrim: Id, val idSec: Id?, val b
             cmder.cmd(side, akt)
             state = cmder.state()
             cmds.add(Pair(side, akt))
-            if (isVsRobot && akt == "w") sides[idPrim] = sides[idPrim].vs
+            if (isVsRobot && akt == "w") sides[idPrim] = sides[idPrim]!!.vs
             sendGame(false)
         } catch (ex: Violation) {
             throw ex
@@ -130,7 +130,7 @@ class Clock(private var left: Duration) {
             left = leftNow()
             last = Instant.now()
         }
-        return left.isZero()
+        return left.isZero
     }
 
     fun started() = last != null
@@ -138,7 +138,7 @@ class Clock(private var left: Duration) {
     fun leftNow(): Duration {
         if (last != null) {
             val dur = left.minus(Duration.between(Instant.now(), last))!!
-            return if (dur.isNegative()) Duration.ZERO else dur
+            return if (dur.isNegative) Duration.ZERO else dur
         } else {
             return left
         }
@@ -172,7 +172,7 @@ class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClo
 enum class Side {
     a, b, n;
 
-    val vs: Side by Delegates.lazy {
+    val vs: Side by lazy(LazyThreadSafetyMode.NONE) {
         when (this) {
             a -> b
             b -> a
@@ -180,7 +180,8 @@ enum class Side {
         }
     }
 
-    val isN: Boolean by Delegates.lazy { this == n }
+    val isN: Boolean by lazy(LazyThreadSafetyMode.NONE) { this == n }
+
     companion object{
         val ab = listOf(Side.a,Side.b).requireNoNulls()
     }

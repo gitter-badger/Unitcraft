@@ -38,7 +38,7 @@ interface Log {
 
 class LogFile : Log {
     override fun log(event: String) {
-        val timeStamp = SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(Calendar.getInstance().getTime())
+        val timeStamp = SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(Calendar.getInstance().time)
         println(timeStamp + " " + event)
     }
 }

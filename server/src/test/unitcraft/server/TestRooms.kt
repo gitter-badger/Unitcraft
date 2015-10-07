@@ -12,7 +12,7 @@ class TestRooms {
     var id: Id by Delegates.notNull()
     var idVs: Id by Delegates.notNull()
 
-    Before fun before(){
+    @Before fun before(){
         log = LogTest()
         send = SenderTest()
         rooms = Rooms(log, send,CreatorGameStub())
@@ -20,7 +20,7 @@ class TestRooms {
         idVs = Id("0001")
     }
 
-    Test fun queueAndDecline() {
+    @Test fun queueAndDecline() {
         rooms.queue(id, 1, 5)
         send.assertLast(id,"squeue")
 
@@ -28,11 +28,11 @@ class TestRooms {
         send.assertLast(id,"sonline")
     }
 
-    Test fun queueWrongBetRange() {
+    @Test fun queueWrongBetRange() {
         assertViolation { rooms.queue(id, 5, 1) }
     }
 
-    Test fun twoQueueWithoutIntersection() {
+    @Test fun twoQueueWithoutIntersection() {
         rooms.queue(id, 1, 5)
         send.assertLast(id,"squeue")
 
@@ -40,7 +40,7 @@ class TestRooms {
         send.assertLast(idVs,"squeue")
     }
 
-    Test fun twoMatchThenDecline() {
+    @Test fun twoMatchThenDecline() {
         rooms.queue(id, 1, 5)
         send.assertLast(id,"squeue")
 
@@ -53,7 +53,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"squeue")
     }
 
-    Test fun twoMatchThenDeclineVs() {
+    @Test fun twoMatchThenDeclineVs() {
         rooms.queue(id, 1, 5)
         rooms.queue(idVs, 1, 5)
 
@@ -62,7 +62,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"sonline")
     }
 
-    Test fun twoMatchThenAcceptThenDecline() {
+    @Test fun twoMatchThenAcceptThenDecline() {
         rooms.queue(id, 1, 5)
         rooms.queue(idVs, 1, 5)
 
@@ -74,7 +74,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"squeue")
     }
 
-    Test fun twoMatchThenAcceptThenDeclineVs() {
+    @Test fun twoMatchThenAcceptThenDeclineVs() {
         rooms.queue(id, 1, 5)
         rooms.queue(idVs, 1, 5)
 
@@ -86,7 +86,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"sonline")
     }
 
-    Test fun twoMatchThenAcceptVsThenDecline() {
+    @Test fun twoMatchThenAcceptVsThenDecline() {
         rooms.queue(id, 1, 5)
         rooms.queue(idVs, 1, 5)
 
@@ -98,7 +98,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"squeue")
     }
 
-    Test fun twoMatchThenAcceptThenAcceptVs() {
+    @Test fun twoMatchThenAcceptThenAcceptVs() {
         rooms.queue(id, 1, 5)
         rooms.queue(idVs, 1, 5)
         rooms.accept(id)
@@ -109,7 +109,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"sgame")
     }
 
-    Test fun twoMatchThenAcceptVsThenAccept() {
+    @Test fun twoMatchThenAcceptVsThenAccept() {
         rooms.queue(id, 1, 5)
         rooms.queue(idVs, 1, 5)
         rooms.accept(idVs)
@@ -120,7 +120,7 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"sgame")
     }
 
-    Test fun inviteThenDecline() {
+    @Test fun inviteThenDecline() {
         rooms.invite(id, idVs, 5)
         send.assertLast(id,"sinvite")
 
@@ -128,7 +128,7 @@ class TestRooms {
         send.assertLast(id,"sonline")
     }
 
-    Test fun twoInvite() {
+    @Test fun twoInvite() {
         rooms.invite(id, idVs, 5)
 
         rooms.invite(idVs, id, 5)
@@ -137,26 +137,26 @@ class TestRooms {
         send.assertLastOrPrev(idVs,"sgame")
     }
 
-    Test fun twoInviteIdNotEqual() {
+    @Test fun twoInviteIdNotEqual() {
         rooms.invite(id, Id("noid"), 5)
         send.assertLast(id,"sinvite")
         rooms.invite(idVs, Id("noid"), 5)
         send.assertLast(idVs,"sinvite")
     }
 
-    Test fun twoInviteBetNotEqual() {
+    @Test fun twoInviteBetNotEqual() {
         rooms.invite(id, idVs, 5)
         send.assertLast(id,"sinvite")
         rooms.invite(idVs, id, 15)
         send.assertLast(idVs, "sinvite")
     }
 
-    Test fun vsRobot() {
+    @Test fun vsRobot() {
         rooms.vsRobot(id, 0)
         assertTrue(log.last.startsWith("vsRobot"))
     }
 
-    Test fun vsRobotOnWrongState() {
+    @Test fun vsRobotOnWrongState() {
         rooms.invite(id, idVs, 5)
         rooms.invite(idVs, id, 5)
 

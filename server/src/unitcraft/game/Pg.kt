@@ -8,13 +8,13 @@ import java.util.*
 
 class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
 
-    val up by Delegates.lazy { pgser.pgOrNull(x,y-1) }
-    val rt by Delegates.lazy { pgser.pgOrNull(x+1,y) }
-    val dw by Delegates.lazy { pgser.pgOrNull(x,y+1) }
-    val lf by Delegates.lazy { pgser.pgOrNull(x-1,y) }
-    val near by Delegates.lazy { listOf(up, rt,pgser.pgOrNull(x,y+1),pgser.pgOrNull(x-1,y)).filterNotNull() }
+    val up by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x,y-1) }
+    val rt by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x+1,y) }
+    val dw by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x,y+1) }
+    val lf by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x-1,y) }
+    val near by lazy(LazyThreadSafetyMode.NONE) { listOf(up, rt,pgser.pgOrNull(x,y+1),pgser.pgOrNull(x-1,y)).filterNotNull() }
 
-    val all by Delegates.lazy { pgser.pgs}
+    val all by lazy(LazyThreadSafetyMode.NONE) { pgser.pgs}
 
     override fun toString() = "$x $y"
 

@@ -14,27 +14,27 @@ import kotlin.properties.Delegates
 class Editor {
     private val edits = ArrayList<Edit>()
 
-    private val groupTiles by Delegates.lazy {
+    private val groupTiles by lazy(LazyThreadSafetyMode.NONE) {
         sort()
         edits.map{it.tiles}
     }
 
-    private val editAdds by Delegates.lazy {
+    private val editAdds by lazy(LazyThreadSafetyMode.NONE) {
         sort()
         edits.map{it.editAdd}
     }
 
-    private val editRemoves by Delegates.lazy {
+    private val editRemoves by lazy(LazyThreadSafetyMode.NONE) {
         sort()
-        edits.reverse().map{it.editRemove}
+        edits.reversed().map{it.editRemove}
     }
 
-    val opterTest by Delegates.lazy {
+    val opterTest by lazy(LazyThreadSafetyMode.NONE) {
         sort()
         Opter(groupTiles.flatten().map { Opt(DabTile(it)) })
     }
 
-    private val ranges by Delegates.lazy {
+    private val ranges by lazy(LazyThreadSafetyMode.NONE) {
         sort()
         ArrayList<Range<Int>>().init{
             for(tiles in edits.map{it.tiles}) {

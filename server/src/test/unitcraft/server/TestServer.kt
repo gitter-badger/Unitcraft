@@ -15,13 +15,13 @@ class TestServer {
     var server: Server by Delegates.notNull()
     var ws: WsTest by Delegates.notNull()
 
-    Before fun before(){
+    @Before fun before(){
         log = LogTest()
         server = Server(log)
         ws = WsTest(null,server)
     }
 
-    Test fun regAndChangeNick() {
+    @Test fun regAndChangeNick() {
         ws.onMsg("n")
         assertEquals("msg n", log.last, "сообщения залогировано")
         assertEquals('n', ws.last[0], "ответ начинает с n")
@@ -46,19 +46,19 @@ class TestServer {
         assertEquals("0", userN["balance"].toString())
     }
 
-    Test fun notExistCmd() {
+    @Test fun notExistCmd() {
         ws.onMsg("xxx")
         assertTrue(log.last.startsWith("violation"))
         ws.assertClose()
     }
 
-    Test fun emptyCmd() {
+    @Test fun emptyCmd() {
         ws.onMsg("")
         log.assertLast("violation")
         ws.assertClose()
     }
 
-    Test fun vsRobot() {
+    @Test fun vsRobot() {
         ws.onMsg("n")
         val key = ws.last.substring(1, ws.last.length())
         ws.onMsg("l$key 0")

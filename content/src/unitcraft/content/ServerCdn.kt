@@ -15,7 +15,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.HashMap
 import java.util.HashSet
 import javax.imageio.ImageIO
-import kotlin.platform.platformStatic
 import kotlin.properties.Delegates
 import java.awt.image.BufferedImage as Image
 
@@ -72,7 +71,7 @@ class ServerCdn() : NanoHTTPD(8000) {
     }
 
     override fun serve(session: NanoHTTPD.IHTTPSession): NanoHTTPD.Response? {
-        val file = File(dirCdn, if(session.getUri()== "/") "/index.html" else session.getUri())
+        val file = File(dirCdn, if(session.uri == "/") "/index.html" else session.uri)
         println(file)
         val qdmnTile = qdmnFromFile(file,"tile")
         if(qdmnTile!=null && qdmnTile !in qdmnsTileUpdated) createTileset(qdmnTile,dirCdn)
@@ -91,7 +90,7 @@ class ServerCdn() : NanoHTTPD(8000) {
         for (tile in res.resTiles) {
             println(tile)
             val file = fileFromTile(tile)
-            if (!file.isFile()) throw Err("Tile ${tile.name} not found")
+            if (!file.isFile) throw Err("Tile ${tile.name} not found")
             imgsTile[tile.name] = ImageIO.read(file)!!
             namesUnused.remove(file.name)
         }
@@ -154,7 +153,7 @@ class ServerCdn() : NanoHTTPD(8000) {
         val img = BufferedImage(panels.size() * qdmn, qdmn, BufferedImage.TYPE_INT_ARGB)
         val g = img.createGraphics()
         for((idx,panel) in panels.withIndex()){
-            g.drawImage(CtxEffectImpl.resize(imgsPanel[panel],qdmn), idx*qdmn, 0, null)
+            g.drawImage(CtxEffectImpl.resize(imgsPanel[panel]!!,qdmn), idx*qdmn, 0, null)
         }
         ImageIO.write(img, "png", File(dirOut, "png/panel${qdmn}.png"))
         qdmnsPanelUpdated.add(qdmn)
@@ -188,14 +187,14 @@ class ServerCdn() : NanoHTTPD(8000) {
         val listQdmnTile = idxsMap(40){40+it*2}
         val listQdmnPanel = idxsMap(11){70+it*10}
 
-        platformStatic fun main(args: Array<String>) {
+        @JvmStatic fun main(args: Array<String>) {
             ServerCdn().start()
             Thread.sleep(Long.MAX_VALUE)
         }
     }
 }
 
-fun File.files() = listFiles { it.isFile() }!!
+fun File.files() = listFiles { it.isFile }!!
 
 val regexNameBase = "[.][^.]+$".toRegex()
 

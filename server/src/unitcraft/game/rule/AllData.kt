@@ -8,7 +8,6 @@ import unitcraft.server.exclude
 import unitcraft.server.init
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.jvm.kotlin
 import kotlin.properties.Delegates
 
 class AllData{
@@ -86,7 +85,7 @@ abstract class Shape(val head: Pg) {
     abstract val pgs: List<Pg>
     abstract fun headTo(pgTo: Pg): Shape
     abstract fun near(): List<Pg>
-    val further:List<Pg> by Delegates.lazy{ near().flatMap{it.near}.distinct().filter { it != head } }
+    val further:List<Pg> by lazy(LazyThreadSafetyMode.NONE) { near().flatMap{it.near}.distinct().filter { it != head } }
 }
 
 data class Singl(head: Pg) : Shape(head) {

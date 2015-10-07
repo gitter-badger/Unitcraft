@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import java.io.File
 
 class TestUsers {
-    Test fun regAndChangeNick() {
+    @Test fun regAndChangeNick() {
         val log = LogTest()
         val users = Users(log)
         val id = Id("0000")
@@ -22,7 +22,7 @@ class TestUsers {
         assertEquals("Nick", user2.nick)
     }
 
-    Test fun newKey() {
+    @Test fun newKey() {
         val log = LogTest()
         val users = Users(log)
         for(i in 1..100){

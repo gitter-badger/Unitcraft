@@ -43,7 +43,7 @@ class Flater(val r:Resource,val stager: Stager,val allData:() -> AllData,val dra
         val flats = allData().flats
         for(flatL in flatsL){
             val flat = Flat(flatL.shape)
-            landTps[flatL.tpFlat][flatL.num](flat)
+            landTps[flatL.tpFlat]!![flatL.num](flat)
             flats.add(flat)
         }
     }

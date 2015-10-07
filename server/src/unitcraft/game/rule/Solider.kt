@@ -82,7 +82,7 @@ class Solider(val r: Resource,
     fun reset(solidsL: ArrayList<land.Solid>) {
         for(solidL in solidsL){
             val solid = Obj(solidL.shape)
-            landTps[solidL.tpSolid][solidL.num](solid)
+            landTps[solidL.tpSolid]!![solidL.num](solid)
             objs().add(solid)
         }
     }

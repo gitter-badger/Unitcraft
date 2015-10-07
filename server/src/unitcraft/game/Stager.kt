@@ -25,7 +25,7 @@ class Stager(r:Resource,val allData: () -> AllData) {
     fun endTurn() {
         val sideTurn = allData().sideTurn
         endTurns.forEach { it(sideTurn) }
-        allData().point[sideTurn] -= 1
+        allData().point[sideTurn] = allData().point[sideTurn]!! - 1
         allData().sideTurn = sideTurn.vs
         startTurns.forEach { it(sideTurn.vs) }
     }

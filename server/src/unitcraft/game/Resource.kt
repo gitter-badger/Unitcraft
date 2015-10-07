@@ -9,7 +9,6 @@ import unitcraft.server.idxsMap
 import unitcraft.game.Effect
 import java.awt.Color
 import kotlin.reflect.*
-import kotlin.reflect.jvm.java
 
 class Resource {
     val resTiles = ArrayList<ResTile>()

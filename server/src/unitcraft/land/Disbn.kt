@@ -44,7 +44,7 @@ class Wave(val pgStart: Pg, val radius: Double? = null, val cost: (Pg) -> Double
         val list = ArrayList<Pair<Pg, Double>>()
         for (pg in pgSrc.near) {
             val c = cost(pg)
-            if (c != null && costs[pg] == null) list.add(pg to costs[pgSrc] + c)
+            if (c != null && costs[pg] == null) list.add(pg to costs[pgSrc]!! + c)
         }
         list.sort { p1, p2 -> p1.component2().compareTo(p2.component2()) }
         return list
@@ -60,9 +60,9 @@ class Wave(val pgStart: Pg, val radius: Double? = null, val cost: (Pg) -> Double
         var pg = pgEnd
         val path = listOf(pgEnd).toArrayList()
         while (pg != pgStart) {
-            pg = pgsFrom[pg]
+            pg = pgsFrom[pg]!!
             path.add(pg)
         }
-        return path.reverse()
+        return path.reversed()
     }
 }

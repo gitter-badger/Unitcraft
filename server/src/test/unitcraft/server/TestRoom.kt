@@ -21,13 +21,13 @@ class TestRoom {
     val idVs = Id("0001")
     val cmder = CmderStub()
 
-    Before fun before() {
+    @Before fun before() {
         game = CmderStub()
         room = Room(log, send,id,idVs,5, cmder)
     }
 
     // комната отсылает состояние игры
-    Test fun sendState() {
+    @Test fun sendState() {
         assertEquals(send.idPrev,id)
         assertEquals(send.idLast,idVs)
         checkState(0L)
@@ -47,7 +47,7 @@ class TestRoom {
     }
 
     // комната добавляет команды от AI
-    Test fun cmdRobot() {
+    @Test fun cmdRobot() {
         val cmderRobot = CmderStub()
         val roomRobot = Room(log, send,id,null,0, cmderRobot)
         roomRobot.cmd(id,Prm("0#cmd0"))
@@ -58,7 +58,7 @@ class TestRoom {
     }
 
     // после ошибки из-за AI комната заканчивает ход AI
-    Test fun errCmdRobot() {
+    @Test fun errCmdRobot() {
         val cmderRobot = CmderStub()
         val roomRobot = Room(log, send,id,null,0, cmderRobot)
         roomRobot.cmd(id,Prm("0#cmd0"))
@@ -71,7 +71,7 @@ class TestRoom {
     }
 
     // после ошибки при исполнении команды комната создает игру заново и повторяет команды
-    Test fun errCmd() {
+    @Test fun errCmd() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
 
@@ -80,7 +80,7 @@ class TestRoom {
     }
 
     // комната выбрасывает нарушение протокола при исполнении команды как есть
-    Test fun violationCmd() {
+    @Test fun violationCmd() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
 
@@ -88,7 +88,7 @@ class TestRoom {
     }
 
     // после ошибки при создании state комната создает игру заново и повторяет команды
-    Test fun errCmdJson() {
+    @Test fun errCmdJson() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
 
@@ -104,7 +104,7 @@ class TestRoom {
         assertEquals("cmd1",cmder.cmds[1])
     }
 
-    Test fun outSync() {
+    @Test fun outSync() {
         room.cmd(id,Prm("0#cmd0"))
         room.cmd(id,Prm("1#cmd1"))
         room.cmd(id,Prm("0#cmd"))
@@ -117,7 +117,7 @@ class TestRoom {
         assertEquals(cmder.cmds[1],"cmd1")
     }
 
-    Test fun idWin() {
+    @Test fun idWin() {
 
     }
 }

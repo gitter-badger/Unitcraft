@@ -1,31 +1,28 @@
 package unitcraft.land
 
-import java.util.ArrayList
-import kotlin.properties.Delegates
-import java.util.HashMap
-import unitcraft.game.*
+import unitcraft.game.Pg
+import unitcraft.game.Pgser
 import unitcraft.game.rule.Singl
-import unitcraft.server.*
-import unitcraft.land.Random
 import unitcraft.land.TpFlat.*
 import unitcraft.land.TpSolid.*
+import unitcraft.server.Err
+import java.util.*
 
-class Land(maxTpFlat:Map<TpFlat,Int>, maxTpSolid:Map<TpSolid,Int>,val mission: Int?){
+class Land(maxTpFlat: Map<TpFlat, Int>, maxTpSolid: Map<TpSolid, Int>, val mission: Int?) {
 
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
     val mapFlat = maxTpFlat.mapValues { r.nextInt(it.value) }
     val yr = 9 + r.nextInt(7)
-    val xr = if(yr==15) 15 else yr + r.nextInt(15-yr)
-    val pgser = Pgser(xr,yr)
-    val xl = xr-1
-    val yl = yr-1
+    val xr = if (yr == 15) 15 else yr + r.nextInt(15 - yr)
+    val pgser = Pgser(xr, yr)
+
 
     val flats = ArrayList<Flat>()
     val solids = ArrayList<Solid>()
 
     init {
-        for(pg in pgser) {
+        for (pg in pgser) {
             addFlat(pg, none, 0)
         }
 
@@ -37,71 +34,105 @@ class Land(maxTpFlat:Map<TpFlat,Int>, maxTpSolid:Map<TpSolid,Int>,val mission: I
             addFlat(it, wild, 1)
         }
 
-        Algs.spot(this).forEach {
+        Algs.river(this).forEach {
+            addFlat(it, liquid, 0)
+        }
+
+        Algs.spray(this).forEach {
             addFlat(it, flag, 0)
         }
 
-        solids.add(Solid(pgser.pg(0,3),builder,0))
-        solids.add(Solid(pgser.pg(xl,yl-3),builder,1))
+        solids.add(Solid(pgser.pg(0, 3), builder, 0))
+        solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1))
     }
 
-    fun addFlat(pg:Pg,tpFlat:TpFlat,idx:Int){
-        flats.idxOfFirst() { it.pg == pg }?.let{ flats.remove(it) }
-        flats.add(Flat(pg, tpFlat, idx))
+    fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int) {
+        val flat = flats.firstOrNull() { it.pg == pg }
+        if (flat != null) {
+            flat.tpFlat = tpFlat
+            flat.num = idx
+        } else flats.add(Flat(pg, tpFlat, idx))
     }
 
-    fun pgRnd() = selRnd(pgser.pgs)
-
-    fun pgRnd(predicate:(Pg) -> Boolean):Pg{
-        val list = pgser.pgs.filter(predicate)
-        if(list.isEmpty()) throw Err("predicate nevewhere true")
-        return selRnd(list)
-    }
-
-    fun selRnd<E>(list:List<E>) = if(!list.isEmpty()) list[r.nextInt(list.size())] else throw Err("list is empty")
-
-    fun isEdge(pg:Pg) = pg.x==0 || pg.x==xl || pg.y==0 || pg.y==yl
-
-    fun isCorner(pg:Pg) = pg.x==0 && pg.y==0 || pg.x==xl && pg.y==0 || pg.x==xl && pg.y==yl || pg.x==0 && pg.y==yl
 
 }
 
-enum class TpFlat{
+enum class TpFlat {
     none, solid, liquid, wild, special, flag
 }
 
-enum class TpSolid{
+enum class TpSolid {
     std, builder
 }
 
-class Flat(val pg:Pg,val tpFlat:TpFlat,val num:Int){
-    val shape = Singl(pg)
-}
-class Solid(val pg:Pg,val tpSolid:TpSolid,val num:Int){
+class Flat(val pg: Pg, var tpFlat: TpFlat, var num: Int) {
     val shape = Singl(pg)
 }
 
-class PrmAlg(val land:Land,val pgs:MutableList<Pg>){
-    fun add(pg:Pg){
+class Solid(val pg: Pg, var tpSolid: TpSolid, var num: Int) {
+    val shape = Singl(pg)
+}
+
+class PrmAlg(val land: Land, val pgs: MutableList<Pg>) {
+    fun add(pg: Pg) {
         pgs.add(pg)
     }
 
-    fun pgRnd() = land.selRnd(land.pgser.pgs)
+    val xl = land.xr - 1
+    val yl = land.yr - 1
+
+    fun pgRnd() = selRnd(land.pgser.pgs)
+
+    fun pgRnd(predicate: (Pg) -> Boolean): Pg {
+        val list = land.pgser.pgs.filter(predicate)
+        if (list.isEmpty()) throw Err("predicate neverwhere true")
+        return selRnd(list)
+    }
+
+    fun dist2(pg:Pg,pgOther:Pg) = Math.sqrt(Math.pow(pg.x.toDouble()-pgOther.x,2.0)+Math.pow(pg.y.toDouble()-pgOther.y,2.0))
+
+    fun selRnd<E>(list: List<E>) = if (!list.isEmpty()) list[land.r.nextInt(list.size())] else throw Err("list is empty")
+
+
+    fun isEdge(pg: Pg) = pg.x == 0 || pg.x == xl || pg.y == 0 || pg.y == yl
+
+    fun isCorner(pg: Pg) = pg.x == 0 && pg.y == 0 || pg.x == xl && pg.y == 0 || pg.x == xl && pg.y == yl || pg.x == 0 && pg.y == yl
 }
 
-fun createAlg(fn:PrmAlg.()->Unit):(Land)->List<Pg>{
-    return {land:Land ->
+fun createAlg(fn: PrmAlg.() -> Unit): (Land) -> List<Pg> {
+    return { land: Land ->
         val lst = ArrayList<Pg>()
-        val p = PrmAlg(land,lst)
+        val p = PrmAlg(land, lst)
         p.fn()
         lst
     }
 }
 
-object Algs{
-    val spot = createAlg{
-       repeat(5){
-           add(pgRnd())
-       }
+object Algs {
+    val spray = createAlg {
+        repeat(5) {
+            add(pgRnd())
+        }
+    }
+    val spot = createAlg {
+        add(pgRnd())
+        repeat(5) {
+            add(pgRnd { it !in pgs && it.near.any { it in pgs } })
+        }
+    }
+
+    val river = createAlg {
+        val start = pgRnd { isEdge(it) }
+        val pivot = pgRnd { isEdge(it) && it != start }
+        val end = pgRnd { isEdge(it) && it != start && it != pivot }
+        add(start)
+        fun buildPathTo(aim: Pg) {
+            while (true) {
+                add(pgs.last().near.minBy { dist2(it, aim) }!!)
+                if (pgs.last() == aim) break
+            }
+        }
+        buildPathTo(pivot)
+        buildPathTo(end)
     }
 }
