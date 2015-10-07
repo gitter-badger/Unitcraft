@@ -3,8 +3,6 @@ package unitcraft.game
 import org.json.simple.JSONObject
 import org.json.simple.JSONAware
 import org.json.simple.JSONValue
-import unitcraft.server.init
-import java.util.*
 
 // текущее состояние игры, выраженное инструкциями по отрисовке для клиента
 class Snap(
@@ -19,8 +17,8 @@ class Snap(
         val opterTest:Opter?
 ) {
 
-    fun toJson() = JSONObject().init {
-        put("dmn",JSONObject().init {
+    fun toJson() = JSONObject().apply {
+        put("dmn",JSONObject().apply {
             put("xr",xr)
             put("yr",yr)
         })

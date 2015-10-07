@@ -6,7 +6,6 @@ import unitcraft.game.rule.byPg
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.idxOfFirst
-import unitcraft.server.init
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -36,7 +35,7 @@ class Editor {
 
     private val ranges by lazy(LazyThreadSafetyMode.NONE) {
         sort()
-        ArrayList<Range<Int>>().init{
+        ArrayList<Range<Int>>().apply{
             for(tiles in edits.map{it.tiles}) {
                 val s = if (isNotEmpty()) last().end + 1 else 0
                 add(s..s + tiles.lastIndex)

@@ -1,9 +1,5 @@
 package unitcraft.game
 
-import kotlin.properties.Delegates
-import unitcraft.server.Err
-import unitcraft.land.Land
-import unitcraft.server.init
 import java.util.*
 
 class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
@@ -22,7 +18,7 @@ class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
 }
 
 class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{
-    val pgs:List<Pg> = ArrayList<Pg>(xr*yr).init{
+    val pgs:List<Pg> = ArrayList<Pg>(xr*yr).apply{
         repeat(xr) {x -> repeat(yr) {y ->
             add(Pg(this@Pgser, x, y))
         }}

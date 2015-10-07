@@ -5,7 +5,6 @@ import unitcraft.game.Pg
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.exclude
-import unitcraft.server.init
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.properties.Delegates
@@ -16,7 +15,7 @@ class AllData{
 
     val bonus = HashMap<Side, Int>()
 
-    val point = HashMap<Side, Int>().init{
+    val point = HashMap<Side, Int>().apply{
         put(Side.a,15)
         put(Side.b,15)
     }
@@ -33,7 +32,7 @@ class Flat(shape: Shape):HasShape(shape){
 class Flats: ListHasShape<Flat>{
     override val list = ArrayList<Flat>()
 
-    fun sort() = list.init{ Collections.sort(list,compareBy { it.head() }) }
+    fun sort() = list.apply{ Collections.sort(list,compareBy { it.head() }) }
 
     fun get(pg: Pg) = list.byPg(pg)!!
 }
@@ -54,7 +53,7 @@ class Obj(shape: Shape):HasShape(shape) {
 class Objs: ListHasShape<Obj> {
     override val list = ArrayList<Obj>()
 
-    fun sort():List<Obj> = list.init{ Collections.sort(list,compareBy { it.head() }) }
+    fun sort():List<Obj> = list.apply{ Collections.sort(list,compareBy { it.head() }) }
 
     fun bySide(side:Side) = list.bySide(side)
 
@@ -117,7 +116,7 @@ open class HasData{
 
     inline fun <reified T : Data> get() = datas.filterIsInstance<T>()
 
-    inline fun <reified T : Data> orPut(v:()->T) = if(has<T>()) invoke<T>() else v().init{data(v())}
+    inline fun <reified T : Data> orPut(v:()->T) = if(has<T>()) invoke<T>() else v().apply{data(v())}
 }
 
 open class HasShape(var shape:Shape):HasData(){

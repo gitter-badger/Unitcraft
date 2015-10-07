@@ -7,7 +7,6 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.ArrayList
 import unitcraft.server.Violation
-import unitcraft.server.init
 import kotlin.properties.Delegates
 
 //class Akt(val pgAim:Pg,val tile:Int, val fn:(()->Unit)?=null,val opter: Opter?,val fnOpt:(()->Unit)?=null) : JSONAware{
@@ -20,7 +19,7 @@ import kotlin.properties.Delegates
 //}
 
 abstract class Akt(val pg:Pg,val tlsAkt: TlsAkt){
-    open fun json(isOn:Boolean) = JSONObject().init {
+    open fun json(isOn:Boolean) = JSONObject().apply {
         put("x", pg.x)
         put("y", pg.y)
         put("dab", DabTile(tlsAkt(isOn)))
@@ -30,7 +29,7 @@ abstract class Akt(val pg:Pg,val tlsAkt: TlsAkt){
 class AktSimple(pg:Pg,tlsAkt: TlsAkt, val fn: () -> Unit):Akt(pg,tlsAkt)
 
 class AktOpt(pg:Pg,tlsAkt: TlsAkt,val dabs:List<List<Dab>>, val fn: (Int) -> Unit):Akt(pg,tlsAkt){
-    override fun json(isOn: Boolean)= super.json(isOn).init{
+    override fun json(isOn: Boolean)= super.json(isOn).apply{
         put("opter", Opter(dabs.map{Opt(it)}))
     }
 }

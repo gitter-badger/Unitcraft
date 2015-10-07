@@ -1,12 +1,5 @@
 package unitcraft.server
 
-import java.io.File
-
-inline fun <T : Any> T.init(f: T.() -> Unit): T {
-    this.f()
-    return this
-}
-
 inline fun <T> idxsMap(qnt:Int,f: (Int) -> T) = (0..qnt-1).map{f(it)}
 
 inline fun <T> List<T>.idxOfFirst(predicate: (T) -> Boolean): Int? {

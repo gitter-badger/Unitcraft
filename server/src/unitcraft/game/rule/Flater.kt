@@ -5,7 +5,6 @@ import unitcraft.land
 import unitcraft.land.Land
 import unitcraft.land.TpFlat
 import unitcraft.server.Side
-import unitcraft.server.init
 import java.time.Instant
 import java.util.*
 import kotlin.properties.Delegates

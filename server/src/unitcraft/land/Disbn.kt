@@ -1,12 +1,11 @@
 package unitcraft.land
 
 import unitcraft.game.Pg
-import unitcraft.server.init
 import java.util.ArrayList
 import java.util.HashMap
 
 class Disbn<A>(vararg elems: Pair<A, Int>) {
-    private val ranges = ArrayList<Pair<A, Range<Int>>>().init {
+    private val ranges = ArrayList<Pair<A, Range<Int>>>().apply {
         var sum = 0
         for ((a, chance) in elems) {
             add(a to (sum..sum + chance - 1))

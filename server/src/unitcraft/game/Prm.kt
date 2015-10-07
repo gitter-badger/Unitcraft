@@ -3,7 +3,6 @@ package unitcraft.game
 import java.util.ArrayList
 import unitcraft.server.Side
 import unitcraft.land.Land
-import unitcraft.server.init
 import unitcraft.server.Violation
 import java.util.regex.Pattern
 

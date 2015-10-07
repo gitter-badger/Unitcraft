@@ -11,7 +11,7 @@ import kotlin.properties.Delegates
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
 // TODO нужен контроль времени
 class Room(val log: Log, val send: Sender, val idPrim: Id, val idSec: Id?, val bet: Int = 0, private val cmder: CmderGame) {
-    private val sides = HashMap<Id, Side>().init {
+    private val sides = HashMap<Id, Side>().apply {
         if (idSec != null) if (r.nextBoolean()) {
             this[idPrim] = Side.a
             this[idSec] = Side.b

@@ -3,7 +3,6 @@ package unitcraft.game
 import unitcraft.game.rule.*
 import unitcraft.server.Err
 import unitcraft.server.Side
-import unitcraft.server.init
 import java.util.*
 import kotlin.properties.Delegates
 
