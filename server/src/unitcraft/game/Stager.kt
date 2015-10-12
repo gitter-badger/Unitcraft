@@ -3,12 +3,14 @@ package unitcraft.game
 import unitcraft.game.rule.AllData
 import unitcraft.game.rule.Obj
 import unitcraft.game.rule.Objs
+import unitcraft.inject.inject
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class Stager(r:Resource,val allData: () -> AllData) {
+class Stager(r:Resource) {
+    val allData: () -> AllData by inject()
     val tileEdgeTurn = DabTile(r.tile("edgeTurn", Resource.effectPlace))
     val tileEdgeWait = DabTile(r.tile("edgeWait", Resource.effectPlace))
 

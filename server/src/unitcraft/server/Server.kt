@@ -1,23 +1,39 @@
 package unitcraft.server
 
-import unitcraft
-import unitcraft.game.Unitcraft
-import java.util.concurrent.Executors
-import java.util.HashMap
 import org.json.simple.JSONObject
 import org.mindrot.BCrypt
+import unitcraft.inject.inject
+import java.util.*
+import java.util.concurrent.Executors
 
-
-class Server(val log: Log) : Sender{
+class Server {
+    val wser: Wser by inject()
+    val log: Log by inject()
     val threadMain = Executors.newSingleThreadExecutor()
     val threadAux = Executors.newSingleThreadExecutor()
-    val users = Users(log)
-    val rooms = Rooms(log, this, Unitcraft())
-    val wss = HashMap<Id, Ws>()
+    val users: Users by inject()
+    val bttler: Bttler by inject()
+    val ssns = HashMap<String, Ssn>()
+    val bttls = HashMap<Id, Bttl>()
 
-    fun onMsg(ws: Ws, msg: String) {
+    lateinit var ssn: Ssn
+    lateinit var bttl: Bttl
+
+    init {
+        wser.onOpen { key, isLocal -> onOpen(key, isLocal) }
+        wser.onMsg { key, msg -> onMsg(key, msg) }
+        wser.onClose { key -> onClose(key) }
+    }
+
+    fun start() {
+        wser.start()
+        println("Server started")
+    }
+
+    fun onMsg(key: String, msg: String) {
         threadMain.execute {
             try {
+                ssn = ssns[key]!!
                 if (msg.isEmpty()) throw Violation("msg is empty")
                 if (msg.length() > 20) {
                     throw Violation("msg len > 20: ${msg.substring(0, 20)}...")
@@ -25,184 +41,287 @@ class Server(val log: Log) : Sender{
                 log.msg(msg)
                 val prm = Prm(msg[1, msg.length()].toString())
                 when (msg[0]) {
-                    'q' -> ws.send("q");
-                    'n' -> reg(ws, prm)
-                    'l' -> login(ws, prm)
-                    'k' -> changeNick(ws, prm)
-                    'p' -> play(ws, prm)
-                    't' -> vsRobot(ws, prm)
-                    'm' -> vsRobotMission(ws, prm)
-                    'a' -> akt(ws, prm)
-                    'r' -> refresh(ws, prm)
-                    'w' -> land(ws, prm)
-                    'y' -> accept(ws, prm)
-                    'c' -> invite(ws, prm)
-                    'd' -> decline(ws, prm)
+                    'q' -> send("q")
+                    'n' -> reg(prm)
+                    'l' -> onLogin(prm)
+                    'k' -> changeNick(prm)
+                    'p' -> onPlay(prm)
+                    't' -> onVsRobot(prm)
+                    'm' -> vsRobotMission(prm)
+                    'a' -> akt(prm)
+                    'r' -> refresh(prm)
+                    'w' -> land(prm)
+                    'y' -> accept(prm)
+                    'c' -> invite(prm)
+                    'd' -> onDecline(prm)
                     else -> throw Violation("unknown msg: " + msg)
                 }
             } catch(ex: Violation) {
                 log.violation(ex)
-                ws.close()
+                wser.close(key)
             } catch (ex: Throwable) {
                 log.error(ex)
-                ws.close()
+                wser.close(key)
             }
         }
     }
 
-    fun onOpen(ws: Ws) {
+    fun onOpen(key: String, isLocal: Boolean) {
         threadMain.execute {
+            ssn = Ssn(key, isLocal)
+            ssns[key] = ssn
             log.open()
-            if(ws.isLocal) {
-                var id = Id("dev"+wss.size())
+            if (isLocal) {
+                var id = Id("dev" + ssns.size())
                 val user = users.get(id)
                 if (user == null) users.add(id, "")
-                loginOk(ws, id, 1)
+                loginOk(id, 1)
             }
         }
     }
 
-    fun onClose(ws: Ws) {
+    fun onClose(key: String) {
         threadMain.execute {
             log.close()
-            if (ws.isLogin) {
-                rooms.close(ws.id)
-                wss.remove(ws.id)
-            }
+            ssn = ssns[key]!!
+            if (ssn.isLogin) decline()
+            ssns.remove(key)
         }
     }
 
-    fun reg(ws: Ws, prm: Prm) {
-        ensureUnlogin(ws, "reg")
+    fun reg(prm: Prm) {
+        ensureUnlogin("reg")
         prm.ensureEmpty()
-        val key = users.newKey()
+        val pw = users.newKey()
         threadAux.execute {
-            val digest = BCrypt.hashpw(key, BCrypt.gensalt())!!
+            val digest = BCrypt.hashpw(pw, BCrypt.gensalt())!!
             threadMain.execute {
-                users.add(Users.keyToId(key), digest)
-                ws.send("n" + key)
+                ssn.regData = RegData(pw, digest)
+                send("n" + pw)
             }
         }
     }
 
-    fun login(ws: Ws, prm: Prm) {
-        ensureUnlogin(ws, "login")
+    fun onLogin(prm: Prm) {
+        ensureUnlogin("login")
         prm.ensureSize(2)
-        val key = prm.str(0, 15, 15)
-        var id = Users.keyToId(key)
+        val pw = prm.str(0, 15, 15)
         val mission = prm.mission(1)
-        val user = users[id]
-        if (user != null) {
-            threadAux.execute {
-                val ok = if (BCrypt.checkpw(key, user.digest)) user.id else null
-                threadMain.execute {
-                    loginOk(ws, ok, mission)
+        val regData = ssn.regData
+        if (regData != null && pw == regData.pw) {
+            val id = Users.keyToId(regData.pw)
+            users.add(id, regData.digest)
+            ssn.regData = null
+            loginOk(id, mission)
+        } else {
+            var id = Users.keyToId(pw)
+            val user = users[id]
+            if (user != null) {
+                threadAux.execute {
+                    val ok = if (BCrypt.checkpw(pw, user.digest)) user.id else null
+                    threadMain.execute {
+                        loginOk(ok, mission)
+                    }
                 }
+            } else {
+                send("w")
             }
-        } else {
-            ws.send("w")
         }
     }
 
-    fun loginOk(ws: Ws, id: Id?, mission: Int) {
+    fun loginOk(id: Id?, mission: Int) {
         if (id != null) {
-            ws.login(id)
-            wss[ws.id] = ws
-            sendUser(ws)
-            rooms.login(ws.id,mission)
+            ssn.login(id)
+            sendUser()
+            ssn.bttl = bttls[id]
+            if (ssn.bttl != null)
+                send(bttler.refresh(ssn.id))
+            else
+                vsRobot(mission)
         } else {
-            ws.send("w")
+            send("w")
         }
     }
 
-    fun changeNick(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "changeNick")
+    fun changeNick(prm: Prm) {
+        ensureLogin("changeNick")
         prm.ensureSize(1)
         val nick = prm.str(0, 3, 15)
-        users.changeNick(ws.id, nick)
-        sendUser(ws)
+        users.changeNick(ssn.id, nick)
+        sendUser()
     }
 
-    fun play(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "play")
+    fun onPlay(prm: Prm) {
+        ensureLogin("play")
         prm.ensureSize(2)
-        rooms.queue(ws.id, prm.bet(0), prm.bet(1))
+        ssn.ensureState(Status.online)
+        val min = prm.bet(0)
+        val max = prm.bet(1)
+        if (min > max) throw Violation("min bet($min) > max bet($max)")
+        //TODO check balance
+        play(min, max)
     }
 
-    fun vsRobot(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "vsRobot")
+    private fun play(min:Int,max:Int) {
+        val play = Play(min,max)
+        val ssnsInQue = ssns.values().filter { it.play != null && it.play?.match==null }
+        if (ssnsInQue.size() >= 1) {
+            val ssnFinded = ssnsInQue.first()
+            ssn.play!!.match = Match(ssnFinded, 1)
+            ssnFinded.play!!.match = Match(ssn, 1)
+            sendStatus()
+            sendStatus(ssnFinded)
+        } else {
+            ssn.play = play
+            ssn.invite = null
+            sendStatus()
+        }
+    }
+
+    fun onVsRobot(prm: Prm) {
+        ensureLogin("vsRobot")
         prm.ensureEmpty()
-        rooms.vsRobot(ws.id)
+        vsRobot()
     }
 
-    fun vsRobotMission(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "vsRobotMission")
+    fun vsRobotMission(prm: Prm) {
+        ensureLogin("vsRobotMission")
         prm.ensureSize(1)
-        val mission = prm.mission(0)
-        rooms.vsRobot(ws.id, mission)
+        vsRobot(prm.mission(0))
     }
 
-    fun akt(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "createMission")
-        rooms.akt(ws.id, prm)
+    fun akt(prm: Prm) {
+        ensureLogin("akt")
+        bttl = bttls[ssn.id]!!
+        send(bttler.cmd(ssn.id, prm))
+        if (bttl.idWin() != null) {
+            log.end(bttl.idWin().toString())
+            sendStatus(ssns[bttl.idPrim]!!)
+            sendStatus(ssns[bttl.idSec]!!)
+        }
     }
 
-    fun land(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "land")
+    fun land(prm: Prm) {
+        ensureLogin("land")
         prm.ensureEmpty()
-        println(rooms.land(ws.id))
+        println(bttler.land(ssn.id))
     }
 
-    fun accept(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "matchAccept")
+    fun accept(prm: Prm) {
+        ensureLogin("matchAccept")
         prm.ensureEmpty()
-        rooms.accept(ws.id)
+        ssn.ensureState(Status.match)
+        val ssnVs = ssn.play!!.match!!.ssnVs
+        if (ssnVs.play!!.match!!.accepted) {
+            vsPlayer(ssn, ssnVs, ssn.play!!.match!!.bet)
+        } else {
+            ssn.play!!.match!!.accepted = true
+            sendStatus()
+        }
     }
-    fun invite(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "invite")
+
+    fun invite(prm: Prm) {
+        ensureLogin("invite")
         prm.ensureSize(2)
-        rooms.invite(ws.id, Id(prm.str(0, 4, 4)), prm.bet(1))
+        //rooms.invite(ssn.id, Id(prm.str(0, 4, 4)), prm.bet(1))
+        ssn.ensureState(Status.online)
+        val bet = prm.bet(1)
+        val idVs = Id(prm.str(0, 4, 4))
+        // TODO check balance
+        val ssnInvite = ssns[idVs]
+        val invite = ssnInvite?.invite
+        if (ssnInvite != null && invite != null && ssn.id == invite.idVs && bet == invite.bet) {
+            vsPlayer(ssn, ssnInvite, bet)
+        } else {
+            ssn.invite = Invite(idVs, bet)
+            ssn.play = null
+            sendStatus()
+        }
     }
-    fun decline(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "decline")
+
+    fun onDecline(prm: Prm) {
+        ensureLogin("decline")
         prm.ensureEmpty()
-        rooms.decline(ws.id)
+        decline()
     }
 
-    fun refresh(ws: Ws, prm: Prm) {
-        ensureLogin(ws, "refresh")
+    private fun decline() {
+        ssn.play?.match?.ssnVs?.play?.match=null
+        ssn.play = null
+        ssn.invite = null
+    }
+
+    fun refresh(prm: Prm) {
+        ensureLogin("refresh")
         prm.ensureEmpty()
-        rooms.refresh(ws.id)
+        bttl = ssn.bttl!!
+        send(bttler.refresh(ssn.id))
     }
 
-    fun ensureLogin(ws: Ws, cmd: String) {
-        if (!ws.isLogin) throw Violation("need login for $cmd")
+    fun ensureLogin(cmd: String) {
+        if (!ssn.isLogin) throw Violation("need login for $cmd")
     }
 
-    fun ensureAdmin(ws: Ws, cmd: String) {
-        if (!ws.isLogin || ws.id.toString() != "0000") throw Violation("need admin for $cmd")
+    fun ensureAdmin(cmd: String) {
+        if (!ssn.isLogin || ssn.id.toString() != "0000") throw Violation("need admin for $cmd")
     }
 
-    fun ensureUnlogin(ws: Ws, cmd: String) {
-        if (ws.isLogin) throw Violation("need unlogin for ${cmd}")
+    fun ensureUnlogin(cmd: String) {
+        if (ssn.isLogin) throw Violation("need unlogin for ${cmd}")
     }
 
-    fun sendUser(ws: Ws) {
-        val user = users[ws.id]!!
+    fun sendUser() {
+        val user = users[ssn.id]!!
         val obj = JSONObject()
         obj["id"] = user.id.toString()
         obj["nick"] = user.nick
         obj["balance"] = user.balance
-        ws.send("u"+obj)
+        send("u" + obj)
     }
 
-    override fun invoke(id: Id, msg: String) {
-        val ws = wss[id] ?: throw Err("User $id disconnected")
-        ws.send(msg)
+    private fun vsRobot(mission: Int? = null) {
+        ssn.ensureStateNotGame()
+        log.vsRobot(ssn.id)
+        //val room = Room(log, send, id, null, 0, creatorGame.createGame(mission))
+        var bttl = Bttl(ssn.id)
+        bttls[ssn.id] = bttl
+        ssn.bttl = bttl
+        send(bttler.start(mission,true))
+    }
+
+    private fun vsPlayer(ssnA: Ssn, ssnB: Ssn, bet: Int) {
+        ssnA.ensureStateNotGame()
+        ssnB.ensureStateNotGame()
+        log.vsPlayer(ssnA.id, ssnB.id)
+        bttl = Bttl(ssnA.id, ssnB.id, bet)
+        bttls[ssnA.id] = bttl
+        bttls[ssnB.id] = bttl
+        ssnA.bttl = bttl
+        ssnB.bttl = bttl
+        ssnA.invite = null
+        ssnB.invite = null
+        ssnA.play = null
+        ssnB.play = null
+        sendStatus(ssnA)
+        sendStatus(ssnB)
+        send(bttler.start(null,false))
+    }
+
+    fun send(msg: String) {
+        wser.send(ssn.key, msg)
+    }
+
+    fun send(chain: Chain) {
+        chain.list.forEach { wser.send(ssns[it.first]!!.key, it.second) }
+    }
+
+    fun sendStatus(s: Ssn = ssn) {
+        send("s" + s.status())
     }
 }
 
-abstract class Ws {
+class Ssn(val key: String, val isLocal: Boolean) {
+
     private var _id: Id? = null
 
     val id: Id
@@ -216,17 +335,64 @@ abstract class Ws {
         _id = id
     }
 
-    abstract fun send(msg: String)
-    abstract fun close()
-    abstract val isLocal:Boolean
+    var regData: RegData? = null
+    var play: Play? = null
+    var invite: Invite? = null
+    var bttl: Bttl? = null
+
+    fun status(): Status {
+        return when {
+            bttl?.let { it.sideRobot==null && it.idWin() == null } ?: false -> Status.game
+            play?.match?.let { it.accepted } ?: false -> Status.wait
+            play?.match != null -> Status.match
+            play != null -> Status.queue
+            invite != null -> Status.invite
+            else -> Status.online
+        }
+    }
+
+    fun ensureStateNotGame() {
+        if (status() == Status.game) throw Violation("State.game is not allowed")
+    }
+
+    fun ensureState(state: Status) {
+        val actual = status()
+        if (actual != state) throw Violation("wrong state $actual expected $state")
+    }
 }
 
-interface Sender{
-    fun invoke(id:Id,msg:String)
+data class RegData(val pw: String, val digest: String)
+
+class Play(val min: Int, val max: Int) {
+    var match: Match? = null
+
+    init {
+        if (min < 1 || min > max) throw IllegalArgumentException("BetRange min $min max $max")
+    }
 }
 
-// нарушение клиентом протокола, приводит к разрыву соединения с этим клиентом
-class Violation(msg: String) : Exception(msg)
+class Match(val ssnVs: Ssn, val bet: Int){
+    var accepted: Boolean = false
+}
 
-// любая ошибка
-class Err(msg: String) : Exception(msg)
+data class Invite(val idVs: Id, val bet: Int) {init {
+    if (bet < 0) throw IllegalArgumentException("Invite bet $bet")
+}
+}
+
+//состояние пользователя относительно очереди
+//отображается в 3м квадрате в интерфейсе
+enum class Status {
+    // свободен
+    online,
+    // выслал приглашение
+    invite,
+    // в очереди
+    queue,
+    // матч найден
+    match,
+    // матч найден и принят пользователем
+    wait,
+    // играет с человеком
+    game
+}

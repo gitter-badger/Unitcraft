@@ -68,7 +68,7 @@ class TestServer {
     }
 }
 
-class WsTest(id: String? = null, val server: Server? = null) : Ws() {
+class WsTest(id: String? = null, val server: Server? = null) : Ssn() {
     init {
         if (id != null) login(Id(id))
     }

@@ -1,109 +1,112 @@
 package unitcraft.server
 
 import org.json.simple.JSONObject
+import unitcraft.game.DataUnitcraft
+import unitcraft.inject.inject
 import java.time.Duration
 import java.time.Instant
-import java.util.ArrayList
-import java.util.HashMap
-import java.util.Random
-import kotlin.properties.Delegates
+import java.util.*
 
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
 // TODO нужен контроль времени
-class Room(val log: Log, val send: Sender, val idPrim: Id, val idSec: Id?, val bet: Int = 0, private val cmder: CmderGame) {
-    private val sides = HashMap<Id, Side>().apply {
-        if (idSec != null) if (r.nextBoolean()) {
-            this[idPrim] = Side.a
-            this[idSec] = Side.b
-        } else {
-            this[idPrim] = Side.b
-            this[idSec] = Side.a
-        } else this[idPrim] = Side.a
+class Bttler {
+    val log: Log by inject()
+    val cmder: CmderGame by inject()
+    val bttl: () -> Bttl by inject()
+
+    fun start(mission: Int?, canEdit: Boolean): Chain {
+        bttl().data = DataUnitcraft(mission, canEdit)
+        cmder.reset()
+        bttl().state = cmder.state()
+        return sendGame(false)
     }
 
-    val cmds = ArrayList<Pair<Side, String>>()
+    fun isVsRobot() = bttl().sideRobot != null
 
-    private var state: GameState
-
-    init {
-        state = cmder.state()
-        sendGame(false)
-    }
-
-    val isVsRobot = idSec == null
-
-    fun cmd(id: Id, prm: Prm) {
+    fun cmd(id: Id, prm: Prm): Chain {
         val (version, akt) = prm.akt()
-        if (version != cmds.size()) {
+        if (version != bttl().cmds.size()) {
             log.outSync()
-            refresh(id)
-            return
+            return refresh(id)
         }
-        aktAndSend(sides[id]!!, akt)
-        if (isVsRobot && state.sideWin == null) {
+        val chain = Chain()
+        chain.addChain(aktAndSend(bttl().sides[id]!!, akt))
+        if (isVsRobot() && bttl().state.sideWin == null) {
             while (true) {
                 val cmdRobot = try {
-                    cmder.cmdRobot(sides[idPrim]!!.vs)
+                    cmder.cmdRobot(bttl().sideRobot!!)
                 } catch(e: Throwable) {
                     log.error(e)
                     "e"
                 } ?: break
-                aktAndSend(sides[idPrim]!!.vs, cmdRobot)
-                if (state.sideWin != null) break
+                chain.addChain(aktAndSend(bttl().sideRobot!!, cmdRobot))
+                if (bttl().state.sideWin != null) break
             }
         }
+        return chain
     }
 
-    fun idWin(): Id? {
-        if (isVsRobot) throw Err("call idWin() on robot room")
-        return if (state.sideWin != null) sides.entrySet().first { it.value == state.sideWin }.key else null
-    }
 
-    fun refresh(id: Id) {
-        sendGame(false, id)
-    }
+    fun refresh(id: Id): Chain = sendGame(false, id)
+
 
     fun land(id: Id) {
         cmder.land()
     }
 
-    private fun aktAndSend(side: Side, akt: String) {
+    private fun aktAndSend(side: Side, akt: String): Chain {
         try {
             cmder.cmd(side, akt)
-            state = cmder.state()
-            cmds.add(Pair(side, akt))
-            if (isVsRobot && akt == "w") sides[idPrim] = sides[idPrim]!!.vs
-            sendGame(false)
+            bttl().state = cmder.state()
+            bttl().cmds.add(Pair(side, akt))
+            if (isVsRobot() && akt == "w") bttl().changeSideRobot()
+            return sendGame(false)
         } catch (ex: Violation) {
             throw ex
         } catch(ex: Throwable) {
             log.error(ex)
             resetGame()
-            sendGame(true)
+            return sendGame(true)
         }
 
     }
 
     private fun resetGame() {
         cmder.reset()
-        for ((side, akt) in cmds) {
+        for ((side, akt) in bttl().cmds) {
             cmder.cmd(side, akt)
         }
     }
 
-    private fun sendGame(isErr: Boolean, idOnly: Id? = null) {
-        for ((id, side) in sides) if (idOnly == null || id == idOnly) {
-            val json = state.json[side]!!
-            json["version"] = cmds.size()
-            json["bet"] = bet
+    private fun sendGame(isErr: Boolean, idOnly: Id? = null): Chain {
+        val bttl = bttl()
+        val chain = Chain()
+        for ((id, side) in bttl.sides) if (idOnly == null || id == idOnly) {
+            val json = bttl.state.json[side]!!
+            json["version"] = bttl.cmds.size()
+            json["bet"] = bttl.bet
             json["clock"] = listOf(1000000, 198000)
             if (isErr) json["err"] = true else json.remove("err")
-            send(id, "g" + json)
+            chain.add(id, "g" + json)
         }
+        return chain
+    }
+}
+
+class Chain() {
+
+    constructor(id: Id, json: String) : this() {
+        add(id, json)
     }
 
-    companion object {
-        val r = Random()
+    val list = ArrayList<Pair<Id, String>>()
+
+    fun add(id: Id, json: String) {
+        list.add(id to json)
+    }
+
+    fun addChain(chain: Chain) {
+        list.addAll(chain.list)
     }
 }
 
@@ -146,6 +149,7 @@ class Clock(private var left: Duration) {
 }
 
 interface CmderGame {
+
     // сбрасывает состояние игры до исходного
     fun reset()
 
@@ -182,7 +186,42 @@ enum class Side {
 
     val isN: Boolean by lazy(LazyThreadSafetyMode.NONE) { this == n }
 
-    companion object{
-        val ab = listOf(Side.a,Side.b).requireNoNulls()
+    companion object {
+        val ab = listOf(Side.a, Side.b).requireNoNulls()
     }
+}
+
+class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
+    lateinit var data: DataUnitcraft
+    lateinit var state: GameState
+
+    val id = "$idPrim-${idSec ?: "AI"}-${Instant.now()}"
+
+    val sides = HashMap<Id, Side>().apply {
+        if (idSec != null) if (r.nextBoolean()) {
+            this[idPrim] = Side.a
+            this[idSec] = Side.b
+        } else {
+            this[idPrim] = Side.b
+            this[idSec] = Side.a
+        } else this[idPrim] = Side.a
+    }
+
+    companion object {
+        val r = Random()
+    }
+    val cmds = ArrayList<Pair<Side, String>>()
+
+
+    fun changeSideRobot() {
+        sides[idPrim] = sideRobot!!
+    }
+
+    fun idWin(): Id? =
+            if (idSec == null) null
+            else if (state.sideWin != null) sides.entrySet().first { it.value == state.sideWin }.key
+            else null
+
+    val sideRobot = if (idSec == null) sides[idPrim]!!.vs else null
+
 }

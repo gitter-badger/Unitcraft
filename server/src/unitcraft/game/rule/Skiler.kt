@@ -1,15 +1,18 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.inject.inject
+import unitcraft.inject.injectValue
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
-class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
+class SkilerMove(r: Resource){
     val tlsAktMove = r.tlsAktMove
+    val mover: Mover  by inject()
 
     init{
-        spoter.listOnTire.add{obj ->
+        injectValue<Spoter>().listOnTire.add{obj ->
             if(obj.has<SkilMove>()) obj<SkilMove>().refuel()
         }
     }
@@ -42,8 +45,10 @@ class SkilerMove(r: Resource, spoter: Spoter,val mover: Mover){
     }
 }
 
-class SkilerHit(r:Resource,val lifer:Lifer,val spoter: Spoter){
+class SkilerHit(r:Resource){
     val tlsAkt = r.tlsAkt("hit")
+    val lifer:Lifer by inject()
+    val spoter: Spoter by inject()
 
     fun add(obj:Obj){
         obj.data(SkilHit())

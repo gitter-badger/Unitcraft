@@ -1,10 +1,18 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.inject.inject
 import unitcraft.server.exclude
 
-class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Drawer,val spoter: Spoter, mover: Mover, private val flats: () -> Flats) {
+class Stazis(r: Resource) {
     val tiles = r.tlsList(5, "stazis")
+    val stager: Stager by inject()
+    val editor: Editor by inject()
+    val drawer: Drawer by inject()
+    val spoter: Spoter by inject()
+    val mover: Mover by inject()
+    val flats: () -> Flats by inject()
+
 
     init {
         editor.onEdit(PriorDraw.overObj,listOf(tiles.last()), { pg, side, num -> plant(pg) }, { pg -> flats()[pg].remove<Stazis>() != null })
@@ -25,7 +33,7 @@ class Stazis(r: Resource, val stager: Stager, val editor: Editor, val drawer: Dr
         flats()[pg].data(Stazis())
     }
 
-    fun contains(pg:Pg) = flats()[pg].has<Stazis>()
+    operator fun contains(pg:Pg) = flats()[pg].has<Stazis>()
 
     class Stazis:Data{
         var value = 5

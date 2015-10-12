@@ -1,11 +1,16 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.inject.inject
 import unitcraft.server.Side
 import java.util.ArrayList
 
-class Enforcer(r: Resource, val stager: Stager, val drawer: Drawer, val spoter: Spoter, val objs: () -> Objs) {
+class Enforcer(r: Resource) {
     val tls = r.tlsBool("enforced", "enforcedAlready")
+    val stager: Stager by inject()
+    val drawer: Drawer by inject()
+    val spoter: Spoter by inject()
+    val objs: () -> Objs  by inject()
 
     init {
         drawer.drawObjs.add { obj,side,ctx  -> if(obj.has<Enforce>()) ctx.drawTile(obj.head(),tls(obj<Enforce>().isOn)) }

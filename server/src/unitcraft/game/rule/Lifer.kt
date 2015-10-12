@@ -1,10 +1,14 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.inject.inject
+import unitcraft.inject.injectValue
 import java.util.*
 
-class Lifer(r: Resource,drawer: Drawer,val objs: ()->Objs) {
+class Lifer(r: Resource) {
     private val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
+
+    val objs: ()->Objs by inject()
 
     fun heal(obj:Obj,value:Int){
         obj.life += value
@@ -30,7 +34,7 @@ class Lifer(r: Resource,drawer: Drawer,val objs: ()->Objs) {
     }
 
     init{
-        drawer.drawObjs.add {obj,side,ctx ->
+        injectValue<Drawer>().drawObjs.add {obj,side,ctx ->
             ctx.drawText(obj.head(), obj.life, hintTextLife)
         }
     }

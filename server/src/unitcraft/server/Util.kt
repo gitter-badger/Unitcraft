@@ -15,3 +15,9 @@ inline fun <T> MutableIterable<T>.exclude(predicate: (T) -> Boolean) {
     val iter = iterator()
     for (elem in iter) if(predicate(elem)) iter.remove()
 }
+
+// нарушение клиентом протокола, приводит к разрыву соединения с этим клиентом
+class Violation(msg: String) : Exception(msg)
+
+// любая ошибка
+class Err(msg: String) : Exception(msg)

@@ -1,172 +1,158 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
+import unitcraft.inject.inject
+import unitcraft.inject.register
 import unitcraft.land.Land
 import unitcraft.server.*
-import kotlin.properties.Delegates
 
-class Unitcraft(r: Resource = Resource()) : CreatorGame {
-    override fun createGame(mission: Int?) = CmderUnitcraft(mission, true)
+fun registerUnitcraft(data: ()->DataUnitcraft = {DataUnitcraft(0,false)}): Resource {
+    register(CmderUnitcraft())
 
-    private var cur: CmderUnitcraft by Delegates.notNull()
+    register(data)
+    register({ data().allData })
+    register({ data().allData.objs })
+    register({ data().allData.flats })
 
-    val pgser = { cur.pgser }
-    val allData = { cur.allData }
-    val objs = { cur.allData.objs }
-    val flats = { cur.allData.flats }
+    val r = Resource()
 
-    val stager = Stager(r,allData)
-    val editor = Editor()
-    val drawer = Drawer(allData)
-    val spoter = Spoter(stager, allData)
+    register(Stager(r))
+    register(Editor())
+    register(Drawer())
+    register(Spoter())
+    register(Flater())
+    register(Sider())
+    register(Tracer(r))
+    register(Mover())
+    register(Stazis(r))
+    register(Lifer(r))
+    register(Enforcer(r))
+    register(SkilerMove(r))
+    register(SkilerHit(r))
+    register(Builder(r))
+    register(Solider(r))
 
+    Forest(r)
+    Grass(r)
+    Water(r)
+    Sand(r)
+    Catapult(r)
 
-    //    val sizeFix: Map<TpPlace, Int> = mapOf(
-    //            TpPlace.forest to 4,
-    //            TpPlace.grass to 5,
-    //            TpPlace.hill to 1,
-    //            TpPlace.mount to 1,
-    //            TpPlace.sand to 4,
-    //            TpPlace.water to 1
-    //    )
-    //val tilesPlace = TpPlace.values().map { it to r.tlsList(sizeFix[it]!!, it.name(), Resource.effectPlace) }.toMap()
-    val flater: Flater = Flater(r, stager, allData, drawer, editor)
+    Mine(r)
+    Hospital(r)
+    Flag(r)
 
-    val sider = Sider(spoter, objs)
-    val tracer = Tracer(r)
+    //Electric(r)
+    Telepath(r)
+    Staziser(r)
+    Inviser(r)
+    //Imitator(r)
+    Redeployer(r)
+    Warehouse(r)
+    return r
+}
 
+class DataUnitcraft(mission: Int?, val canEdit: Boolean) {
+    val land = Land(mission)
+    lateinit var allData: AllData
+}
 
-    val shaper = Mover(r, stager, objs)
-    val stazis = Stazis(r, stager, editor, drawer, spoter, shaper, flats)
+class CmderUnitcraft : CmderGame {
+    val data: () -> DataUnitcraft by inject()
 
-    val lifer = Lifer(r, drawer, objs)
-    val enforcer = Enforcer(r, stager, drawer, spoter, objs)
-    val skilerMove = SkilerMove(r, spoter, shaper)
-    val skilerHit = SkilerHit(r, lifer, spoter)
-    val builder = Builder(r, lifer, spoter, shaper, objs)
-    val solider = Solider(r, drawer, editor, sider, lifer, enforcer, spoter, shaper, builder, skilerMove, objs)
+    val flater: Flater by inject()
+    val solider: Solider by inject()
+    val editor: Editor by inject()
+    val stager: Stager by inject()
+    val spoter: Spoter by inject()
+    val drawer: Drawer by inject()
+    val tracer: Tracer by inject()
 
-    init {
-        Forest(r, flater, shaper, flats)
-        Grass(r, flater)
-        Water(r, flater)
-        Sand(r, flater)
-        Catapult(r, flater, spoter, shaper, flats)
-
-        Mine(r, flater, stager, builder, flats)
-        Hospital(r, flater)
-        Flag(r, flater)
-
-        //        Electric(r, voiner)
-        Telepath(r, enforcer, solider, spoter)
-        Staziser(r, stazis, solider, spoter)
-        Inviser(r, solider, shaper, skilerHit, objs)
-        //        Imitator(spoter,voiner,objs)
-        Redeployer(r, solider, builder, spoter, objs)
-        Warehouse(r,solider,builder, lifer)
+    override fun reset() {
+        data().allData = AllData()
+        flater.reset(data().land.flats)
+        solider.reset(data().land.solids)
     }
 
-    inner class CmderUnitcraft(mission: Int?, val canEdit: Boolean) : CmderGame {
-        val land = Land(flater.maxFromTpFlat(),solider.maxFromTpSolid(), mission)
-        val pgser = land.pgser
-        var allData: AllData by Delegates.notNull()
-
-
-        init {
-            reset()
+    override fun cmd(side: Side, cmd: String) {
+        if (side.isN) throw throw Err("side is neutral")
+        if (cmd.isEmpty()) throw Violation("cmd is empty")
+        val prm = Prm(data().land.pgser, cmd[1, cmd.length()].toString())
+        when (cmd[0]) {
+            'z' -> editAdd(side, prm)
+            'r' -> editRemove(prm)
+            'd' -> editDestroy(prm)
+            'c' -> editChange(side, prm)
+            'a' -> akt(side, prm)
+            'b' -> aktOpt(side, prm)
+            'e', 'w' -> endTurn(side, prm)
+            else -> throw Violation("unknown msg: " + cmd)
         }
-
-        override fun reset() {
-            allData = AllData()
-            cur = this
-            flater.reset(land.flats)
-            solider.reset(land.solids)
-        }
-
-        override fun cmd(side: Side, cmd: String) {
-            cur = this
-            if (side.isN) throw throw Err("side is neutral")
-            if (cmd.isEmpty()) throw Violation("cmd is empty")
-            val prm = Prm(pgser, cmd[1, cmd.length()].toString())
-            when (cmd[0]) {
-                'z' -> editAdd(side, prm)
-                'r' -> editRemove(prm)
-                'd' -> editDestroy(prm)
-                'c' -> editChange(side, prm)
-                'a' -> akt(side, prm)
-                'b' -> aktOpt(side, prm)
-                'e', 'w' -> endTurn(side, prm)
-                else -> throw Violation("unknown msg: " + cmd)
-            }
-        }
-
-        override fun state(): GameState {
-            cur = this
-            return GameState(null, Side.ab.map { it to snap(it).toJson() }.toMap(), null)
-        }
-
-        override fun cmdRobot(sideRobot: Side): String? {
-            cur = this
-            return if (stager.sideTurn() == sideRobot) "e" else null
-        }
-
-        override fun land(): String {
-            cur = this
-            throw UnsupportedOperationException()
-        }
-
-        private fun editAdd(side: Side, prm: Prm) {
-            ensureTest()
-            prm.ensureSize(3)
-            val num = prm.int(2)
-            if (num >= editor.opterTest.opts.size()) throw Violation("editAdd out bound")
-            editor.editAdd(prm.pg(0), side, num)
-        }
-
-        private fun editRemove(prm: Prm) {
-            ensureTest()
-            prm.ensureSize(2)
-            editor.editRemove(prm.pg(0))
-        }
-
-        private fun editDestroy(prm: Prm) {
-            ensureTest()
-            prm.ensureSize(2)
-            editor.editDestroy(prm.pg(0))
-        }
-
-        private fun editChange(side: Side, prm: Prm) {
-            ensureTest()
-            prm.ensureSize(2)
-            solider.editChange(prm.pg(0), side)
-        }
-
-        private fun akt(side: Side, prm: Prm) {
-            prm.ensureSize(5)
-            spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3))
-        }
-
-        private fun aktOpt(side: Side, prm: Prm) {
-            prm.ensureSize(6)
-            spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5))
-        }
-
-        private fun endTurn(side: Side, prm: Prm) {
-            prm.ensureSize(0)
-            if (stager.sideTurn() != side) throw Violation("endTurn side($side) != sideTurn")
-            stager.endTurn()
-        }
-
-        private fun ensureTest() {
-            if (!canEdit) throw Violation("only for test game")
-        }
-
-        private fun snap(side: Side) = Snap(
-                pgser.xr,
-                pgser.yr,
-                drawer.draw(side),
-                spoter.spots(side),
-                tracer.traces(side), stager.stage(side), stager.edge(side), stager.focus, if (canEdit) editor.opterTest else null
-        )
     }
+
+    override fun state(): GameState {
+        return GameState(null, Side.ab.map { it to snap(it).toJson() }.toMap(), null)
+    }
+
+    override fun cmdRobot(sideRobot: Side): String? {
+        return if (stager.sideTurn() == sideRobot) "e" else null
+    }
+
+    override fun land(): String {
+        throw UnsupportedOperationException()
+    }
+
+    private fun editAdd(side: Side, prm: Prm) {
+        ensureTest()
+        prm.ensureSize(3)
+        val num = prm.int(2)
+        if (num >= editor.opterTest.opts.size()) throw Violation("editAdd out bound")
+        editor.editAdd(prm.pg(0), side, num)
+    }
+
+    private fun editRemove(prm: Prm) {
+        ensureTest()
+        prm.ensureSize(2)
+        editor.editRemove(prm.pg(0))
+    }
+
+    private fun editDestroy(prm: Prm) {
+        ensureTest()
+        prm.ensureSize(2)
+        editor.editDestroy(prm.pg(0))
+    }
+
+    private fun editChange(side: Side, prm: Prm) {
+        ensureTest()
+        prm.ensureSize(2)
+        solider.editChange(prm.pg(0), side)
+    }
+
+    private fun akt(side: Side, prm: Prm) {
+        prm.ensureSize(5)
+        spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3))
+    }
+
+    private fun aktOpt(side: Side, prm: Prm) {
+        prm.ensureSize(6)
+        spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5))
+    }
+
+    private fun endTurn(side: Side, prm: Prm) {
+        prm.ensureSize(0)
+        if (stager.sideTurn() != side) throw Violation("endTurn side($side) != sideTurn")
+        stager.endTurn()
+    }
+
+    private fun ensureTest() {
+        if (!data().canEdit) throw Violation("only for test game")
+    }
+
+    private fun snap(side: Side) = Snap(
+            data().land.pgser.xr,
+            data().land.pgser.yr,
+            drawer.draw(side),
+            spoter.spots(side),
+            tracer.traces(side), stager.stage(side), stager.edge(side), stager.focus, if (data().canEdit) editor.opterTest else null
+    )
 }

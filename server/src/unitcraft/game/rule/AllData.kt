@@ -34,7 +34,7 @@ class Flats: ListHasShape<Flat>{
 
     fun sort() = list.apply{ Collections.sort(list,compareBy { it.head() }) }
 
-    fun get(pg: Pg) = list.byPg(pg)!!
+    operator fun get(pg: Pg) = list.byPg(pg)!!
 }
 
 class Obj(shape: Shape):HasShape(shape) {
@@ -57,7 +57,7 @@ class Objs: ListHasShape<Obj> {
 
     fun bySide(side:Side) = list.bySide(side)
 
-    fun get(pg: Pg) = list.byPg(pg)
+    operator fun get(pg: Pg) = list.byPg(pg)
 }
 
 inline fun <reified T : Data,A:HasShape> List<A>.by() = filter { it.has<T>() }.map{it to it<T>()}

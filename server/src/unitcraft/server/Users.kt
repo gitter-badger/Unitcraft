@@ -10,7 +10,7 @@ import java.util.Random
 class Users(val log: Log) {
     val users = HashMap<Id, User>()
 
-    fun get(id: Id): User? {
+    operator fun get(id: Id): User? {
         return users[id]
     }
 

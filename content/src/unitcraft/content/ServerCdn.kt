@@ -25,7 +25,7 @@ fun main(args: Array<String>) {
 class ServerCdn() : NanoHTTPD(8000) {
     val dirCdn = File("content/cdn/")
 
-    val res = Resource()
+    val res = registerUnitcraft()
     val panels = File(dirPanels).files().map{it.nameBase}
 
     val imgsTile = HashMap<String, BufferedImage>()
@@ -37,7 +37,6 @@ class ServerCdn() : NanoHTTPD(8000) {
 
     init{
         if(listQdmnTile.any{it%2!=0}) throw Err("qdmnTile must be even")
-        Unitcraft(res)
         loadImgsTile()
         loadImgsPanel()
     }

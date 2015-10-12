@@ -1,12 +1,15 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
+import unitcraft.inject.inject
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.Violation
 import java.util.*
 
-class Spoter(val stager: Stager,val allData:()-> AllData) {
+class Spoter {
+    val stager: Stager  by inject()
+    val allData:()-> AllData  by inject()
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
     val listSkil = ArrayList<(Obj)->Skil?>()
     val listSkilByCopy = ArrayList<(Obj)->List<Obj>>()

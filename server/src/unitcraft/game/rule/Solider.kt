@@ -1,25 +1,14 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
-import unitcraft.land
-import unitcraft.land.TpFlat
+import unitcraft.inject.inject
+import unitcraft.inject.injectValue
 import unitcraft.land.TpSolid
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
-class Solider(val r: Resource,
-              val drawer: Drawer,
-              val editor: Editor,
-              val sider: Sider,
-              val lifer: Lifer,
-              val enforcer: Enforcer,
-              val spoter: Spoter,
-              val mover: Mover,
-              val builder: Builder,
-              val skilerMove: SkilerMove,
-              val objs: () -> Objs
-) {
+class Solider(r: Resource) {
     private val hintTileFlipHide = r.hintTile("ctx.translate(rTile,0);ctx.scale(-1,1);ctx.globalAlpha=0.7;")
     private val hintTileFlip = r.hintTile("ctx.translate(rTile,0);ctx.scale(-1,1);")
     private val hintTileHide = r.hintTile("ctx.globalAlpha=0.7;")
@@ -29,6 +18,12 @@ class Solider(val r: Resource,
     val tilesEditor = ArrayList<Tile>()
     val creates = ArrayList<(Obj) -> Unit>()
     private val landTps = HashMap<TpSolid, MutableList<(Obj) -> Unit>>()
+    val drawer: Drawer by inject()
+    val editor: Editor by inject()
+    val mover: Mover  by inject()
+    val builder: Builder by inject()
+    val skilerMove: SkilerMove by inject()
+    val objs: () -> Objs by inject()
 
     init {
         editor.onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
@@ -59,10 +54,10 @@ class Solider(val r: Resource,
         val crt = if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create
         creates.add(crt)
         if (isFabric) builder.addFabrik(0, tile, crt)
-        if(tpSolid!=null) landTps.getOrPut(tpSolid){ArrayList<(Obj)->Unit>()}.add(create)
+        if (tpSolid != null) landTps.getOrPut(tpSolid) { ArrayList<(Obj) -> Unit>() }.add(create)
     }
 
-    fun addTls(obj:Obj,tlsSolid:TlsSolid){
+    fun addTls(obj: Obj, tlsSolid: TlsSolid) {
         obj.data(HasTlsSolid(tlsSolid))
     }
 
@@ -79,20 +74,20 @@ class Solider(val r: Resource,
 
     fun maxFromTpSolid() = landTps.mapValues { it.value.size() }
 
-    fun reset(solidsL: ArrayList<land.Solid>) {
-        for(solidL in solidsL){
+    fun reset(solidsL: ArrayList<unitcraft.land.Solid>) {
+        for (solidL in solidsL) {
             val solid = Obj(solidL.shape)
             landTps[solidL.tpSolid]!![solidL.num](solid)
             objs().add(solid)
         }
     }
 
-    inner class HasTlsSolid(val tlsSolid:TlsSolid) : HasTileObj {
+    inner class HasTlsSolid(val tlsSolid: TlsSolid) : HasTileObj {
         override fun tile(sideVid: Side, obj: Obj) = tlsSolid(sideVid, obj.side, obj.isFresh)
 
-        override fun hint(sideVid: Side, obj: Obj):Int?{
+        override fun hint(sideVid: Side, obj: Obj): Int? {
             val hided = !obj.isVid(sideVid.vs)
-            return when{
+            return when {
                 obj.flip && hided -> hintTileFlipHide
                 obj.flip -> hintTileFlip
                 hided -> hintTileHide
@@ -102,20 +97,23 @@ class Solider(val r: Resource,
     }
 }
 
-class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val spoter: Spoter) {
+class Telepath(r: Resource) {
     init {
+        val enforcer = injectValue<Enforcer>()
+        val solider = injectValue<Solider>()
+        val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("telepath")
         val tlsAkt = r.tlsAkt("telepath")
         val skil = SkilTelepath(enforcer, spoter, tlsAkt)
         solider.add(tls.neut) {
-            solider.addTls(it,tls)
+            solider.addTls(it, tls)
             it.data(skil)
         }
     }
 
     class SkilTelepath(val enforcer: Enforcer, val spoter: Spoter, val tlsAkt: TlsAkt) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
-                obj.near().filter { enforcer.canEnforce(it,sideVid) }.map {
+                obj.near().filter { enforcer.canEnforce(it, sideVid) }.map {
                     AktSimple(it, tlsAkt) {
                         enforcer.enforce(it)
                         spoter.tire(obj)
@@ -136,17 +134,20 @@ class Telepath(r: Resource, val enforcer: Enforcer, val solider: Solider, val sp
 
 }
 
-class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Spoter) {
+class Staziser(r: Resource) {
     init {
+        val stazis = injectValue<Stazis>()
+        val solider = injectValue<Solider>()
+        val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("staziser")
         val tlsAkt = r.tlsAkt("staziser")
         solider.add(tls.neut) {
-            solider.addTls(it,tls)
-            it.data(SkilStaziser(tlsAkt))
+            solider.addTls(it, tls)
+            it.data(SkilStaziser(tlsAkt, stazis, spoter))
         }
     }
 
-    inner class SkilStaziser(val tlsAkt: TlsAkt) : Skil {
+    class SkilStaziser(val tlsAkt: TlsAkt, val stazis: Stazis, val spoter: Spoter) : Skil {
         override fun akts(sideVid: Side, obj: Obj) =
                 obj.near().filter { it !in stazis }.map {
                     AktSimple(it, tlsAkt) {
@@ -157,11 +158,14 @@ class Staziser(r: Resource, val stazis: Stazis, solider: Solider, val spoter: Sp
     }
 }
 
-class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerHit, val objs: () -> Objs) {
+class Inviser(r: Resource) {
     init {
+        val solider = injectValue<Solider>()
+        val mover = injectValue<Mover>()
+        val skilerHit = injectValue<SkilerHit>()
         val tls = r.tlsVoin("inviser")
         solider.add(tls.neut) {
-            solider.addTls(it,tls)
+            solider.addTls(it, tls)
             it.data(DataInviser)
             skilerHit.add(it)
         }
@@ -171,14 +175,18 @@ class Inviser(r: Resource,solider: Solider, mover: Mover, val skilerHit: SkilerH
     private object DataInviser : Data
 }
 
-class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter: Spoter, val objs: () -> Objs) {
+class Redeployer(r: Resource) {
     val tlsAkt = r.tlsAkt("redeployer")
+    val solider: Solider by inject()
+    val spoter: Spoter by inject()
+    val builder: Builder by inject()
+    val objs: () -> Objs by inject()
 
     init {
         val tls = r.tlsVoin("redeployer")
         val skil = SkilRedeployer()
-        solider.add(tls.neut,TpSolid.builder,false) {
-            solider.addTls(it,tls)
+        solider.add(tls.neut, TpSolid.builder, false) {
+            solider.addTls(it, tls)
             it.data(skil)
             builder.add(it, { it.near() }, {})
         }
@@ -198,12 +206,15 @@ class Redeployer(r: Resource, solider: Solider, val builder: Builder, val spoter
     }
 }
 
-class Warehouse(r: Resource,solider: Solider, builder: Builder, val lifer: Lifer) {
+class Warehouse(r: Resource) {
     init {
+        val solider = injectValue<Solider>()
+        val builder = injectValue<Builder>()
+        val lifer = injectValue<Lifer>()
         val tls = r.tlsVoin("warehouse")
-        solider.add(tls.neut,TpSolid.builder,false) {
-            solider.addTls(it,tls)
-            builder.add(it, { it.further() }, {lifer.heal(it,2)})
+        solider.add(tls.neut, TpSolid.builder, false) {
+            solider.addTls(it, tls)
+            builder.add(it, { it.further() }, { lifer.heal(it, 2) })
         }
     }
 }
@@ -267,11 +278,15 @@ class Imitator(val spoter: Spoter, solider: Solider, val objs: () -> Objs) {
     //    }
 }
 */
-class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Mover, val objs: () -> Objs) {
+class Builder(r: Resource) {
     val tlsAkt = TlsAkt(r.tile("build", Resource.effectAkt), r.tile("build", Resource.effectAktOff))
     val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
     val price = 5
     val fabriks = ArrayList<Fabrik>()
+    val lifer: Lifer by inject()
+    val spoter: Spoter by inject()
+    val mover: Mover by inject()
+    val objs: () -> Objs by inject()
 
     fun plusGold(side: Side, value: Int) {
         objs().bySide(side).by<SkilBuild, Obj>().forEach { lifer.heal(it.first, value) }
@@ -279,7 +294,7 @@ class Builder(r: Resource, val lifer: Lifer, val spoter: Spoter, val mover: Move
 
     fun add(obj: Obj, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
         obj.data(SkilBuild(zone, fabriks))
-        lifer.change(obj,50)
+        lifer.change(obj, 50)
     }
 
     fun addFabrik(prior: Int, tile: Tile, create: (Obj) -> Unit) {

@@ -1,12 +1,15 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
+import unitcraft.inject.inject
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 import kotlin.properties.Delegates
 
-class Mover(r:Resource,val stager: Stager,val objs:()-> Objs) {
+class Mover{
+    val stager: Stager by inject()
+    val objs:()-> Objs by inject()
     val slotStopMove = ArrayList<(Move)->Boolean>()
     val slotStopBuild = ArrayList<(Shape)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()

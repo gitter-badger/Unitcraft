@@ -1,13 +1,14 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
+import unitcraft.inject.inject
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.ArrayList
 import java.util.HashMap
 
-class Drawer(val allData: () -> AllData) {
-
+class Drawer() {
+    val allData: () -> AllData  by inject()
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 
     val drawFlats = ArrayList<(Flat, Side,CtxDraw) -> Unit>()

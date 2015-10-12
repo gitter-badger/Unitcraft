@@ -2,17 +2,22 @@ package unitcraft.land
 
 import unitcraft.game.Pg
 import unitcraft.game.Pgser
+import unitcraft.game.rule.Flater
 import unitcraft.game.rule.Singl
+import unitcraft.game.rule.Solider
+import unitcraft.inject.inject
 import unitcraft.land.TpFlat.*
 import unitcraft.land.TpSolid.*
 import unitcraft.server.Err
 import java.util.*
 
-class Land(maxTpFlat: Map<TpFlat, Int>, maxTpSolid: Map<TpSolid, Int>, val mission: Int?) {
+class Land(val mission: Int?) {
+    val solider: Solider by inject()
+    val flater: Flater by inject()
 
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
-    val mapFlat = maxTpFlat.mapValues { r.nextInt(it.value) }
+    val mapFlat = flater.maxFromTpFlat().mapValues { r.nextInt(it.value) }
     val yr = 9 + r.nextInt(7)
     val xr = if (yr == 15) 15 else yr + r.nextInt(15 - yr)
     val pgser = Pgser(xr, yr)
