@@ -53,17 +53,17 @@ class Resource {
 
     fun hintTile(hintTile: String):Int {
         hintTiles.add(HintTile(hintTile))
-        return hintTiles.size()-1
+        return hintTiles.size -1
     }
 
     fun hintText(hintText: String):Int {
         hintTexts.add(HintText(hintText))
-        return hintTexts.size()-1
+        return hintTexts.size -1
     }
 
     fun buildik(tile: Int):Int {
         buildiks.add(tile)
-        return buildiks.size()-1
+        return buildiks.size -1
     }
 
     companion object{

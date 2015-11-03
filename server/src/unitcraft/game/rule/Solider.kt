@@ -23,7 +23,7 @@ class Solider(r: Resource) {
     val mover: Mover  by inject()
     val builder: Builder by inject()
     val skilerMove: SkilerMove by inject()
-    val objs: () -> Objs by inject()
+    val objs: () -> Objs by injectObjs()
 
     init {
         editor.onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
@@ -72,7 +72,7 @@ class Solider(r: Resource) {
         }
     }
 
-    fun maxFromTpSolid() = landTps.mapValues { it.value.size() }
+    fun maxFromTpSolid() = landTps.mapValues { it.value.size }
 
     fun reset(solidsL: ArrayList<unitcraft.land.Solid>) {
         for (solidL in solidsL) {

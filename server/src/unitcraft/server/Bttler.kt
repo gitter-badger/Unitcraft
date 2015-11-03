@@ -6,16 +6,20 @@ import unitcraft.inject.inject
 import java.time.Duration
 import java.time.Instant
 import java.util.*
+import kotlin.properties.Delegates
 
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
 // TODO нужен контроль времени
 class Bttler {
     val log: Log by inject()
     val cmder: CmderGame by inject()
-    val bttl: () -> Bttl by inject()
+    val bttl: () -> Bttl by injectBttl()
 
     fun start(mission: Int?, canEdit: Boolean): Chain {
-        bttl().data = DataUnitcraft(mission, canEdit)
+        val b = bttl()
+        println(b)
+        val d = DataUnitcraft(mission, canEdit)
+        bttl().data = d
         cmder.reset()
         bttl().state = cmder.state()
         return sendGame(false)
@@ -25,7 +29,7 @@ class Bttler {
 
     fun cmd(id: Id, prm: Prm): Chain {
         val (version, akt) = prm.akt()
-        if (version != bttl().cmds.size()) {
+        if (version != bttl().cmds.size) {
             log.outSync()
             return refresh(id)
         }
@@ -83,7 +87,7 @@ class Bttler {
         val chain = Chain()
         for ((id, side) in bttl.sides) if (idOnly == null || id == idOnly) {
             val json = bttl.state.json[side]!!
-            json["version"] = bttl.cmds.size()
+            json["version"] = bttl.cmds.size
             json["bet"] = bttl.bet
             json["clock"] = listOf(1000000, 198000)
             if (isErr) json["err"] = true else json.remove("err")
@@ -192,7 +196,7 @@ enum class Side {
 }
 
 class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
-    lateinit var data: DataUnitcraft
+    var data: DataUnitcraft by Delegates.notNull()
     lateinit var state: GameState
 
     val id = "$idPrim-${idSec ?: "AI"}-${Instant.now()}"
@@ -210,6 +214,7 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
     companion object {
         val r = Random()
     }
+
     val cmds = ArrayList<Pair<Side, String>>()
 
 

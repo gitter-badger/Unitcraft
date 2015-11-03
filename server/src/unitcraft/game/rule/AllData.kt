@@ -87,16 +87,39 @@ abstract class Shape(val head: Pg) {
     val further:List<Pg> by lazy(LazyThreadSafetyMode.NONE) { near().flatMap{it.near}.distinct().filter { it != head } }
 }
 
-data class Singl(head: Pg) : Shape(head) {
+class Singl(head: Pg) : Shape(head) {
     override val pgs = listOf(head)
     override fun headTo(pgTo: Pg) = Singl(pgTo)
     override fun near() = head.near
+    override fun equals(other: Any?): Boolean{
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+        other as Singl
+        if (head != other.head) return false
+        return true
+    }
+
+    override fun hashCode(): Int{
+        return head.hashCode()
+    }
+
 }
 
-data class Quadr(head: Pg) : Shape(head) {
+class Quadr(head: Pg) : Shape(head) {
     override val pgs = listOf(head, head.rt, head.dw, head.rt?.dw).requireNoNulls()
     override fun headTo(pgTo: Pg) = Quadr(pgTo)
     override fun near() = listOf(head.up, head.lf, head.dw?.lf, head.dw?.dw, head.rt?.up, head.rt?.rt).filterNotNull()
+    override fun equals(other: Any?): Boolean{
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+        other as Singl
+        if (head != other.head) return false
+        return true
+    }
+
+    override fun hashCode(): Int{
+        return head.hashCode()
+    }
 }
 
 interface Data

@@ -9,14 +9,16 @@ import java.util.*
 import kotlin.properties.Delegates
 
 class Flater {
-    val allData: () -> AllData by inject()
+    val allData: () -> AllData by injectAllData()
     val stager: Stager by inject()
     val drawer: Drawer by inject()
     val editor: Editor by inject()
 
     val tilesEditor = ArrayList<Tile>()
     val creates = ArrayList<(Flat) -> Unit>()
+
     private val landTps = HashMap<TpFlat, MutableList<(Flat) -> Unit>>()
+
     fun flats() = allData().flats
 
     init {
@@ -40,7 +42,7 @@ class Flater {
         landTps.getOrPut(tpFlat) { ArrayList<(Flat) -> Unit>() }.add(create)
     }
 
-    fun maxFromTpFlat() = landTps.mapValues { it.value.size() }
+    fun maxFromTpFlat() = landTps.mapValues { it.value.size }
 
     fun reset(flatsL: ArrayList<unitcraft.land.Flat>) {
         val flats = allData().flats
@@ -66,7 +68,7 @@ class Flater {
 //        TpPlace.water to 1
 //)
 
-fun randomTile(tiles: List<Tile>) = tiles[Any().hashCode() % tiles.size()]
+fun randomTile(tiles: List<Tile>) = tiles[Any().hashCode() % tiles.size]
 
 open class HasTileFlatFix(val tile: Tile) : HasTileFlat {
     override fun tile(sideVid: Side, flat: Flat) = tile
@@ -86,7 +88,7 @@ class Forest(r: Resource) {
     init {
         val flater = injectValue<Flater>()
         val mover = injectValue<Mover>()
-        val flats = injectValue<() -> Flats>()
+        val flats = injectFlats().value
         val tiles = r.tlsList(4, "forest", Resource.effectPlace)
         flater.add(tiles[0], TpFlat.wild) { it.data(DataForest(randomTile(tiles))) }
         mover.slotHide.add { flats()[it.head()].has<DataForest>() }
@@ -124,7 +126,7 @@ class Catapult(val r: Resource) : Skil {
 
     init {
         val flater = injectValue<Flater>()
-        val flats = injectValue<() -> Flats>()
+        val flats = injectFlats().value
         val tile = r.tile("catapult")
         val catapult = Catapult(tile)
         flater.add(tile, TpFlat.special) { it.data(catapult) }
@@ -181,11 +183,11 @@ class Mine(r: Resource) {
     init {
         val flater = injectValue<Flater>()
         val stager = injectValue<Stager>()
-        val flats = injectValue<() -> Flats>()
+        val flats = injectFlats().value
         val tls = r.tlsFlatOwn("mine")
         flater.add(tls.neut, TpFlat.special) { it.data(Mine(tls)) }
         stager.onEndTurn {
-            val gold = flats().by<Mine>().filter { it.second.side == stager.sideTurn() }.size()
+            val gold = flats().by<Mine>().filter { it.second.side == stager.sideTurn() }.size
             //            builder.plusGold(stager.sideTurn(),gold)
         }
     }

@@ -10,11 +10,19 @@ fun main(args: Array<String>) {
     register<Log>(LogFile())
     register<Wser>(wser)
     register(Bttler())
+    register(Users())
 
     val server = Server()
     register(server)
+    ForInject.bttl={ server.bttl }
     registerUnitcraft({ server.bttl.data })
 
     server.start()
 
 }
+
+object ForInject {
+    lateinit var bttl: () -> Bttl
+}
+
+fun injectBttl() = lazy(LazyThreadSafetyMode.NONE){ForInject.bttl}

@@ -3,16 +3,27 @@ package unitcraft.game
 import unitcraft.game.rule.*
 import unitcraft.inject.inject
 import unitcraft.inject.register
-import unitcraft.land.Land
 import unitcraft.server.*
 
-fun registerUnitcraft(data: ()->DataUnitcraft = {DataUnitcraft(0,false)}): Resource {
+object FncUnitcraft {
+    lateinit var data: () -> DataUnitcraft
+    lateinit var allData: () -> AllData
+    lateinit var objs: () -> Objs
+    lateinit var flats: () -> Flats
+}
+
+fun injectData() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.data }
+fun injectAllData() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.allData }
+fun injectObjs() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.objs }
+fun injectFlats() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.flats }
+
+fun registerUnitcraft(data: () -> DataUnitcraft = { DataUnitcraft(0, false) }): Resource {
     register(CmderUnitcraft())
 
-    register(data)
-    register({ data().allData })
-    register({ data().allData.objs })
-    register({ data().allData.flats })
+    FncUnitcraft.data = data
+    FncUnitcraft.allData = { data().allData }
+    FncUnitcraft.objs = { data().allData.objs }
+    FncUnitcraft.flats = { data().allData.flats }
 
     val r = Resource()
 
@@ -53,12 +64,12 @@ fun registerUnitcraft(data: ()->DataUnitcraft = {DataUnitcraft(0,false)}): Resou
 }
 
 class DataUnitcraft(mission: Int?, val canEdit: Boolean) {
-    val land = Land(mission)
+    //    val land = Land(mission)
     lateinit var allData: AllData
 }
 
 class CmderUnitcraft : CmderGame {
-    val data: () -> DataUnitcraft by inject()
+    val data: () -> DataUnitcraft by injectData()
 
     val flater: Flater by inject()
     val solider: Solider by inject()
@@ -70,14 +81,14 @@ class CmderUnitcraft : CmderGame {
 
     override fun reset() {
         data().allData = AllData()
-        flater.reset(data().land.flats)
-        solider.reset(data().land.solids)
+        //        flater.reset(data().land.flats)
+        //        solider.reset(data().land.solids)
     }
 
     override fun cmd(side: Side, cmd: String) {
         if (side.isN) throw throw Err("side is neutral")
         if (cmd.isEmpty()) throw Violation("cmd is empty")
-        val prm = Prm(data().land.pgser, cmd[1, cmd.length()].toString())
+        val prm = Prm(/*data().land.pgser*/Pgser(10, 10), cmd[1, cmd.length].toString())
         when (cmd[0]) {
             'z' -> editAdd(side, prm)
             'r' -> editRemove(prm)
@@ -106,7 +117,7 @@ class CmderUnitcraft : CmderGame {
         ensureTest()
         prm.ensureSize(3)
         val num = prm.int(2)
-        if (num >= editor.opterTest.opts.size()) throw Violation("editAdd out bound")
+        if (num >= editor.opterTest.opts.size) throw Violation("editAdd out bound")
         editor.editAdd(prm.pg(0), side, num)
     }
 
@@ -149,8 +160,8 @@ class CmderUnitcraft : CmderGame {
     }
 
     private fun snap(side: Side) = Snap(
-            data().land.pgser.xr,
-            data().land.pgser.yr,
+            10, //data().land.pgser.xr,
+            10, //data().land.pgser.yr,
             drawer.draw(side),
             spoter.spots(side),
             tracer.traces(side), stager.stage(side), stager.edge(side), stager.focus, if (data().canEdit) editor.opterTest else null

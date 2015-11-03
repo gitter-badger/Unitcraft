@@ -12,12 +12,12 @@ import unitcraft.server.Err
 import java.util.*
 
 class Land(val mission: Int?) {
-    val solider: Solider by inject()
-    val flater: Flater by inject()
+//    val solider: Solider by inject()
+//    val flater: Flater by inject()
 
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
-    val mapFlat = flater.maxFromTpFlat().mapValues { r.nextInt(it.value) }
+//    val mapFlat = flater.maxFromTpFlat().mapValues { r.nextInt(it.value) }
     val yr = 9 + r.nextInt(7)
     val xr = if (yr == 15) 15 else yr + r.nextInt(15 - yr)
     val pgser = Pgser(xr, yr)
@@ -96,8 +96,7 @@ class PrmAlg(val land: Land, val pgs: MutableList<Pg>) {
 
     fun dist2(pg:Pg,pgOther:Pg) = Math.sqrt(Math.pow(pg.x.toDouble()-pgOther.x,2.0)+Math.pow(pg.y.toDouble()-pgOther.y,2.0))
 
-    fun selRnd<E>(list: List<E>) = if (!list.isEmpty()) list[land.r.nextInt(list.size())] else throw Err("list is empty")
-
+    fun selRnd<E>(list: List<E>) = if (!list.isEmpty()) list[land.r.nextInt(list.size)] else throw Err("list is empty")
 
     fun isEdge(pg: Pg) = pg.x == 0 || pg.x == xl || pg.y == 0 || pg.y == yl
 

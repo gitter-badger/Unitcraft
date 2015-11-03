@@ -1,5 +1,6 @@
 package unitcraft.server
 
+import unitcraft.inject.inject
 import java.util.HashMap
 import java.util.Random
 
@@ -7,7 +8,8 @@ import java.util.Random
 // TODO удалять пользователя, не зашедшего ни разу, через сутки
 // TODO удалять пользователя, зашедшего ровно один раз, через неделю
 // если журнал пользователей станет слишком длинным, то его можно будет начать заново
-class Users(val log: Log) {
+class Users {
+    val log: Log by inject()
     val users = HashMap<Id, User>()
 
     operator fun get(id: Id): User? {
@@ -40,7 +42,7 @@ class Users(val log: Log) {
         private fun genKey(): String {
             val rnd = Random()
             return StringBuilder {
-                for (i in (0..14).map{rnd.nextInt(alphanum.length())}) {
+                for (i in (0..14).map{rnd.nextInt(alphanum.length)}) {
                     append(alphanum[i])
                 }
             }.toString()
@@ -51,7 +53,7 @@ class Users(val log: Log) {
 }
 
 data class Id(val id: String) {init {
-    if (id.length() != 4) throw IllegalArgumentException("id length != 4: $id")
+    if (id.length != 4) throw IllegalArgumentException("id length != 4: $id")
 }
     override fun toString(): String {
         return id

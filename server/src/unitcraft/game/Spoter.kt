@@ -106,7 +106,7 @@ class Raise(val pgsErr: List<Pg>, val isOn: Boolean) {
         if(akt is AktOpt && akt.dabs.isEmpty()) return
         //if (akt.pgAim in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
         val idx = listSloy.indexOfFirst { it.aktByPg(akt.pg) != null } + 1
-        if (idx == listSloy.size()) listSloy.add(Sloy(isOn))
+        if (idx == listSloy.size) listSloy.add(Sloy(isOn))
         listSloy[idx].akts.add(akt)
     }
 

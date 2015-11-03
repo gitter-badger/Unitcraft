@@ -19,7 +19,7 @@ import kotlin.properties.Delegates
 import java.awt.image.BufferedImage as Image
 
 fun main(args: Array<String>) {
-    ServerCdn().deploy(args.size()==0)
+    ServerCdn().deploy(args.size ==0)
 }
 
 class ServerCdn() : NanoHTTPD(8000) {
@@ -81,7 +81,7 @@ class ServerCdn() : NanoHTTPD(8000) {
     }
 
     private fun qdmnFromFile(file:File,prefix:String) =
-            if(file.name.startsWith(prefix)) file.nameBase.substring(prefix.length()).toInt() else null
+            if(file.name.startsWith(prefix)) file.nameBase.substring(prefix.length).toInt() else null
 
     private fun loadImgsTile(){
         val namesUnused = File(dirTiles).files().map { it.name }.toArrayList()
@@ -134,7 +134,7 @@ class ServerCdn() : NanoHTTPD(8000) {
     private fun fileFromTile(resTile: ResTile) = File(dirTiles + resTile.name + ".png")
 
     private fun createTileset(qdmn: Int,dirOut:File){
-        val img = BufferedImage(50 * qdmn * 2, (res.resTiles.size() / 50 + (if (res.resTiles.size() % 50 > 0) 1 else 0)) * qdmn * 2, BufferedImage.TYPE_INT_ARGB)
+        val img = BufferedImage(50 * qdmn * 2, (res.resTiles.size / 50 + (if (res.resTiles.size % 50 > 0) 1 else 0)) * qdmn * 2, BufferedImage.TYPE_INT_ARGB)
         val g = img.createGraphics()
 
         for ((ind, tile) in res.resTiles.withIndex()) {
@@ -149,7 +149,7 @@ class ServerCdn() : NanoHTTPD(8000) {
     }
 
     private fun createPanelset(qdmn: Int,dirOut:File){
-        val img = BufferedImage(panels.size() * qdmn, qdmn, BufferedImage.TYPE_INT_ARGB)
+        val img = BufferedImage(panels.size * qdmn, qdmn, BufferedImage.TYPE_INT_ARGB)
         val g = img.createGraphics()
         for((idx,panel) in panels.withIndex()){
             g.drawImage(CtxEffectImpl.resize(imgsPanel[panel]!!,qdmn), idx*qdmn, 0, null)

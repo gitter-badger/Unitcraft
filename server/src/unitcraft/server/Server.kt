@@ -35,11 +35,11 @@ class Server {
             try {
                 ssn = ssns[key]!!
                 if (msg.isEmpty()) throw Violation("msg is empty")
-                if (msg.length() > 20) {
+                if (msg.length > 20) {
                     throw Violation("msg len > 20: ${msg.substring(0, 20)}...")
                 }
                 log.msg(msg)
-                val prm = Prm(msg[1, msg.length()].toString())
+                val prm = Prm(msg[1, msg.length].toString())
                 when (msg[0]) {
                     'q' -> send("q")
                     'n' -> reg(prm)
@@ -165,7 +165,7 @@ class Server {
     private fun play(min:Int,max:Int) {
         val play = Play(min,max)
         val ssnsInQue = ssns.values().filter { it.play != null && it.play?.match==null }
-        if (ssnsInQue.size() >= 1) {
+        if (ssnsInQue.size >= 1) {
             val ssnFinded = ssnsInQue.first()
             ssn.play!!.match = Match(ssnFinded, 1)
             ssnFinded.play!!.match = Match(ssn, 1)
@@ -283,7 +283,7 @@ class Server {
         ssn.ensureStateNotGame()
         log.vsRobot(ssn.id)
         //val room = Room(log, send, id, null, 0, creatorGame.createGame(mission))
-        var bttl = Bttl(ssn.id)
+        bttl = Bttl(ssn.id)
         bttls[ssn.id] = bttl
         ssn.bttl = bttl
         send(bttler.start(mission,true))

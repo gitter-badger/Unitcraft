@@ -11,23 +11,23 @@ class Prm(private val pgser: Pgser, private val s: String) {
 
     init {
         if (!strs.all { it.allDigits() }) throw Violation("prm have non-ints in cmd: $s")
-        if (!strs.all { it.length() <= 3 }) throw Violation("size of ints in cmd is too big : $s")
+        if (!strs.all { it.length <= 3 }) throw Violation("size of ints in cmd is too big : $s")
     }
 
     private val p = strs.map { it.toInt() }
 
     fun pg(i: Int): Pg {
-        if (i + 1 >= p.size()) throw Violation("not enough size for pg at pos($i) in cmd: $s")
+        if (i + 1 >= p.size) throw Violation("not enough size for pg at pos($i) in cmd: $s")
         return pgser.pgOrNull(p[i], p[i + 1]) ?: throw Violation("prm pg at $i is out in cmd: $s")
     }
 
     fun int(pos: Int): Int {
-        if (pos >= p.size()) throw Violation("pos($pos) is out: $s")
+        if (pos >= p.size) throw Violation("pos($pos) is out: $s")
         return p[pos]
     }
 
     fun ensureSize(size: Int) {
-        if (size != p.size()) throw Violation("prm size($s) != $size")
+        if (size != p.size) throw Violation("prm size($s) != $size")
     }
 
     companion object {
