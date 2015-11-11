@@ -135,7 +135,7 @@ open class HasData{
 
     inline fun <reified T : Data> remove() = datas.exclude{it is T}
 
-    inline fun <reified T : Data> invoke(): T = datas.first{it is T} as T
+    inline operator fun <reified T : Data> invoke(): T = datas.first{it is T} as T
 
     inline fun <reified T : Data> get() = datas.filterIsInstance<T>()
 

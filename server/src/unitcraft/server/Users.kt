@@ -41,11 +41,11 @@ class Users {
 
         private fun genKey(): String {
             val rnd = Random()
-            return StringBuilder {
+            return buildString {
                 for (i in (0..14).map{rnd.nextInt(alphanum.length)}) {
                     append(alphanum[i])
                 }
-            }.toString()
+            }
         }
 
         fun keyToId(key: String) = Id(key.substring(0, 4))

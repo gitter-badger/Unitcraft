@@ -72,8 +72,8 @@ class Server {
             ssns[key] = ssn
             log.open()
             if (isLocal) {
-                var id = Id("dev" + ssns.size())
-                val user = users.get(id)
+                var id = Id("dev" + ssns.size)
+                val user = users[id]
                 if (user == null) users.add(id, "")
                 loginOk(id, 1)
             }
@@ -164,7 +164,7 @@ class Server {
 
     private fun play(min:Int,max:Int) {
         val play = Play(min,max)
-        val ssnsInQue = ssns.values().filter { it.play != null && it.play?.match==null }
+        val ssnsInQue = ssns.values.filter { it.play != null && it.play?.match==null }
         if (ssnsInQue.size >= 1) {
             val ssnFinded = ssnsInQue.first()
             ssn.play!!.match = Match(ssnFinded, 1)
@@ -196,8 +196,8 @@ class Server {
         send(bttler.cmd(ssn.id, prm))
         if (bttl.idWin() != null) {
             log.end(bttl.idWin().toString())
-            sendStatus(ssns[bttl.idPrim]!!)
-            sendStatus(ssns[bttl.idSec]!!)
+            sendStatus(bttl.idPrim)
+            sendStatus(bttl.idSec!!)
         }
     }
 
@@ -228,7 +228,7 @@ class Server {
         val bet = prm.bet(1)
         val idVs = Id(prm.str(0, 4, 4))
         // TODO check balance
-        val ssnInvite = ssns[idVs]
+        val ssnInvite = ssnById(idVs)
         val invite = ssnInvite?.invite
         if (ssnInvite != null && invite != null && ssn.id == invite.idVs && bet == invite.bet) {
             vsPlayer(ssn, ssnInvite, bet)
@@ -312,12 +312,20 @@ class Server {
     }
 
     fun send(chain: Chain) {
-        chain.list.forEach { wser.send(ssns[it.first]!!.key, it.second) }
+        chain.list.forEach { wser.send(ssnById(it.first)!!.key, it.second) }
     }
 
     fun sendStatus(s: Ssn = ssn) {
         send("s" + s.status())
     }
+
+    fun sendStatus(id:Id) {
+        val ssn = ssnById(id)
+        if(ssn!=null) send("s" + ssn.status())
+    }
+
+    private fun ssnById(id:Id) = ssns.values.firstOrNull { it.isLogin && it.id == id}
+
 }
 
 class Ssn(val key: String, val isLocal: Boolean) {

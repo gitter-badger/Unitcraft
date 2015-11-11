@@ -9,7 +9,7 @@ import kotlin.properties.Delegates
 
 class Mover{
     val stager: Stager by inject()
-    val objs:()-> Objs by inject()
+    val objs:()-> Objs by injectObjs()
     val slotStopMove = ArrayList<(Move)->Boolean>()
     val slotStopBuild = ArrayList<(Shape)->Boolean>()
     val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()

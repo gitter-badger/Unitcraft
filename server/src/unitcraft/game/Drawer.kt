@@ -8,7 +8,7 @@ import java.util.ArrayList
 import java.util.HashMap
 
 class Drawer() {
-    val allData: () -> AllData  by inject()
+    val allData: () -> AllData  by injectAllData()
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 
     val drawFlats = ArrayList<(Flat, Side,CtxDraw) -> Unit>()
@@ -20,7 +20,7 @@ class Drawer() {
 
     fun draw(side: Side): List<DabOnGrid> {
         val ctx = CtxDraw(side)
-        for (prior in PriorDraw.values()) {
+        for (prior in PriorDraw.values) {
             drawFlats(side,ctx)
             draws[PriorDraw.flat]?.forEach { it(side, ctx) }
             drawObjs(side, ctx)

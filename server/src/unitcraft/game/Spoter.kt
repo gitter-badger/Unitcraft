@@ -9,7 +9,7 @@ import java.util.*
 
 class Spoter {
     val stager: Stager  by inject()
-    val allData:()-> AllData  by inject()
+    val allData:()-> AllData  by injectAllData()
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
     val listSkil = ArrayList<(Obj)->Skil?>()
     val listSkilByCopy = ArrayList<(Obj)->List<Obj>>()

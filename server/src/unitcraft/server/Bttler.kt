@@ -16,8 +16,6 @@ class Bttler {
     val bttl: () -> Bttl by injectBttl()
 
     fun start(mission: Int?, canEdit: Boolean): Chain {
-        val b = bttl()
-        println(b)
         val d = DataUnitcraft(mission, canEdit)
         bttl().data = d
         cmder.reset()

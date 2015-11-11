@@ -11,7 +11,7 @@ class Stazis(r: Resource) {
     val drawer: Drawer by inject()
     val spoter: Spoter by inject()
     val mover: Mover by inject()
-    val flats: () -> Flats by inject()
+    val flats: () -> Flats by injectFlats()
 
 
     init {

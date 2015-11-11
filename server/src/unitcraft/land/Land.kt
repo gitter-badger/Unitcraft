@@ -12,16 +12,14 @@ import unitcraft.server.Err
 import java.util.*
 
 class Land(val mission: Int?) {
-//    val solider: Solider by inject()
-//    val flater: Flater by inject()
+    val solider: Solider by inject()
+    val flater: Flater by inject()
 
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
-//    val mapFlat = flater.maxFromTpFlat().mapValues { r.nextInt(it.value) }
     val yr = 9 + r.nextInt(7)
     val xr = if (yr == 15) 15 else yr + r.nextInt(15 - yr)
     val pgser = Pgser(xr, yr)
-
 
     val flats = ArrayList<Flat>()
     val solids = ArrayList<Solid>()
@@ -31,21 +29,39 @@ class Land(val mission: Int?) {
             addFlat(pg, none, 0)
         }
 
-        Algs.spot(this).forEach {
-            addFlat(it, wild, 0)
+        val exc = ArrayList<Pg>()
+        var cur = Algs.spot(this, exc, 10)
+        var idx = idxFlatRnd(wild)
+        cur.forEach {
+            addFlat(it, wild, idx)
         }
+        exc.addAll(cur)
 
-        Algs.spot(this).forEach {
-            addFlat(it, wild, 1)
+        cur = Algs.spot(this, exc, 10)
+        idx = idxFlatRnd(wild)
+        cur.forEach {
+            addFlat(it, wild, idx)
         }
+        exc.addAll(cur)
 
-        Algs.river(this).forEach {
-            addFlat(it, liquid, 0)
+        cur = Algs.river(this, exc)
+        idx = idxFlatRnd(liquid)
+        cur.forEach {
+            addFlat(it, liquid, idx)
         }
+        exc.addAll(cur)
 
-        Algs.spray(this).forEach {
-            addFlat(it, flag, 0)
+        cur = Algs.spray(this, exc, 3)
+        cur.forEach {
+            addFlat(it, flagA, 0)
         }
+        exc.addAll(cur)
+
+        cur = Algs.spray(this, exc, 2)
+        cur.forEach {
+            addFlat(it, flagB, 0)
+        }
+        exc.addAll(cur)
 
         solids.add(Solid(pgser.pg(0, 3), builder, 0))
         solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1))
@@ -59,11 +75,24 @@ class Land(val mission: Int?) {
         } else flats.add(Flat(pg, tpFlat, idx))
     }
 
+    fun pgRnd(predicate: (Pg) -> Boolean) = pgRndOrNull(predicate)?:throw Err("predicate neverwhere true")
 
+    fun pgRndOrNull(predicate: (Pg) -> Boolean): Pg? {
+        val list = pgser.pgs.filter(predicate)
+        return if (list.isEmpty()) null else selRnd(list)
+    }
+
+    fun pgRnd() = selRnd(pgser.pgs)
+
+    fun <E> selRnd(list: List<E>) = if (!list.isEmpty()) list[r.nextInt(list.size)] else throw Err("list is empty")
+
+    fun idxFlatRnd(tpFlat: TpFlat) = r.nextInt(flater.maxFromTpFlat()[tpFlat]!!)
+
+    fun idxSolidRnd(tpFlat: TpSolid) = r.nextInt(solider.maxFromTpSolid()[tpFlat]!!)
 }
 
 enum class TpFlat {
-    none, solid, liquid, wild, special, flag
+    none, solid, liquid, wild, special, flagA, flagB
 }
 
 enum class TpSolid {
@@ -78,65 +107,61 @@ class Solid(val pg: Pg, var tpSolid: TpSolid, var num: Int) {
     val shape = Singl(pg)
 }
 
-class PrmAlg(val land: Land, val pgs: MutableList<Pg>) {
-    fun add(pg: Pg) {
-        pgs.add(pg)
-    }
-
-    val xl = land.xr - 1
-    val yl = land.yr - 1
-
-    fun pgRnd() = selRnd(land.pgser.pgs)
-
-    fun pgRnd(predicate: (Pg) -> Boolean): Pg {
-        val list = land.pgser.pgs.filter(predicate)
-        if (list.isEmpty()) throw Err("predicate neverwhere true")
-        return selRnd(list)
-    }
-
-    fun dist2(pg:Pg,pgOther:Pg) = Math.sqrt(Math.pow(pg.x.toDouble()-pgOther.x,2.0)+Math.pow(pg.y.toDouble()-pgOther.y,2.0))
-
-    fun selRnd<E>(list: List<E>) = if (!list.isEmpty()) list[land.r.nextInt(list.size)] else throw Err("list is empty")
-
-    fun isEdge(pg: Pg) = pg.x == 0 || pg.x == xl || pg.y == 0 || pg.y == yl
-
-    fun isCorner(pg: Pg) = pg.x == 0 && pg.y == 0 || pg.x == xl && pg.y == 0 || pg.x == xl && pg.y == yl || pg.x == 0 && pg.y == yl
-}
-
-fun createAlg(fn: PrmAlg.() -> Unit): (Land) -> List<Pg> {
-    return { land: Land ->
-        val lst = ArrayList<Pg>()
-        val p = PrmAlg(land, lst)
-        p.fn()
-        lst
-    }
-}
-
 object Algs {
-    val spray = createAlg {
-        repeat(5) {
-            add(pgRnd())
+    fun spray(land: Land, exc: List<Pg>, qnt: Int): List<Pg> {
+        val lst = ArrayList<Pg>()
+        repeat(qnt) {
+            lst.add(land.pgRnd { it !in exc })
         }
-    }
-    val spot = createAlg {
-        add(pgRnd())
-        repeat(5) {
-            add(pgRnd { it !in pgs && it.near.any { it in pgs } })
-        }
+        return lst
     }
 
-    val river = createAlg {
-        val start = pgRnd { isEdge(it) }
-        val pivot = pgRnd { isEdge(it) && it != start }
-        val end = pgRnd { isEdge(it) && it != start && it != pivot }
-        add(start)
-        fun buildPathTo(aim: Pg) {
-            while (true) {
-                add(pgs.last().near.minBy { dist2(it, aim) }!!)
-                if (pgs.last() == aim) break
-            }
+    fun spot(land: Land, exc: List<Pg>, qnt: Int): List<Pg> {
+        val lst = ArrayList<Pg>()
+        lst.add(land.pgRnd { it !in exc })
+        repeat(qnt - 1) {
+            lst.add(land.pgRnd { it !in exc && it !in lst && it.near.any { it in lst } })
         }
-        buildPathTo(pivot)
-        buildPathTo(end)
+        return lst
+    }
+
+    fun river(land: Land, exc: List<Pg>): List<Pg> {
+        val lst = ArrayList<Pg>()
+        val start = land.pgRnd { it.isEdge() && it !in exc }
+        val finish = land.pgRnd { it.isEdge() && it !in exc && it != start && dist2(it, start) > 5 }
+        lst.addAll(land.pgser.pgs)
+        lst.removeAll(exc)
+        val pgsMust = ArrayList<Pg>()
+        if (isConnected(start, finish, lst)) {
+            while (true) {
+                val next = land.pgRndOrNull { it != start && it != finish && it in lst && it !in pgsMust } ?: break
+                if (isConnected(start, finish, lst - next)) {
+                    lst.remove(next)
+                } else {
+                    pgsMust.add(next)
+                }
+            }
+            return lst
+        } else return emptyList()
+    }
+
+    private fun isConnected(start: Pg, finish: Pg, where: List<Pg>): Boolean {
+        val wave = ArrayList<Pg>()
+        val que = ArrayList<Pg>()
+        que.add(start)
+        wave.add(start)
+        while (true) {
+            if (que.isEmpty()) break
+            val next = que.removeAt(0).near.filter { it in where && it !in wave }
+            que.addAll(next)
+            wave.addAll(next)
+        }
+        return finish in wave
     }
 }
+
+fun Pg.isCorner() = x == 0 && y == 0 || x == pgser.xr - 1 && y == 0 || x == pgser.xr - 1 && y == pgser.yr - 1 || x == 0 && y == pgser.yr - 1
+
+fun Pg.isEdge() = x == 0 || x == pgser.xr - 1 || y == 0 || y == pgser.yr - 1
+
+fun dist2(pg: Pg, pgOther: Pg) = Math.sqrt(Math.pow(pg.x.toDouble() - pgOther.x, 2.0) + Math.pow(pg.y.toDouble() - pgOther.y, 2.0))

@@ -171,7 +171,8 @@ class Flag(r: Resource) {
     init {
         val flater = injectValue<Flater>()
         val tls = r.tlsFlatOwn("flag")
-        flater.add(tls.neut, TpFlat.flag) { it.data(DataFlag(tls)) }
+        flater.add(tls.neut, TpFlat.flagA) { it.data(DataFlag(tls)) }
+        flater.add(tls.neut, TpFlat.flagB) { it.data(DataFlag(tls)) }
     }
 
     private class DataFlag(tls: TlsFlatOwn) : DataPoint(tls) {

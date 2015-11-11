@@ -155,7 +155,7 @@ class Resource {
 }
 
 open class TlsFlatOwn(val neut:Tile,val ally:Tile,val enemy:Tile){
-    fun invoke(sideVid:Side, sideOwn: Side) =
+    operator fun invoke(sideVid:Side, sideOwn: Side) =
             if(sideOwn.isN) neut else if(sideOwn == sideVid) ally else enemy
 }
 
@@ -165,11 +165,11 @@ class TlsSolid(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){
 }
 
 class TlsAkt(val aktOn:Tile,val aktOff:Tile){
-    fun invoke(isOn: Boolean) = if(isOn) aktOn else aktOff
+    operator fun invoke(isOn: Boolean) = if(isOn) aktOn else aktOff
 }
 
 class TlsBool(val tileTrue:Tile,val tileFalse:Tile){
-    fun invoke(b: Boolean) = if(b) tileTrue else tileFalse
+    operator fun invoke(b: Boolean) = if(b) tileTrue else tileFalse
 }
 
 data class ResTile(val name: String, val effect: Effect) {

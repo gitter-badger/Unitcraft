@@ -3,6 +3,7 @@ package unitcraft.game
 import unitcraft.game.rule.*
 import unitcraft.inject.inject
 import unitcraft.inject.register
+import unitcraft.land.Land
 import unitcraft.server.*
 
 object FncUnitcraft {
@@ -18,7 +19,7 @@ fun injectObjs() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.objs }
 fun injectFlats() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.flats }
 
 fun registerUnitcraft(data: () -> DataUnitcraft = { DataUnitcraft(0, false) }): Resource {
-    register(CmderUnitcraft())
+    register<CmderGame>(CmderUnitcraft())
 
     FncUnitcraft.data = data
     FncUnitcraft.allData = { data().allData }
@@ -64,7 +65,7 @@ fun registerUnitcraft(data: () -> DataUnitcraft = { DataUnitcraft(0, false) }): 
 }
 
 class DataUnitcraft(mission: Int?, val canEdit: Boolean) {
-    //    val land = Land(mission)
+    val land = Land(mission)
     lateinit var allData: AllData
 }
 
@@ -81,8 +82,8 @@ class CmderUnitcraft : CmderGame {
 
     override fun reset() {
         data().allData = AllData()
-        //        flater.reset(data().land.flats)
-        //        solider.reset(data().land.solids)
+                flater.reset(data().land.flats)
+                solider.reset(data().land.solids)
     }
 
     override fun cmd(side: Side, cmd: String) {
@@ -160,8 +161,8 @@ class CmderUnitcraft : CmderGame {
     }
 
     private fun snap(side: Side) = Snap(
-            10, //data().land.pgser.xr,
-            10, //data().land.pgser.yr,
+            data().land.pgser.xr,
+            data().land.pgser.yr,
             drawer.draw(side),
             spoter.spots(side),
             tracer.traces(side), stager.stage(side), stager.edge(side), stager.focus, if (data().canEdit) editor.opterTest else null

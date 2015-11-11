@@ -180,7 +180,7 @@ class Redeployer(r: Resource) {
     val solider: Solider by inject()
     val spoter: Spoter by inject()
     val builder: Builder by inject()
-    val objs: () -> Objs by inject()
+    val objs: () -> Objs by injectObjs()
 
     init {
         val tls = r.tlsVoin("redeployer")
