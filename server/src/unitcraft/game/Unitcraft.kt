@@ -18,13 +18,13 @@ fun injectAllData() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.allData }
 fun injectObjs() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.objs }
 fun injectFlats() = lazy(LazyThreadSafetyMode.NONE) { FncUnitcraft.flats }
 
-fun registerUnitcraft(data: () -> DataUnitcraft = { DataUnitcraft(0, false) }): Resource {
+fun registerUnitcraft(data: () -> GameData = { object:GameData{} }): Resource {
     register<CmderGame>(CmderUnitcraft())
 
-    FncUnitcraft.data = data
-    FncUnitcraft.allData = { data().allData }
-    FncUnitcraft.objs = { data().allData.objs }
-    FncUnitcraft.flats = { data().allData.flats }
+    FncUnitcraft.data = {data() as DataUnitcraft}
+    FncUnitcraft.allData = { FncUnitcraft.data().allData }
+    FncUnitcraft.objs = { FncUnitcraft.data().allData.objs }
+    FncUnitcraft.flats = { FncUnitcraft.data().allData.flats }
 
     val r = Resource()
 
@@ -64,7 +64,7 @@ fun registerUnitcraft(data: () -> DataUnitcraft = { DataUnitcraft(0, false) }): 
     return r
 }
 
-class DataUnitcraft(mission: Int?, val canEdit: Boolean) {
+class DataUnitcraft(mission: Int?, val canEdit: Boolean):GameData {
     val land = Land(mission)
     lateinit var allData: AllData
 }
@@ -80,16 +80,18 @@ class CmderUnitcraft : CmderGame {
     val drawer: Drawer by inject()
     val tracer: Tracer by inject()
 
+    override fun createData(mission: Int?, canEdit: Boolean) = DataUnitcraft(mission,canEdit)
+
     override fun reset() {
         data().allData = AllData()
-                flater.reset(data().land.flats)
-                solider.reset(data().land.solids)
+        flater.reset(data().land.flats)
+        solider.reset(data().land.solids)
     }
 
     override fun cmd(side: Side, cmd: String) {
         if (side.isN) throw throw Err("side is neutral")
         if (cmd.isEmpty()) throw Violation("cmd is empty")
-        val prm = Prm(/*data().land.pgser*/Pgser(10, 10), cmd[1, cmd.length].toString())
+        val prm = Prm(data().land.pgser, cmd[1, cmd.length].toString())
         when (cmd[0]) {
             'z' -> editAdd(side, prm)
             'r' -> editRemove(prm)

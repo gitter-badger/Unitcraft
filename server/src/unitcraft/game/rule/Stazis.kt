@@ -17,13 +17,13 @@ class Stazis(r: Resource) {
     init {
         editor.onEdit(PriorDraw.overObj,listOf(tiles.last()), { pg, side, num -> plant(pg) }, { pg -> flats()[pg].remove<Stazis>() != null })
         stager.onEndTurn {
-            for ((flat,stazis) in flats().by<Stazis>()) {
+            for ((flat,stazis) in flats().by<Stazis,Flat>()) {
                 stazis.value -= 1
                 if(stazis.value==0) flat.remove<Stazis>()
             }
         }
         drawer.onDraw(PriorDraw.overObj) { side, ctx ->
-            for ((flat,stazis) in flats().by<Stazis>()) ctx.drawTile(flat.head(), tiles[stazis.value - 1])
+            for ((flat,stazis) in flats().by<Stazis,Flat>()) ctx.drawTile(flat.head(), tiles[stazis.value - 1])
         }
         mover.slotStopMove.add{ it.shapeTo.pgs.any{it in this} }
         spoter.slotStopSkils.add{ obj,skil -> obj.shape.pgs.all{it !in this}}

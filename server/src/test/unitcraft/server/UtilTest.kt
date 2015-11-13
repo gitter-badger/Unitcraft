@@ -1,5 +1,7 @@
 package unitcraft.server
 
+import org.json.simple.JSONObject
+import java.util.*
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.test.assertEquals
@@ -30,14 +32,6 @@ fun <T> measure(f: () -> T): T {
 class LogTest : Log {
     var last: String = ""
 
-    override fun error(ex: Throwable) {
-        log("error")
-    }
-
-    override fun violation(ex: Throwable) {
-        log("violation")
-    }
-
     override fun log(event: String) {
         last = event
     }
@@ -47,29 +41,89 @@ class LogTest : Log {
     }
 }
 
-class SenderTest():Sender{
-    var idLast = Id("last")
-    var last = ""
+class WserTest:Wser{
+    var idSsnLast = ""
+    var msgLast = ""
 
-    var idPrev = Id("prev")
-    var prev = ""
+    var idSsnPrev = ""
+    var msgPrev = ""
 
-    override fun invoke(id: Id, msg: String) {
-        idPrev = idLast
-        prev = last
-        idLast = id
-        last = msg
+    var closed:String? = null
+
+    override fun onOpen(fn: (String, Boolean) -> Unit) {
+
     }
-    fun assertLast(id:Id,msg:String){
-        assertTrue(idLast == id && msg == last,"send msg ${msg} to ${id}")
+
+    override fun onMsg(fn: (String, String) -> Unit) {
+
     }
-    fun assertLastOrPrev(id:Id,msg:String){
-        assertTrue(idPrev == id && msg == prev || idLast == id && msg == last,"send msg ${msg} to ${id}")
+
+    override fun onClose(fn: (String) -> Unit) {
+
+    }
+
+    override fun start() {
+        throw UnsupportedOperationException()
+    }
+
+    override fun close(key: String) {
+        closed = key
+    }
+
+    override fun send(key: String, msg: String) {
+        idSsnPrev = idSsnLast
+        msgPrev = msgLast
+        idSsnLast = key
+        msgLast = msg
+    }
+    fun assertLast(idSsn:String, msg:String){
+        assertTrue(idSsnLast == idSsn && msg == msgLast,"send $msgLast to $idSsnLast but expect $msg to $idSsn")
+    }
+    fun assertLastOrPrev(idSsn:String, msg:String){
+        assertTrue(idSsnPrev == idSsn && msg == msgPrev || idSsnLast == idSsn && msg == msgLast,"send $msgLast/$msgPrev to $idSsnLast/$idSsnPrev but expect $msg to $idSsn")
+    }
+
+    fun assertClose(key:String){
+        assertEquals(key,closed)
     }
 }
 
-class CreatorGameStub : CreatorGame{
-    override fun createGame(mission: Int?): CmderGame {
-        return CmderStub()
+class GameDataStub:GameData
+
+class CmderStub : CmderGame {
+    var timesReseted = 0
+    val sides = ArrayList<Side>()
+    val cmds = ArrayList<String>()
+
+    override fun createData(mission: Int?, canEdit: Boolean)=GameDataStub()
+
+    override fun reset() {
+        timesReseted += 1
+        cmds.clear()
+    }
+
+    override fun cmd(side: Side, cmd: String) {
+        sides.add(side)
+        cmds.add(cmd)
+        if (cmd == "errCmd") throw Err("errCmd")
+        if (cmd == "violationCmd") throw Violation("violationCmd")
+    }
+
+    override fun cmdRobot(sideRobot: Side): String? {
+        if (cmds.lastOrNull() == "errRobot") throw Err("errRobot")
+        return if (cmds.lastOrNull() == "robot") "robotAnswer" else null
+    }
+
+    override fun land(): String {
+        throw UnsupportedOperationException()
+    }
+
+    override fun state(): GameState {
+        if (cmds.lastOrNull() == "errState") throw Err("errState")
+        return GameState(if (cmds.lastOrNull() == "win") Side.a else null, mapOf(Side.a to JSONObject(), Side.b to JSONObject()), null)
+    }
+
+    fun assertReseted() {
+        assertTrue(timesReseted == 1, "игра не сброшена")
     }
 }

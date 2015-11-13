@@ -16,8 +16,7 @@ class Bttler {
     val bttl: () -> Bttl by injectBttl()
 
     fun start(mission: Int?, canEdit: Boolean): Chain {
-        val d = DataUnitcraft(mission, canEdit)
-        bttl().data = d
+        bttl().data = cmder.createData(mission, canEdit)
         cmder.reset()
         bttl().state = cmder.state()
         return sendGame(false)
@@ -151,6 +150,8 @@ class Clock(private var left: Duration) {
 }
 
 interface CmderGame {
+    // начинает партию и создает ее data
+    fun createData(mission:Int?, canEdit: Boolean):GameData
 
     // сбрасывает состояние игры до исходного
     fun reset()
@@ -194,7 +195,7 @@ enum class Side {
 }
 
 class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
-    var data: DataUnitcraft by Delegates.notNull()
+    lateinit var data: GameData
     lateinit var state: GameState
 
     val id = "$idPrim-${idSec ?: "AI"}-${Instant.now()}"
@@ -222,9 +223,11 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
 
     fun idWin(): Id? =
             if (idSec == null) null
-            else if (state.sideWin != null) sides.entrySet().first { it.value == state.sideWin }.key
+            else if (state.sideWin != null) sides.entries.first { it.value == state.sideWin }.key
             else null
 
     val sideRobot = if (idSec == null) sides[idPrim]!!.vs else null
 
 }
+
+interface GameData

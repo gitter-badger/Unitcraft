@@ -17,7 +17,7 @@ class Users {
     }
 
     fun add(id: Id, digest: String) {
-        if (users.contains(id)) throw Exception("busy id: $id")
+        if (users.contains(id)) throw Exception("busy id: $id") // TODO возврат вместо ошибки
         users[id] = User(id, digest)
     }
 

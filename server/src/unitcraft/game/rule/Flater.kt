@@ -29,7 +29,7 @@ class Flater {
             flats().add(flat)
         }, { pg -> false })
         stager.onEndTurn {
-            for ((flat, point) in allData().flats.by<DataPoint>())
+            for ((flat, point) in allData().flats.by<DataPoint,Flat>())
                 for (voin in allData().objs)
                     if (flat.shape.pgs.intersect(voin.shape.pgs).isNotEmpty())
                         point.side = voin.side
@@ -132,7 +132,7 @@ class Catapult(val r: Resource) : Skil {
         flater.add(tile, TpFlat.special) { it.data(catapult) }
 
         spoter.listSkil.add {
-            if (it.shape.pgs.intersect(flats().by<Catapult>().flatMap { it.first.shape.pgs }).isNotEmpty()) this else null
+            if (it.shape.pgs.intersect(flats().by<Catapult,Flat>().flatMap { it.first.shape.pgs }).isNotEmpty()) this else null
         }
     }
 
@@ -188,7 +188,7 @@ class Mine(r: Resource) {
         val tls = r.tlsFlatOwn("mine")
         flater.add(tls.neut, TpFlat.special) { it.data(Mine(tls)) }
         stager.onEndTurn {
-            val gold = flats().by<Mine>().filter { it.second.side == stager.sideTurn() }.size
+            val gold = flats().by<Mine,Flat>().filter { it.second.side == stager.sideTurn() }.size
             //            builder.plusGold(stager.sideTurn(),gold)
         }
     }

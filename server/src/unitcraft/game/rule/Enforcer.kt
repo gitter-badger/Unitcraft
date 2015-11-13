@@ -10,7 +10,7 @@ class Enforcer(r: Resource) {
     val stager: Stager by inject()
     val drawer: Drawer by inject()
     val spoter: Spoter by inject()
-    val objs: () -> Objs  by inject()
+    val objs: () -> Objs  by injectObjs()
 
     init {
         drawer.drawObjs.add { obj,side,ctx  -> if(obj.has<Enforce>()) ctx.drawTile(obj.head(),tls(obj<Enforce>().isOn)) }

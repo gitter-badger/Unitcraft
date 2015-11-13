@@ -3,6 +3,7 @@ package unitcraft.game.rule
 import unitcraft.game.Grid
 import unitcraft.game.Pg
 import unitcraft.server.Err
+import unitcraft.server.GameData
 import unitcraft.server.Side
 import unitcraft.server.exclude
 import java.util.*
@@ -76,9 +77,10 @@ interface ListHasShape<H:HasShape>:Iterable<H>{
     override fun iterator() = list.iterator()
     fun remove(obj: H) = list.remove(obj)
 
-    inline final fun <reified T : Data> by() = list.by<T,H>()
     fun byClash(shape: Shape) = list.byClash(shape)
 }
+
+inline fun <reified T : Data,H:HasShape> ListHasShape<H>.by() = list.by<T,H>()
 
 abstract class Shape(val head: Pg) {
     abstract val pgs: List<Pg>
@@ -103,6 +105,7 @@ class Singl(head: Pg) : Shape(head) {
         return head.hashCode()
     }
 
+    override fun toString() = "+"+head
 }
 
 class Quadr(head: Pg) : Shape(head) {

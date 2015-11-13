@@ -20,9 +20,9 @@ class Server {
     lateinit var bttl: Bttl
 
     init {
-        wser.onOpen { key, isLocal -> onOpen(key, isLocal) }
-        wser.onMsg { key, msg -> onMsg(key, msg) }
-        wser.onClose { key -> onClose(key) }
+        wser.onOpen { key, isLocal -> threadMain.execute { onOpen(key, isLocal) } }
+        wser.onMsg { key, msg -> threadMain.execute { onMsg(key, msg) } }
+        wser.onClose { key -> threadMain.execute { onClose(key) } }
     }
 
     fun start() {
@@ -31,62 +31,56 @@ class Server {
     }
 
     fun onMsg(key: String, msg: String) {
-        threadMain.execute {
-            try {
-                ssn = ssns[key]!!
-                if (msg.isEmpty()) throw Violation("msg is empty")
-                if (msg.length > 20) {
-                    throw Violation("msg len > 20: ${msg.substring(0, 20)}...")
-                }
-                log.msg(msg)
-                val prm = Prm(msg[1, msg.length].toString())
-                when (msg[0]) {
-                    'q' -> send("q")
-                    'n' -> reg(prm)
-                    'l' -> onLogin(prm)
-                    'k' -> changeNick(prm)
-                    'p' -> onPlay(prm)
-                    't' -> onVsRobot(prm)
-                    'm' -> vsRobotMission(prm)
-                    'a' -> akt(prm)
-                    'r' -> refresh(prm)
-                    'w' -> land(prm)
-                    'y' -> accept(prm)
-                    'c' -> invite(prm)
-                    'd' -> onDecline(prm)
-                    else -> throw Violation("unknown msg: " + msg)
-                }
-            } catch(ex: Violation) {
-                log.violation(ex)
-                wser.close(key)
-            } catch (ex: Throwable) {
-                log.error(ex)
-                wser.close(key)
+        try {
+            ssn = ssns[key]!!
+            if (msg.isEmpty()) throw Violation("msg is empty")
+            if (msg.length > 20) {
+                throw Violation("msg len > 20: ${msg.substring(0, 20)}...")
             }
+            log.msg(msg)
+            val prm = Prm(msg[1, msg.length].toString())
+            when (msg[0]) {
+                'q' -> send("q")
+                'n' -> reg(prm)
+                'l' -> onLogin(prm)
+                'k' -> changeNick(prm)
+                'p' -> onPlay(prm)
+                't' -> onVsRobot(prm)
+                'm' -> vsRobotMission(prm)
+                'a' -> akt(prm)
+                'r' -> refresh(prm)
+                'w' -> land(prm)
+                'y' -> accept(prm)
+                'c' -> invite(prm)
+                'd' -> onDecline(prm)
+                else -> throw Violation("unknown msg: " + msg)
+            }
+        } catch(ex: Violation) {
+            log.violation(ex)
+            wser.close(key)
+        } catch (ex: Throwable) {
+            log.error(ex)
+            wser.close(key)
         }
     }
 
     fun onOpen(key: String, isLocal: Boolean) {
-        threadMain.execute {
-            ssn = Ssn(key, isLocal)
-            ssns[key] = ssn
-            log.open()
-            if (isLocal) {
-                var id = Id("dev" + ssns.size)
-                val user = users[id]
-                if (user == null) users.add(id, "")
-                loginOk(id, 1)
-            }
+        ssn = Ssn(key, isLocal)
+        ssns[key] = ssn
+        log.open()
+        if (isLocal) {
+            var id = Id("dev" + ssns.size)
+            val user = users[id]
+            if (user == null) users.add(id, "")
+            loginOk(id, 1)
         }
     }
 
     fun onClose(key: String) {
-        threadMain.execute {
-            log.close()
-            ssn = ssns[key]!!
-            if (ssn.isLogin) decline()
-            ssns.remove(key)
-        }
+        log.close()
+        ssn = ssns[key]!!
+        if (ssn.isLogin) decline()
+        ssns.remove(key)
     }
 
     fun reg(prm: Prm) {
@@ -162,17 +156,17 @@ class Server {
         play(min, max)
     }
 
-    private fun play(min:Int,max:Int) {
-        val play = Play(min,max)
-        val ssnsInQue = ssns.values.filter { it.play != null && it.play?.match==null }
-        if (ssnsInQue.size >= 1) {
-            val ssnFinded = ssnsInQue.first()
-            ssn.play!!.match = Match(ssnFinded, 1)
+    fun play(min: Int, max: Int) {
+        val play = Play(min, max)
+        val ssnsInQue = ssns.values.filter { it.play != null && it.play?.match == null && play.betIntersect(it.play!!)!=null }
+        ssn.play = play
+        val ssnFinded = ssnsInQue.maxBy{play.betIntersect(it.play!!)!!}
+        if (ssnFinded!= null) {
+            ssn.play!!.match = Match(ssnFinded, play.betIntersect(ssnFinded.play!!)!!)
             ssnFinded.play!!.match = Match(ssn, 1)
             sendStatus()
             sendStatus(ssnFinded)
         } else {
-            ssn.play = play
             ssn.invite = null
             sendStatus()
         }
@@ -223,7 +217,6 @@ class Server {
     fun invite(prm: Prm) {
         ensureLogin("invite")
         prm.ensureSize(2)
-        //rooms.invite(ssn.id, Id(prm.str(0, 4, 4)), prm.bet(1))
         ssn.ensureState(Status.online)
         val bet = prm.bet(1)
         val idVs = Id(prm.str(0, 4, 4))
@@ -243,10 +236,14 @@ class Server {
         ensureLogin("decline")
         prm.ensureEmpty()
         decline()
+        sendStatus()
     }
 
     private fun decline() {
-        ssn.play?.match?.ssnVs?.play?.match=null
+        ssn.play?.match?.ssnVs?.let {
+            it.play?.match = null
+            sendStatus(it)
+        }
         ssn.play = null
         ssn.invite = null
     }
@@ -282,11 +279,10 @@ class Server {
     private fun vsRobot(mission: Int? = null) {
         ssn.ensureStateNotGame()
         log.vsRobot(ssn.id)
-        //val room = Room(log, send, id, null, 0, creatorGame.createGame(mission))
         bttl = Bttl(ssn.id)
         bttls[ssn.id] = bttl
         ssn.bttl = bttl
-        send(bttler.start(mission,true))
+        send(bttler.start(mission, true))
     }
 
     private fun vsPlayer(ssnA: Ssn, ssnB: Ssn, bet: Int) {
@@ -302,13 +298,13 @@ class Server {
         ssnB.invite = null
         ssnA.play = null
         ssnB.play = null
+        send(bttler.start(null, false))
         sendStatus(ssnA)
         sendStatus(ssnB)
-        send(bttler.start(null,false))
     }
 
-    fun send(msg: String) {
-        wser.send(ssn.key, msg)
+    fun send(msg: String,s: Ssn = ssn) {
+        wser.send(s.key, msg)
     }
 
     fun send(chain: Chain) {
@@ -316,15 +312,15 @@ class Server {
     }
 
     fun sendStatus(s: Ssn = ssn) {
-        send("s" + s.status())
+        send("s" + s.status(),s)
     }
 
-    fun sendStatus(id:Id) {
+    fun sendStatus(id: Id) {
         val ssn = ssnById(id)
-        if(ssn!=null) send("s" + ssn.status())
+        if (ssn != null) send("s" + ssn.status())
     }
 
-    private fun ssnById(id:Id) = ssns.values.firstOrNull { it.isLogin && it.id == id}
+    private fun ssnById(id: Id) = ssns.values.firstOrNull { it.isLogin && it.id == id }
 
 }
 
@@ -350,7 +346,7 @@ class Ssn(val key: String, val isLocal: Boolean) {
 
     fun status(): Status {
         return when {
-            bttl?.let { it.sideRobot==null && it.idWin() == null } ?: false -> Status.game
+            bttl?.let { it.sideRobot == null && it.idWin() == null } ?: false -> Status.game
             play?.match?.let { it.accepted } ?: false -> Status.wait
             play?.match != null -> Status.match
             play != null -> Status.queue
@@ -377,9 +373,11 @@ class Play(val min: Int, val max: Int) {
     init {
         if (min < 1 || min > max) throw IllegalArgumentException("BetRange min $min max $max")
     }
+
+    fun betIntersect(play: Play) = if(Math.max(min,play.min)<=Math.min(max,play.max)) Math.min(max,play.max) else null
 }
 
-class Match(val ssnVs: Ssn, val bet: Int){
+class Match(val ssnVs: Ssn, val bet: Int) {
     var accepted: Boolean = false
 }
 

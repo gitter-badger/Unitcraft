@@ -8,7 +8,7 @@ import java.util.*
 class Lifer(r: Resource) {
     private val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
 
-    val objs: ()->Objs by inject()
+    val objs: ()->Objs by injectObjs()
 
     fun heal(obj:Obj,value:Int){
         obj.life += value

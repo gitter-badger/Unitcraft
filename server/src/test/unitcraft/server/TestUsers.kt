@@ -1,15 +1,25 @@
 package unitcraft.server
 
+import org.junit.Before
 import org.junit.Test
+import unitcraft.inject.register
 import kotlin.test.assertEquals
 import java.io.File
 
 class TestUsers {
-    @Test fun regAndChangeNick() {
-        val log = LogTest()
-        val users = Users(log)
-        val id = Id("0000")
+    val log = LogTest()
+    lateinit var users:Users
 
+    init{
+        register<Log>(log)
+    }
+
+    @Before fun before(){
+        users = Users()
+    }
+
+    @Test fun regAndChangeNick() {
+        val id = Id("0000")
         users.add(id,"")
 
         val user = users[id]!!
@@ -23,9 +33,7 @@ class TestUsers {
     }
 
     @Test fun newKey() {
-        val log = LogTest()
-        val users = Users(log)
-        for(i in 1..100){
+        repeat(100){
             val id = Users.keyToId(users.newKey())
             users.add(id,"")
         }
