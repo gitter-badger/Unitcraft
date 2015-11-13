@@ -32,7 +32,8 @@ class Drawer() {
 
     private fun drawFlats(side: Side,ctx: CtxDraw){
         for ((flat,ht) in allData().flats.sort().by<HasTileFlat,Flat>()) {
-            ctx.drawTile(flat.head(), ht.tile(side,flat))
+            ctx.drawTile(flat.head(), ht.ground(side,flat))
+            ht.tile(side,flat)?.let{ ctx.drawTile(flat.head(), it) }
             drawFlats.forEach{it(flat,side,ctx)}
         }
     }
@@ -72,5 +73,6 @@ interface HasTileObj : Data{
 }
 
 interface HasTileFlat : Data{
-    fun tile(sideVid: Side, flat: Flat):Tile
+    fun tile(sideVid: Side, flat: Flat):Tile?
+    fun ground(sideVid: Side, flat: Flat):Tile
 }

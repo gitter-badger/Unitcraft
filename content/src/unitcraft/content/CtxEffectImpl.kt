@@ -11,6 +11,8 @@ import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.awt.image.ConvolveOp
 import java.awt.image.Kernel
+import java.io.File
+import javax.imageio.ImageIO
 import java.awt.image.BufferedImage as Image
 
 class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: BufferedImage) : CtxEffect {
@@ -42,9 +44,9 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         img = image(sizeExtend) {
             val imgLight = image(sizeExtend) {
                 it.drawImage(img, 0, 0, null)
-                it.composite = AlphaComposite.SrcIn;
-                it.color = color;
-                it.fillRect(0, 0, sizeExtend, sizeExtend);
+                it.composite = AlphaComposite.SrcIn
+                it.color = color
+                it.fillRect(0, 0, sizeExtend, sizeExtend)
             }
             it.drawImage(imgLight, lightSize, lightSize, null)
             it.drawImage(imgLight, -lightSize, lightSize, null)
@@ -99,15 +101,6 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
             it.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, procent.toFloat()/100);
             it.drawImage(img, 0, 0, null)
         }
-    }
-
-    override fun flat(color: Color) {
-        img = image(img.width, img.height) {
-            it.color = color
-            it.fillRect(size/2,size/2,size, size)
-            it.drawImage(img, 0, 0, null)
-        }
-        place()
     }
 
     override fun shadow(color: Color) {

@@ -22,7 +22,7 @@ class Bttler {
         return sendGame(false)
     }
 
-    fun isVsRobot() = bttl().sideRobot != null
+    fun isVsRobot() = bttl().sideRobot() != null
 
     fun cmd(id: Id, prm: Prm): Chain {
         val (version, akt) = prm.akt()
@@ -35,18 +35,17 @@ class Bttler {
         if (isVsRobot() && bttl().state.sideWin == null) {
             while (true) {
                 val cmdRobot = try {
-                    cmder.cmdRobot(bttl().sideRobot!!)
+                    cmder.cmdRobot(bttl().sideRobot()!!)
                 } catch(e: Throwable) {
                     log.error(e)
                     "e"
                 } ?: break
-                chain.addChain(aktAndSend(bttl().sideRobot!!, cmdRobot))
+                chain.addChain(aktAndSend(bttl().sideRobot()!!, cmdRobot))
                 if (bttl().state.sideWin != null) break
             }
         }
         return chain
     }
-
 
     fun refresh(id: Id): Chain = sendGame(false, id)
 
@@ -218,7 +217,7 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
 
 
     fun changeSideRobot() {
-        sides[idPrim] = sideRobot!!
+        sides[idPrim] = sideRobot()!!
     }
 
     fun idWin(): Id? =
@@ -226,7 +225,7 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
             else if (state.sideWin != null) sides.entries.first { it.value == state.sideWin }.key
             else null
 
-    val sideRobot = if (idSec == null) sides[idPrim]!!.vs else null
+    fun sideRobot() = if (idSec == null) sides[idPrim]!!.vs else null
 
 }
 

@@ -4,6 +4,7 @@ import unitcraft.game.*
 import unitcraft.inject.inject
 import unitcraft.inject.injectValue
 import unitcraft.land.TpFlat
+import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 import kotlin.properties.Delegates
@@ -15,9 +16,9 @@ class Flater {
     val editor: Editor by inject()
 
     val tilesEditor = ArrayList<Tile>()
-    val creates = ArrayList<(Flat) -> Unit>()
+    val creates = ArrayList<(Flat,Side) -> Unit>()
 
-    private val landTps = HashMap<TpFlat, MutableList<(Flat) -> Unit>>()
+    private val landTps = HashMap<TpFlat, MutableList<(Flat,Side) -> Unit>>()
 
     fun flats() = allData().flats
 
@@ -25,7 +26,7 @@ class Flater {
         editor.onEdit(PriorDraw.flat, tilesEditor, { pg, side, num ->
             flats().remove(flats()[pg])
             val flat = Flat(Singl(pg))
-            creates[num](flat)
+            creates[num](flat,side)
             flats().add(flat)
         }, { pg -> false })
         stager.onEndTurn {
@@ -37,9 +38,13 @@ class Flater {
     }
 
     fun add(tileEditor: Tile, tpFlat: TpFlat, create: (Flat) -> Unit) {
+        addPoint(tileEditor,tpFlat,{f,s -> create(f)})
+    }
+
+    fun addPoint(tileEditor: Tile, tpFlat: TpFlat, create: (Flat,Side) -> Unit) {
         tilesEditor.add(tileEditor)
         creates.add(create)
-        landTps.getOrPut(tpFlat) { ArrayList<(Flat) -> Unit>() }.add(create)
+        landTps.getOrPut(tpFlat) { ArrayList<(Flat,Side) -> Unit>() }.add(create)
     }
 
     fun maxFromTpFlat() = landTps.mapValues { it.value.size }
@@ -48,7 +53,7 @@ class Flater {
         val flats = allData().flats
         for (flatL in flatsL) {
             val flat = Flat(flatL.shape)
-            landTps[flatL.tpFlat]!![flatL.num](flat)
+            landTps[flatL.tpFlat]!![flatL.num](flat,flatL.side)
             flats.add(flat)
         }
     }
@@ -70,8 +75,9 @@ class Flater {
 
 fun randomTile(tiles: List<Tile>) = tiles[Any().hashCode() % tiles.size]
 
-open class HasTileFlatFix(val tile: Tile) : HasTileFlat {
+open class HasTileFlatFix(val tile: Tile?,val ground:Tile) : HasTileFlat {
     override fun tile(sideVid: Side, flat: Flat) = tile
+    override fun ground(sideVid: Side, flat: Flat) = ground
 }
 
 class Sand(r: Resource) {
@@ -81,7 +87,7 @@ class Sand(r: Resource) {
         flater.add(tiles[0], TpFlat.wild) { it.data(DataSand(randomTile(tiles))) }
     }
 
-    class DataSand(tile: Tile) : HasTileFlatFix(tile)
+    class DataSand(tile: Tile) : HasTileFlatFix(null,tile)
 }
 
 class Forest(r: Resource) {
@@ -95,7 +101,7 @@ class Forest(r: Resource) {
         mover.slotMoveAfter.add { shapeFrom, move -> mover.rehide() }
     }
 
-    class DataForest(tile: Tile) : HasTileFlatFix(tile)
+    class DataForest(tile: Tile) : HasTileFlatFix(null,tile)
 }
 
 class Grass(r: Resource) {
@@ -105,7 +111,7 @@ class Grass(r: Resource) {
         flater.add(tiles[0], TpFlat.none) { it.data(DataGrass(randomTile(tiles))) }
     }
 
-    class DataGrass(tile: Tile) : HasTileFlatFix(tile)
+    class DataGrass(tile: Tile) : HasTileFlatFix(null,tile)
 }
 
 class Water(r: Resource) {
@@ -115,7 +121,7 @@ class Water(r: Resource) {
         flater.add(tiles[0], TpFlat.liquid) { it.data(DataWater(randomTile(tiles))) }
     }
 
-    class DataWater(tile: Tile) : HasTileFlatFix(tile)
+    class DataWater(tile: Tile) : HasTileFlatFix(null,tile)
 }
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
@@ -128,7 +134,8 @@ class Catapult(val r: Resource) : Skil {
         val flater = injectValue<Flater>()
         val flats = injectFlats().value
         val tile = r.tile("catapult")
-        val catapult = Catapult(tile)
+        val ground = r.tile("ground", Resource.effectPlace)
+        val catapult = Catapult(tile,ground)
         flater.add(tile, TpFlat.special) { it.data(catapult) }
 
         spoter.listSkil.add {
@@ -149,7 +156,7 @@ class Catapult(val r: Resource) : Skil {
             }.filterNotNull()
 
 
-    private class Catapult(tile: Tile) : HasTileFlatFix(tile)
+    private class Catapult(tile: Tile,ground:Tile) : HasTileFlatFix(tile,ground)
     //        info<MsgSpot>(20) {
     //            if (pgSrc in flats) g.voin(pgSpot,side)?.let {
     //                val tggl = g.info(MsgTgglRaise(pgSpot, it))
@@ -162,22 +169,21 @@ class Catapult(val r: Resource) : Skil {
     //        }
 }
 
-abstract class DataPoint(val tls: TlsFlatOwn) : HasTileFlat {
-    open var side = Side.n
-    override fun tile(sideVid: Side, flat: Flat) = tls(sideVid, side)
+abstract class DataPoint(val tile:Tile,val grounds: List<Tile>,side:Side) : HasTileFlat {
+    open var side by Delegates.vetoable(side.apply { if(this==Side.n) throw Err("Side.n is not allowed") }) { prop, sideOld, sideNew -> sideNew != Side.n }
+    override fun tile(sideVid: Side, flat: Flat) = tile
+    override fun ground(sideVid: Side, flat: Flat) = if(side == sideVid) grounds[0] else grounds[1]
 }
 
 class Flag(r: Resource) {
     init {
         val flater = injectValue<Flater>()
-        val tls = r.tlsFlatOwn("flag")
-        flater.add(tls.neut, TpFlat.flagA) { it.data(DataFlag(tls)) }
-        flater.add(tls.neut, TpFlat.flagB) { it.data(DataFlag(tls)) }
+        val tile = r.tile("flag")
+        val grounds = r.grounds
+        flater.addPoint(tile, TpFlat.flag) { flat,side -> flat.data(DataFlag(tile,grounds,side)) }
     }
 
-    private class DataFlag(tls: TlsFlatOwn) : DataPoint(tls) {
-        override var side by Delegates.vetoable(Side.n) { prop, sideOld, sideNew -> sideNew != Side.n }
-    }
+    private class DataFlag(tile: Tile,grounds:List<Tile>,side:Side) : DataPoint(tile,grounds,side)
 }
 
 class Mine(r: Resource) {
@@ -185,23 +191,25 @@ class Mine(r: Resource) {
         val flater = injectValue<Flater>()
         val stager = injectValue<Stager>()
         val flats = injectFlats().value
-        val tls = r.tlsFlatOwn("mine")
-        flater.add(tls.neut, TpFlat.special) { it.data(Mine(tls)) }
+        val tile = r.tile("mine")
+        val grounds = r.grounds
+        flater.addPoint(tile, TpFlat.special) { flat,side -> flat.data(Mine(tile,grounds,side)) }
         stager.onEndTurn {
             val gold = flats().by<Mine,Flat>().filter { it.second.side == stager.sideTurn() }.size
             //            builder.plusGold(stager.sideTurn(),gold)
         }
     }
 
-    private class Mine(tls: TlsFlatOwn) : DataPoint(tls)
+    private class Mine(tile: Tile,grounds:List<Tile>,side:Side) : DataPoint(tile,grounds,side)
 }
 
 class Hospital(r: Resource) {
     init {
         val flater = injectValue<Flater>()
-        val tls = r.tlsFlatOwn("hospital")
-        flater.add(tls.neut, TpFlat.special) { it.data(Hospital(tls)) }
+        val tile = r.tile("hospital")
+        val grounds = r.grounds
+        flater.addPoint(tile, TpFlat.special) { flat,side -> flat.data(Hospital(tile,grounds,side)) }
     }
 
-    private class Hospital(tls: TlsFlatOwn) : DataPoint(tls)
+    private class Hospital(tile: Tile,grounds:List<Tile>,side:Side) : DataPoint(tile,grounds,side)
 }

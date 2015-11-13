@@ -77,6 +77,7 @@ class Solider(r: Resource) {
     fun reset(solidsL: ArrayList<unitcraft.land.Solid>) {
         for (solidL in solidsL) {
             val solid = Obj(solidL.shape)
+            solid.side = solidL.side
             landTps[solidL.tpSolid]!![solidL.num](solid)
             objs().add(solid)
         }
@@ -286,7 +287,7 @@ class Builder(r: Resource) {
     val lifer: Lifer by inject()
     val spoter: Spoter by inject()
     val mover: Mover by inject()
-    val objs: () -> Objs by inject()
+    val objs: () -> Objs by injectObjs()
 
     fun plusGold(side: Side, value: Int) {
         objs().bySide(side).by<SkilBuild, Obj>().forEach { lifer.heal(it.first, value) }

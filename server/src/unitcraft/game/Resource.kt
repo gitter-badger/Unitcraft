@@ -30,7 +30,12 @@ class Resource {
     val tlsAktMove = tlsAkt("move")
     val tileHide = tile("hide")
 
-    fun tlsFlatOwn(name:String) = TlsFlatOwn(tile(name,effectFlat),tile(name,effectControlAlly),tile(name,effectControlEnemy))
+    val tileGround = tile("ground",effectPlace)
+
+    val grounds = listOf(tile("ground.ally",effectPlace),tile("ground.enemy",effectPlace),tile("ground.blue",effectPlace),tile("ground.yelw",effectPlace))
+
+    //fun tlsFlatOwn(name:String) = TlsFlatOwn(tile(name,effectControlAlly),tile(name,effectControlEnemy),tile(name,effectControlYelw),tile(name,effectControlBlue))
+
     fun tlsVoin(name:String) = TlsSolid(
             tile(name,effectNeut),
             TlsBool(tile(name,effectFriend),tile(name,effectFriendTired)),
@@ -117,24 +122,6 @@ class Resource {
         val effectPlace = Effect("place") {
             place()
         }
-
-        val effectFlat = Effect("controlAlly") {
-            fit()
-            extend()
-            flat(Color(150, 150, 150))
-        }
-
-        val effectControlAlly = Effect("controlAlly") {
-            fit()
-            extend()
-            flat(Color(50, 150, 50))
-        }
-
-        val effectControlEnemy = Effect("controlEnemy") {
-            fit()
-            extend()
-            flat(Color(150, 50, 50))
-        }
     }
 //    companion object {
 //        val prmsTestAdd = ArrayList<Any>()
@@ -154,9 +141,8 @@ class Resource {
 //    }
 }
 
-open class TlsFlatOwn(val neut:Tile,val ally:Tile,val enemy:Tile){
-    operator fun invoke(sideVid:Side, sideOwn: Side) =
-            if(sideOwn.isN) neut else if(sideOwn == sideVid) ally else enemy
+open class TlsFlatOwn(val ally:Tile,val enemy:Tile,val yellow:Tile,val blue:Tile){
+    operator fun invoke(sideVid:Side, sideOwn: Side) = if(sideOwn == sideVid) ally else enemy
 }
 
 class TlsSolid(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){
@@ -196,6 +182,5 @@ interface CtxEffect{
     fun light(color: Color)
     fun place()
     fun shadow(color: Color)
-    fun flat(color: Color)
     fun opacity(procent:Int)
 }

@@ -346,7 +346,7 @@ class Ssn(val key: String, val isLocal: Boolean) {
 
     fun status(): Status {
         return when {
-            bttl?.let { it.sideRobot == null && it.idWin() == null } ?: false -> Status.game
+            bttl?.let { it.sideRobot() == null && it.idWin() == null } ?: false -> Status.game
             play?.match?.let { it.accepted } ?: false -> Status.wait
             play?.match != null -> Status.match
             play != null -> Status.queue

@@ -9,6 +9,8 @@ import unitcraft.inject.inject
 import unitcraft.land.TpFlat.*
 import unitcraft.land.TpSolid.*
 import unitcraft.server.Err
+import unitcraft.server.Side
+import unitcraft.server.exclude
 import java.util.*
 
 class Land(val mission: Int?) {
@@ -53,29 +55,28 @@ class Land(val mission: Int?) {
 
         cur = Algs.spray(this, exc, 3)
         cur.forEach {
-            addFlat(it, flagA, 0)
+            addFlat(it, flag, 0, Side.a)
         }
         exc.addAll(cur)
 
         cur = Algs.spray(this, exc, 2)
         cur.forEach {
-            addFlat(it, flagB, 0)
+            addFlat(it, flag, 0, Side.b)
         }
         exc.addAll(cur)
 
-        solids.add(Solid(pgser.pg(0, 3), builder, 0))
-        solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1))
+        solids.add(Solid(pgser.pg(0, 3), builder, 0,Side.a))
+        solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1,Side.b))
     }
 
-    fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int) {
-        val flat = flats.firstOrNull() { it.pg == pg }
-        if (flat != null) {
-            flat.tpFlat = tpFlat
-            flat.num = idx
-        } else flats.add(Flat(pg, tpFlat, idx))
+    fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int,side:Side = sideRnd()) {
+        flats.removeIf { it.pg == pg }
+        flats.add(Flat(pg, tpFlat, idx,side))
     }
 
-    fun pgRnd(predicate: (Pg) -> Boolean) = pgRndOrNull(predicate)?:throw Err("predicate neverwhere true")
+    fun sideRnd() = if (r.nextBoolean()) Side.a else Side.b
+
+    fun pgRnd(predicate: (Pg) -> Boolean) = pgRndOrNull(predicate) ?: throw Err("predicate neverwhere true")
 
     fun pgRndOrNull(predicate: (Pg) -> Boolean): Pg? {
         val list = pgser.pgs.filter(predicate)
@@ -92,18 +93,18 @@ class Land(val mission: Int?) {
 }
 
 enum class TpFlat {
-    none, solid, liquid, wild, special, flagA, flagB
+    none, solid, liquid, wild, special, flag
 }
 
 enum class TpSolid {
     std, builder
 }
 
-class Flat(val pg: Pg, var tpFlat: TpFlat, var num: Int) {
+class Flat(val pg: Pg, val tpFlat: TpFlat, val num: Int, val side: Side) {
     val shape = Singl(pg)
 }
 
-class Solid(val pg: Pg, var tpSolid: TpSolid, var num: Int) {
+class Solid(val pg: Pg, val tpSolid: TpSolid, val num: Int, val side: Side) {
     val shape = Singl(pg)
 }
 
