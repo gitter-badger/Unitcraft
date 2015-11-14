@@ -1,17 +1,16 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
-import unitcraft.inject.inject
-import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
+import kotlin.reflect.KClass
 
-class Drawer() {
+class Drawer {
     val allData: () -> AllData  by injectAllData()
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 
-    val drawFlats = ArrayList<(Flat, Side,CtxDraw) -> Unit>()
+    val tileWithGroundFlat = HashMap<KClass<out Data>,(Flat, Data, Side) -> Pair<Tile,Tile?>?>()
+    val drawFlats = ArrayList<(Flat, Side, CtxDraw) -> Unit>()
     val drawObjs = ArrayList<(Obj, Side,CtxDraw) -> Unit>()
 
     fun onDraw(prior: PriorDraw, onDraw: (Side, CtxDraw) -> Unit) {
@@ -31,9 +30,18 @@ class Drawer() {
     }
 
     private fun drawFlats(side: Side,ctx: CtxDraw){
-        for ((flat,ht) in allData().flats.sort().by<HasTileFlat,Flat>()) {
-            ctx.drawTile(flat.head(), ht.ground(side,flat))
-            ht.tile(side,flat)?.let{ ctx.drawTile(flat.head(), it) }
+        for (flat in allData().flats.sort()) {
+            for (data in flat.datas) {
+                val fn = tileWithGroundFlat[data.javaClass.kotlin]
+                if(fn!=null) {
+                    val gt = fn(flat, data, side)
+                    if (gt != null) {
+                        ctx.drawTile(flat.head(), gt.first)
+                        gt.second?.let { ctx.drawTile(flat.head(), it) }
+                        break
+                    }
+                }
+            }
             drawFlats.forEach{it(flat,side,ctx)}
         }
     }
@@ -45,6 +53,9 @@ class Drawer() {
         }
     }
 
+    inline fun <reified D:Data> onFlat(noinline tileWithGround:(Flat,D, Side) -> Pair<Tile,Tile?>?){
+        tileWithGroundFlat[D::class] = tileWithGround as (Flat, Data, Side) -> Pair<Tile,Tile?>?
+    }
 }
 
 enum class PriorDraw {
@@ -72,7 +83,7 @@ interface HasTileObj : Data{
     fun hint(sideVid: Side, obj: Obj):Int?
 }
 
-interface HasTileFlat : Data{
-    fun tile(sideVid: Side, flat: Flat):Tile?
-    fun ground(sideVid: Side, flat: Flat):Tile
-}
+//interface HasTileFlat : Data{
+//    fun tile(sideVid: Side, flat: Flat):Tile?
+//    fun ground(sideVid: Side, flat: Flat):Tile
+//}

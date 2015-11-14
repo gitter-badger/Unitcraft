@@ -143,9 +143,9 @@ class ServerCdn() : NanoHTTPD(8000) {
             g.drawImage(ctx.img, ind % 50 * qdmn * 2, ind / 50 * qdmn * 2, null)
         }
         g.dispose()
-        ImageIO.write(img, "png", File(dirOut, "png/tile${qdmn}.png"))
+        ImageIO.write(img, "png", File(dirOut, "png/tile$qdmn.png"))
         qdmnsTileUpdated.add(qdmn)
-        println("tileset ${qdmn} updated")
+        println("tileset $qdmn updated")
     }
 
     private fun createPanelset(qdmn: Int,dirOut:File){
@@ -154,14 +154,14 @@ class ServerCdn() : NanoHTTPD(8000) {
         for((idx,panel) in panels.withIndex()){
             g.drawImage(CtxEffectImpl.resize(imgsPanel[panel]!!,qdmn), idx*qdmn, 0, null)
         }
-        ImageIO.write(img, "png", File(dirOut, "png/panel${qdmn}.png"))
+        ImageIO.write(img, "png", File(dirOut, "png/panel$qdmn.png"))
         qdmnsPanelUpdated.add(qdmn)
-        println("panelset ${qdmn} updated")
+        println("panelset $qdmn updated")
     }
 
     fun deploy(isTest:Boolean) {
         val dirPrepare =  File("githubpages/"+if(isTest) "test" else "")
-        dirPrepare.walkBottomUp().filter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
+        dirPrepare.walkBottomUp().treeFilter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
             if(it!=dirPrepare) it.delete()
         }
         dirPrepare.mkdirs()
@@ -172,7 +172,7 @@ class ServerCdn() : NanoHTTPD(8000) {
         for (qdmn in listQdmnPanel) createPanelset(qdmn,dirPrepare)
         val pathPrepare = dirPrepare.toPath()
         val pathCdn = dirCdn.toPath()
-        dirCdn.walkTopDown().filter { it.name != "png" && it.name != "server.js"}.forEach {
+        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" }.forEach {
             val src = it.toPath()
             if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
         }

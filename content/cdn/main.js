@@ -102,15 +102,29 @@ function onClick(click, ui) {
         if (num != null) {
             onClickToolbar(num, ui);
         } else {
-            var pg = ui.pgFromPst(click);
-            if (pg) {
-                onClickGrid(pg, ui);
-            } else {
-                ui.clearFocus();
-                ui.fireAkter();
+            function clickGrid() {
+                var pg = ui.pgFromPst(click);
+                if (pg != null) {
+                    onClickGrid(pg, ui);
+                } else {
+                    ui.clearFocus();
+                    ui.fireAkter();
+                }
             }
+
+            if (ui.game.stage === "bonus" || ui.game.stage === "join") {
+                var bonus = ui.bonusFromBonusBar(click);
+                if (bonus != null) {
+                    onClickBonusbar(bonus, ui);
+                } else clickGrid();
+            } else clickGrid();
         }
     }
+}
+
+function onClickBonusbar(bonus, ui) {
+    if (bonus >= 1 && bonus <= 10) ui.fireAkt("s" + (bonus - 1));
+    if (bonus == 12 || bonus == 13) ui.fireAkt("j" + (bonus - 12));
 }
 
 function endTurn(ui) {
@@ -280,6 +294,11 @@ function createUI(tileset, panelset, streamUi) {
             var pstGrid = ui.pstGrid();
             return {x: Math.max(0, pstGrid.x - ui.qdmnPanel()), y: Math.max(0, pstGrid.y)};
         },
+        pstBonusbar() {
+            var pstGrid = ui.pstGrid();
+            var xrGrid = this.tile() * ui.game.dmn.xr;
+            return {x: pstGrid.x + xrGrid, y: pstGrid.y};
+        },
         updateFocus(pg) {
             this.focus = {pg, idx: 0};
             this.akts = ui.game.spots[strPg(this.focus.pg)][this.focus.idx].akts;
@@ -315,10 +334,14 @@ function createUI(tileset, panelset, streamUi) {
             div(pst.x - this.pstOpter().x, this.qdmnTileOpter()) + div(pst.y - this.pstOpter().y, this.qdmnTileOpter()) * this.dmnOpter().xr : null;
         },
         numFromPstOnToolbar(pst){
-            return isPstInRect(pst, this.pstToolbar(), scaleDmn({
-                xr: 1,
-                yr: 4
-            }, this.qdmnPanel())) ? div(pst.y - this.pstToolbar().y, this.qdmnPanel()) : null;
+            return isPstInRect(pst, this.pstToolbar(), scaleDmn({xr: 1, yr: 4},
+                this.qdmnPanel())) ? div(pst.y - this.pstToolbar().y, this.qdmnPanel()) : null;
+        },
+        bonusFromBonusBar(pst){
+            if (ui.game.stage === "bonus") return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 12},
+                this.qdmnPanel() / 2)) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel() / 2) : null;
+            else return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 2},
+                this.qdmnPanel())) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel())+12 : null;
         },
         isAcceptFromPstOnToolbar(pst){
             var qdmn = this.qdmnPanel();
@@ -332,7 +355,7 @@ function createUI(tileset, panelset, streamUi) {
             return {x: div(this.dmn.xr - xr, 2), y: div(this.dmn.yr - yr, 2)}
         },
         qdmnPanel() {
-            return R.minBy(qdmn => Math.abs(qdmn / ui.dmn.xr - 0.3), listQdmnPanel);
+            return R.minBy(qdmn => Math.abs(ui.dmn.yr / qdmn - 6.5), listQdmnPanel);
         },
         tile(){
             return listQdmnTile[ui.scale];
@@ -435,16 +458,16 @@ function initServer() {
 function createResize(dmn) {
     var canvases = R.map(id => $(id)[0], ["#canvasGrid", "#canvasAkts", "#canvasToolbar", "#canvasOpter"]);
     dmn.onValue(b =>
-            R.forEach(c => {
-                c.width = b.xr;
-                c.height = b.yr;
-            }, canvases)
+        R.forEach(c => {
+            c.width = b.xr;
+            c.height = b.yr;
+        }, canvases)
     );
 }
 
 function createPing(server, keyboard) {
     Kefir.combine([server.msg("q").map(Date.now)], [keyboard.key("p").onValue(() => ws.send("q")).map(Date.now)], R.subtract).onValue(v =>
-            console.log(v + "ms")
+        console.log(v + "ms")
     );
 }
 

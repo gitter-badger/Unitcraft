@@ -17,8 +17,7 @@ class Bttler {
 
     fun start(mission: Int?, canEdit: Boolean): Chain {
         bttl().data = cmder.createData(mission, canEdit)
-        cmder.reset()
-        bttl().state = cmder.state()
+        bttl().state = cmder.reset()
         return sendGame(false)
     }
 
@@ -56,10 +55,11 @@ class Bttler {
 
     private fun aktAndSend(side: Side, akt: String): Chain {
         try {
-            cmder.cmd(side, akt)
-            bttl().state = cmder.state()
+            bttl().state = cmder.cmd(side, akt)
             bttl().cmds.add(Pair(side, akt))
-            if (isVsRobot() && akt == "w") bttl().changeSideRobot()
+            bttl().state.swapSide?.let {
+                if(it == SwapSide.usual || isVsRobot())  bttl().swapSide()
+            }
             return sendGame(false)
         } catch (ex: Violation) {
             throw ex
@@ -153,14 +153,11 @@ interface CmderGame {
     fun createData(mission:Int?, canEdit: Boolean):GameData
 
     // сбрасывает состояние игры до исходного
-    fun reset()
+    fun reset():GameState
 
     // возвращает сторону победителя
     // если null, значит игра еще не окончена
-    fun cmd(side: Side, cmd: String)
-
-    // состояние игры
-    fun state(): GameState
+    fun cmd(side: Side, cmd: String):GameState
 
     // если не null, значит ИИ должен сходить
     fun cmdRobot(sideRobot: Side): String?
@@ -173,7 +170,11 @@ interface CmderGame {
 // определен ли победитель?
 // json расположения юнитов
 // [sideClockOn] - чей таймер должны быть запущен, null - оба таймеры запущены
-class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClockOn: Side?)
+class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClockOn: Side?,val swapSide:SwapSide?)
+
+enum class SwapSide{
+    usual, ifRobot
+}
 
 enum class Side {
     a, b, n;
@@ -216,8 +217,9 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
     val cmds = ArrayList<Pair<Side, String>>()
 
 
-    fun changeSideRobot() {
-        sides[idPrim] = sideRobot()!!
+    fun swapSide() {
+        sides[idPrim] = sides[idPrim]!!.vs
+        if(idSec != null) sides[idSec] = sides[idSec]!!.vs
     }
 
     fun idWin(): Id? =

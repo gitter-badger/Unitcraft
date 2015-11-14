@@ -62,7 +62,7 @@ class DabText(val text:String,val hint:Int? = null) : Dab() {
 abstract class Dab : JSONAware
 
 enum class Stage{
-    bonus, bonusEnemy, turn, turnEnemy, win, winEnemy
+    bonus, bonusEnemy, join, joinEnemy, turn, turnEnemy, win, winEnemy
 }
 
 fun jsonObj(init:JSONObject.()->Unit):String{

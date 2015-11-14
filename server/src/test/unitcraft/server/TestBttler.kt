@@ -10,7 +10,6 @@ import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-
 class TestBttler {
     val parser = JSONParser()
     val log = LogTest()
@@ -75,13 +74,31 @@ class TestBttler {
         assertEquals("e", bttl.cmds[3].second)
     }
 
-    // bttler меняет сторону AI после w
+    // bttler меняет сторону, если того требует state
     @Test fun sideChange(){
+        val side = bttl.sides[id]!!
+        bttler.cmd(id, Prm("0#needSwap"))
+        assertEquals(side.vs,bttl.sides[id])
+        assertEquals(side,bttl.sides[idVs])
+
+        bttler.cmd(id, Prm("1#needSwapIfRobot"))
+        assertEquals(side.vs,bttl.sides[id])
+        assertEquals(side,bttl.sides[idVs])
+    }
+
+    // bttler меняет сторону, если того требует state, в игре с AI
+    @Test fun sideChangeRobot(){
         bttl = Bttl(id, null)
+        assertEquals(Side.a,bttl.sides[id])
         assertEquals(Side.b,bttl.sideRobot())
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#w"))
+
+        bttler.cmd(id, Prm("0#needSwap"))
+        assertEquals(Side.b,bttl.sides[id])
         assertEquals(Side.a,bttl.sideRobot())
+
+        bttler.cmd(id, Prm("1#needSwapIfRobot"))
+        assertEquals(Side.a,bttl.sides[id])
+        assertEquals(Side.b,bttl.sideRobot())
     }
 
     private fun assertStateAfterReset() {

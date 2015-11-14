@@ -97,16 +97,20 @@ class CmderStub : CmderGame {
 
     override fun createData(mission: Int?, canEdit: Boolean)=GameDataStub()
 
-    override fun reset() {
+    override fun reset():GameState {
         timesReseted += 1
         cmds.clear()
+        return state()
     }
 
-    override fun cmd(side: Side, cmd: String) {
+    override fun cmd(side: Side, cmd: String):GameState {
         sides.add(side)
         cmds.add(cmd)
         if (cmd == "errCmd") throw Err("errCmd")
         if (cmd == "violationCmd") throw Violation("violationCmd")
+        if (cmd == "needSwap") return state(SwapSide.usual)
+        if (cmd == "needSwapIfRobot") return state(SwapSide.ifRobot)
+        return state()
     }
 
     override fun cmdRobot(sideRobot: Side): String? {
@@ -118,9 +122,9 @@ class CmderStub : CmderGame {
         throw UnsupportedOperationException()
     }
 
-    override fun state(): GameState {
+    private fun state(swapSide: SwapSide?=null): GameState {
         if (cmds.lastOrNull() == "errState") throw Err("errState")
-        return GameState(if (cmds.lastOrNull() == "win") Side.a else null, mapOf(Side.a to JSONObject(), Side.b to JSONObject()), null)
+        return GameState(if (cmds.lastOrNull() == "win") Side.a else null, mapOf(Side.a to JSONObject(), Side.b to JSONObject()), null,swapSide)
     }
 
     fun assertReseted() {

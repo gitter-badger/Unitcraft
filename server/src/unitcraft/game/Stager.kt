@@ -3,9 +3,9 @@ package unitcraft.game
 import unitcraft.game.rule.AllData
 import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.ArrayList
+import java.util.*
 
-class Stager(r:Resource) {
+class Stager(r: Resource) {
     val allData: () -> AllData by injectAllData()
     val tileEdgeTurn = DabTile(r.tile("edgeTurn", Resource.effectPlace))
     val tileEdgeWait = DabTile(r.tile("edgeWait", Resource.effectPlace))
@@ -28,17 +28,25 @@ class Stager(r:Resource) {
         startTurns.forEach { it(sideTurn.vs) }
     }
 
-    fun stage(sideVid:Side):Stage{
-        if(sideTurn()==sideVid) return Stage.turn
-        else if(sideTurn()==sideVid.vs) return Stage.turnEnemy
-        else throw Err("stage assertion")
+    fun stage(sideVid: Side) = when {
+        allData().point[sideVid] == 0 -> Stage.winEnemy
+        allData().point[sideVid.vs] == 0 -> Stage.win
+        allData().bonus[sideVid] == null -> Stage.bonus
+        allData().bonus[sideVid.vs] == null -> Stage.bonusEnemy
+        allData().needJoin && sideTurn() == sideVid -> Stage.join
+        allData().needJoin && sideTurn() == sideVid.vs -> Stage.joinEnemy
+        sideTurn() == sideVid -> Stage.turn
+        sideTurn() == sideVid.vs -> Stage.turnEnemy
+        else -> throw Err("stage assertion")
     }
 
-    fun edge(sideVid:Side):DabTile{
-        return when(stage(sideVid)){
+    fun edge(sideVid: Side): DabTile {
+        return when (stage(sideVid)) {
             Stage.turn -> tileEdgeTurn
             Stage.turnEnemy -> tileEdgeWait
             else -> tileEdgeWait
         }
     }
+
+    fun isBeforeTurn(sideVid: Side) = stage(sideVid).ordinal <= 3
 }

@@ -17,7 +17,7 @@ import java.awt.image.BufferedImage as Image
 
 class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: BufferedImage) : CtxEffect {
     init {
-        if (size.mod(2) != 0) throw Err("size:${size} is not even")
+        if (size.mod(2) != 0) throw Err("size:$size is not even")
     }
 
     val sizeExtend = size * 2
