@@ -53,6 +53,10 @@ class Land(val mission: Int?) {
         }
         exc.addAll(cur)
 
+        cur = Algs.spray(this, exc, 1+r.nextInt(5))
+        cur.forEach { addFlat(it, special, idxFlatRnd(special)) }
+        exc.addAll(cur)
+
         cur = Algs.spray(this, exc, 3)
         cur.forEach {
             addFlat(it, flag, 0, Side.a)
