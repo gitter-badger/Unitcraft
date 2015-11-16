@@ -10,6 +10,7 @@ import java.util.*
 class Spoter {
     val stager: Stager  by inject()
     val allData:()-> AllData  by injectAllData()
+
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
     val listSkil = ArrayList<(Obj)->Skil?>()
     val listSkilByCopy = ArrayList<(Obj)->List<Obj>>()
@@ -73,7 +74,7 @@ class Spoter {
 
 
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
-        val isOn = if(sideVid == stager.sideTurn() && obj.isFresh) listCanAkt.any{it(sideVid,obj)} else false
+        val isOn = if(stager.isTurn(sideVid) && obj.isFresh) listCanAkt.any{it(sideVid,obj)} else false
         val r =  Raise(obj.shape.pgs,isOn)
         for(skil in skilsObj(obj))
             for(p in skil.akts(sideVid,obj))

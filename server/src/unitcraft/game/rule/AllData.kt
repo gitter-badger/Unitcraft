@@ -45,7 +45,6 @@ class Obj(shape: Shape) : HasShape(shape) {
 
     fun isVid(sideVid: Side) = side.isN || side == sideVid || !hide
 
-
     override fun toString() = "Solid $shape $datas"
 }
 
@@ -84,7 +83,7 @@ abstract class Shape(val head: Pg) {
     abstract val pgs: List<Pg>
     abstract fun headTo(pgTo: Pg): Shape
     abstract fun near(): List<Pg>
-    val further: List<Pg> by lazy(LazyThreadSafetyMode.NONE) { near().flatMap { it.near }.distinct().filter { it != head } }
+    val further: List<Pg> by lazy(LazyThreadSafetyMode.NONE) { near() + near().flatMap { it.near }.distinct().filter { it != head } }
 }
 
 class Singl(head: Pg) : Shape(head) {

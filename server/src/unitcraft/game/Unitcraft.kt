@@ -172,19 +172,19 @@ class CmderUnitcraft : CmderGame {
     }
 
     private fun akt(side: Side, prm: Prm) {
-        if (stager.stage(side) != Stage.turn) throw Violation("not your turn")
+        if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(5)
         spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3))
     }
 
     private fun aktOpt(side: Side, prm: Prm) {
-        if (stager.stage(side) != Stage.turn) throw Violation("not your turn")
+        if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(6)
         spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5))
     }
 
     private fun endTurn(side: Side, prm: Prm) {
-        if (stager.sideTurn() != side) throw Violation("endTurn side($side) != sideTurn")
+        if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(0)
         stager.endTurn()
     }

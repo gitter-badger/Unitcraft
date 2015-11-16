@@ -19,9 +19,10 @@ class Land(val mission: Int?) {
 
     val seed = mission?.toLong() ?: System.nanoTime()
     val r = Random(seed)
-    val yr = 9 + r.nextInt(7)
-    val xr = if (yr == 15) 15 else yr + r.nextInt(15 - yr)
-    val pgser = Pgser(xr, yr)
+
+    val pgser = createPgser()
+    val yr = pgser.yr
+    val xr = pgser.xr
 
     val flats = ArrayList<Flat>()
     val solids = ArrayList<Solid>()
@@ -94,6 +95,15 @@ class Land(val mission: Int?) {
     fun idxFlatRnd(tpFlat: TpFlat) = r.nextInt(flater.maxFromTpFlat()[tpFlat]!!)
 
     fun idxSolidRnd(tpFlat: TpSolid) = r.nextInt(solider.maxFromTpSolid()[tpFlat]!!)
+
+    private fun createPgser():Pgser{
+        val (x,y) = selRnd(dmns)
+        return Pgser(x,y)
+    }
+
+    companion object{
+        val dmns = listOf(9 to 9,9 to 10,9 to 11,9 to 12,10 to 10,10 to 11, 10 to 12,11 to 12, 12 to 12)
+    }
 }
 
 enum class TpFlat {

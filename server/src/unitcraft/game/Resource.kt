@@ -7,13 +7,14 @@ import org.json.simple.JSONAware
 import unitcraft.server.Side
 import unitcraft.server.idxsMap
 import unitcraft.game.Effect
+import unitcraft.server.idxOfFirst
 import java.awt.Color
 import kotlin.reflect.*
 
 class Resource {
     val resTiles = ArrayList<ResTile>()
-    val hintTiles = ArrayList<HintTile>()
-    val hintTexts = ArrayList<HintText>()
+    val hintTiles = ArrayList<ResHintTile>()
+    val hintTexts = ArrayList<ResHintText>()
     val buildiks = ArrayList<Int>()
 
     val hintTileDeploy = hintTile("")
@@ -36,42 +37,38 @@ class Resource {
 
     //fun tlsFlatOwn(name:String) = TlsFlatOwn(tile(name,effectControlAlly),tile(name,effectControlEnemy),tile(name,effectControlYelw),tile(name,effectControlBlue))
 
-    fun tlsVoin(name:String) = TlsSolid(
+    fun tlsVoin(name:String) = TlsObj(
             tile(name,effectNeut),
             TlsBool(tile(name,effectFriend),tile(name,effectFriendTired)),
-            TlsBool(tile(name,effectEnemy),tile(name,effectEnemyTired))
+            TlsBool(tile(name,effectEnemy),tile(name,effectEnemyTired)),
+            TlsBool(tile(name,effectBlue),tile(name,effectYelw))
     )
     fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
-    fun tile(tile: String, effect: Effect = effectStandard):Tile {
-        val t = ResTile(tile, effect)
-        val idx = resTiles.indexOf(t)
-        if(idx==-1){
-            resTiles.add(t)
-            return Tile(resTiles.lastIndex)
-        }else{
-            return Tile(idx)
-        }
-    }
+    fun tile(tile: String, effect: Effect = effectStandard) = Tile(resTiles.idxOfOrAdd(ResTile(tile, effect)))
 
-    fun hintTile(hintTile: String):Int {
-        hintTiles.add(HintTile(hintTile))
-        return hintTiles.size -1
-    }
+    fun hintTile(hintTile: String) = HintTile(hintTiles.idxOfOrAdd(ResHintTile(hintTile)))
 
-    fun hintText(hintText: String):Int {
-        hintTexts.add(HintText(hintText))
-        return hintTexts.size -1
-    }
+    fun hintText(hintText: String) = HintText(hintTexts.idxOfOrAdd(ResHintText(hintText)))
 
     fun buildik(tile: Int):Int {
         buildiks.add(tile)
-        return buildiks.size -1
+        return buildiks.size-1
     }
 
     companion object{
+        fun <E> MutableList<E>.idxOfOrAdd(elem:E):Int{
+            val idx = this.idxOfFirst { it == elem }
+            return if(idx==null){
+                this.add(elem)
+                this.lastIndex
+            }else{
+                idx
+            }
+        }
+
         val effectStandard = Effect("standard") {
             fit()
             extend()
@@ -85,25 +82,37 @@ class Resource {
         val effectFriend = Effect("friend") {
             fit()
             extendBottom()
-            light(Color(80, 255, 80))
+            light(120, 90, 90)
         }
 
         val effectFriendTired = Effect("friendTired") {
             fit()
             extendBottom()
-            light(Color(0, 150, 0))
+            light(120, 90, 50)
         }
 
         val effectEnemy = Effect("enemy") {
             fit()
             extendBottom()
-            light(Color(255, 80, 80))
+            light(360, 90, 90)
         }
 
         val effectEnemyTired = Effect("enemyTired") {
             fit()
             extendBottom()
-            light(Color(150, 0, 0))
+            light(360, 90, 50)
+        }
+
+        val effectBlue = Effect("blue") {
+            fit()
+            extendBottom()
+            light(180, 90, 90)
+        }
+
+        val effectYelw = Effect("yelw") {
+            fit()
+            extendBottom()
+            light(60, 90, 90)
         }
 
         val effectAkt = Effect("akt") {
@@ -145,8 +154,8 @@ open class TlsFlatOwn(val ally:Tile,val enemy:Tile,val yellow:Tile,val blue:Tile
     operator fun invoke(sideVid:Side, sideOwn: Side) = if(sideOwn == sideVid) ally else enemy
 }
 
-class TlsSolid(val neut: Tile, val ally: TlsBool, val enemy: TlsBool){
-    fun invoke(side:Side, sideOwn: Side,isFresh:Boolean) =
+class TlsObj(val neut: Tile, val ally: TlsBool, val enemy: TlsBool, val join: TlsBool){
+    operator fun invoke(side:Side, sideOwn: Side, isFresh:Boolean) =
             if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
 }
 
@@ -166,8 +175,16 @@ data class Tile(val num:Int):JSONAware{
     override fun toJSONString()=num.toString()
 }
 
-data class HintTile(val script: String)
-data class HintText(val script: String)
+data class ResHintTile(val script: String)
+data class ResHintText(val script: String)
+
+data class HintTile(val num:Int):JSONAware{
+    override fun toJSONString()=num.toString()
+}
+
+data class HintText(val num:Int):JSONAware{
+    override fun toJSONString()=num.toString()
+}
 
 class Effect(val name: String, val op: CtxEffect.() -> Unit){
     override fun toString(): String {
@@ -179,7 +196,7 @@ interface CtxEffect{
     fun fit()
     fun extend()
     fun extendBottom()
-    fun light(color: Color)
+    fun light(h:Int,s:Int,b:Int)
     fun place()
     fun shadow(color: Color)
     fun opacity(procent:Int)

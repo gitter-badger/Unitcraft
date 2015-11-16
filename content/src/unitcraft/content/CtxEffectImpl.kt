@@ -39,7 +39,8 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         }
     }
 
-    override fun light(color:Color) {
+    override fun light(h:Int,s:Int,b:Int) {
+        val color = colorFromHsb(h,s,b)
         val lightSize = if (size <= 100) 2 else 3
         img = image(sizeExtend) {
             val imgLight = image(sizeExtend) {
@@ -59,6 +60,9 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
             it.drawImage(img, 0, 0, null)
         }
     }
+
+    private fun colorFromHsb(h:Int,s:Int,b:Int) = Color.getHSBColor(h/360F,s/100F,b/100F)
+
 
     override fun place() {
         img = resizeToSquare(img, sizeExtend)

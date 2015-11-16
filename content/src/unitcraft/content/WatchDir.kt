@@ -13,8 +13,10 @@ import java.nio.file.WatchService
 import java.util.*
 import kotlin.concurrent.thread
 
+
 class WatchDir(dirs:List<File>,val onModify:(File) -> Unit) {
     val dirByKey = HashMap<WatchKey,Path>(2)
+
     init{
         val watcher = FileSystems.getDefault().newWatchService()
         for (dir in dirs.map{it.toPath()}) {

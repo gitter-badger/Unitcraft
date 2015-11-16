@@ -49,4 +49,6 @@ class Stager(r: Resource) {
     }
 
     fun isBeforeTurn(sideVid: Side) = stage(sideVid).ordinal <= 3
+
+    fun isTurn(sideVid: Side) = stage(sideVid) == Stage.turn
 }

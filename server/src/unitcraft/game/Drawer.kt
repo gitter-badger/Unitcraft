@@ -7,15 +7,6 @@ import kotlin.reflect.KClass
 
 class Drawer {
     val allData: () -> AllData  by injectAllData()
-    private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
-
-    val tileWithGroundFlat = HashMap<KClass<out Data>,(Flat, Data, Side) -> Pair<Tile,Tile?>?>()
-    val drawFlats = ArrayList<(Flat, Side, CtxDraw) -> Unit>()
-    val drawObjs = ArrayList<(Obj, Side,CtxDraw) -> Unit>()
-
-    fun onDraw(prior: PriorDraw, onDraw: (Side, CtxDraw) -> Unit) {
-        draws.getOrPut(prior) { ArrayList<(Side, CtxDraw) -> Unit>() }.add(onDraw)
-    }
 
     fun draw(side: Side): List<DabOnGrid> {
         val ctx = CtxDraw(side)
@@ -47,14 +38,40 @@ class Drawer {
     }
 
     private fun drawObjs(side: Side, ctx: CtxDraw) {
-        for ((obj,ht) in allData().objs.sort().by<HasTileObj,Obj>()) {
-            ctx.drawTile(obj.head(), ht.tile(side,obj), ht.hint(side,obj))
+        for (obj in allData().objs.sort()) {
+            for (data in obj.datas) {
+                val fn = tileWithHintObj[data.javaClass.kotlin]
+                if(fn!=null) {
+                    val th = fn(obj, data, side)
+                    if (th != null) {
+                        ctx.drawTile(obj.head(), th.first, th.second)
+                        break
+                    }
+                }
+            }
             drawObjs.forEach{it(obj,side,ctx)}
         }
     }
 
+    val drawFlats = ArrayList<(Flat, Side, CtxDraw) -> Unit>()
+    val drawObjs = ArrayList<(Obj, Side,CtxDraw) -> Unit>()
+
+    private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
+
+    fun onDraw(prior: PriorDraw, onDraw: (Side, CtxDraw) -> Unit) {
+        draws.getOrPut(prior) { ArrayList<(Side, CtxDraw) -> Unit>() }.add(onDraw)
+    }
+
+    val tileWithGroundFlat = HashMap<KClass<out Data>,(Flat, Data, Side) -> Pair<Tile,Tile?>?>()
+
     inline fun <reified D:Data> onFlat(noinline tileWithGround:(Flat,D, Side) -> Pair<Tile,Tile?>?){
         tileWithGroundFlat[D::class] = tileWithGround as (Flat, Data, Side) -> Pair<Tile,Tile?>?
+    }
+
+    val tileWithHintObj = HashMap<KClass<out Data>,(Obj, Data, Side) -> Pair<Tile,HintTile?>?>()
+
+    inline fun <reified D:Data> onObj(noinline tileWithHint:(Obj, D, Side) -> Pair<Tile,HintTile?>?){
+        tileWithHintObj[D::class] = tileWithHint as (Obj, Data, Side) -> Pair<Tile,HintTile?>?
     }
 }
 
@@ -65,25 +82,15 @@ enum class PriorDraw {
 class CtxDraw(val sideVid: Side) {
     val dabOnGrids = ArrayList<DabOnGrid>()
 
-    fun drawTile(pg: Pg, tile: Tile, hint: Int? = null) {
+    fun drawTile(pg: Pg, tile: Tile, hint: HintTile? = null) {
         dabOnGrids.add(DabOnGrid(pg, DabTile(tile, hint)))
     }
 
-    fun drawText(pg: Pg, text: String, hint: Int? = null) {
+    fun drawText(pg: Pg, text: String, hint: HintText? = null) {
         dabOnGrids.add(DabOnGrid(pg, DabText(text, hint)))
     }
 
-    fun drawText(pg: Pg, value: Int, hint: Int? = null) {
+    fun drawText(pg: Pg, value: Int, hint: HintText? = null) {
         drawText(pg, value.toString(), hint)
     }
 }
-
-interface HasTileObj : Data{
-    fun tile(sideVid: Side, obj: Obj):Tile
-    fun hint(sideVid: Side, obj: Obj):Int?
-}
-
-//interface HasTileFlat : Data{
-//    fun tile(sideVid: Side, flat: Flat):Tile?
-//    fun ground(sideVid: Side, flat: Flat):Tile
-//}
