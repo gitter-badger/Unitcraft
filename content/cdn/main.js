@@ -158,7 +158,7 @@ function onClickGrid(pg, ui) {
         var akt = findAkt(pg, sloy.akts);
         if (akt != null && sloy.isOn) {
             if (akt.opter) {
-                ui.openOpter(akt.opter, num => ui.fireAkt("b" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg) + " " + num));
+                ui.openOpter(akt.opter, num => "b" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg) + " " + num);
                 ui.fireOpter();
             } else {
                 ui.fireAkt("a" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg));

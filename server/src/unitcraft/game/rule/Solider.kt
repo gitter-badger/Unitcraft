@@ -33,7 +33,6 @@ class Solider(r: Resource) {
             val shape = Singl(pg)
             objs().byClash(shape).forEach { objs().remove(it) }
             val obj = Obj(shape)
-            obj.flip = pg.x > pg.pgser.xr / 2
             obj.side = side
             obj.isFresh = true
             creates[num](obj)
@@ -71,7 +70,7 @@ class Solider(r: Resource) {
             create: (Obj) -> Unit
     ) {
         tilesEditor.add(tile)
-        val crt = if (hasMove) { obj -> create(obj); skilerMove.add(obj, 3) } else create
+        val crt = if (hasMove) { obj -> create(obj); obj.data(SkilMove()) } else create
         creates.add(crt)
         if (priorFabrik!=null) builder.addFabrik(priorFabrik, tile, crt)
         if (tpSolid != null) landTps.getOrPut(tpSolid) { ArrayList<(Obj) -> Unit>() }.add(crt)
@@ -123,73 +122,56 @@ class DataTileObj(val tlsObj: TlsObj) : Data
 class Telepath(r: Resource) {
     init {
         val enforcer = injectValue<Enforcer>()
-        val solider = injectValue<Solider>()
         val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("telepath")
         val tlsAkt = r.tlsAkt("telepath")
-        val skil = SkilTelepath(enforcer, spoter, tlsAkt)
-        solider.add(tls.neut,10) {
-            solider.addTls(it, tls)
-            it.data(skil)
+        injectValue<Solider>().add(tls.neut,10) {
+            it.data(DataTileObj(tls))
+            it.data(DataTelepath)
+        }
+        spoter.addSkil<DataTelepath>(){sideVid, obj, objSrc ->
+            obj.near().filter { enforcer.canEnforce(it, sideVid) }.map {
+                AktSimple(it, tlsAkt) {
+                    enforcer.enforce(it)
+                    spoter.tire(obj)
+                }
+            }
         }
     }
-
-    class SkilTelepath(val enforcer: Enforcer, val spoter: Spoter, val tlsAkt: TlsAkt) : Skil {
-        override fun akts(sideVid: Side, obj: Obj) =
-                obj.near().filter { enforcer.canEnforce(it, sideVid) }.map {
-                    AktSimple(it, tlsAkt) {
-                        enforcer.enforce(it)
-                        spoter.tire(obj)
-                    }
-                }
-    }
-    //    fun spot() {
-    //        for (pgNear in pgSpot.near)
-    //            if (enforcer.canEnforce(pgNear)) {
-    //                s.add(pgNear, tlsAkt) {
-    //                    enforcer.enforce(pgNear)
-    //                    voin.energy = 0
-    //                }
-    //            }
-    //
-    //    }
-
-
+    object DataTelepath : Data
 }
 
 class Staziser(r: Resource) {
     init {
         val stazis = injectValue<Stazis>()
-        val solider = injectValue<Solider>()
-        val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("staziser")
         val tlsAkt = r.tlsAkt("staziser")
-        solider.add(tls.neut,5) {
-            solider.addTls(it, tls)
-            it.data(SkilStaziser(tlsAkt, stazis, spoter))
+        injectValue<Solider>().add(tls.neut,5) {
+            it.data(DataTileObj(tls))
+            it.data(DataStaziser)
+        }
+        val spoter = injectValue<Spoter>()
+        spoter.addSkil<DataStaziser>(){sideVid, obj, objSrc ->
+            obj.near().filter { it !in stazis }.map {
+                AktSimple(it, tlsAkt) {
+                    stazis.plant(it)
+                    spoter.tire(obj)
+                }
+            }
         }
     }
 
-    class SkilStaziser(val tlsAkt: TlsAkt, val stazis: Stazis, val spoter: Spoter) : Skil {
-        override fun akts(sideVid: Side, obj: Obj) =
-                obj.near().filter { it !in stazis }.map {
-                    AktSimple(it, tlsAkt) {
-                        stazis.plant(it)
-                        spoter.tire(obj)
-                    }
-                }
-    }
+    private object DataStaziser : Data
 }
 
 class Inviser(r: Resource) {
     init {
         val mover = injectValue<Mover>()
-        val skilerHit = injectValue<SkilerHit>()
         val tls = r.tlsVoin("inviser")
         injectValue<Solider>().add(tls.neut,30) {
             it.data(DataTileObj(tls))
             it.data(DataInviser)
-            skilerHit.add(it)
+            it.data(DataHit(1))
         }
         mover.slotHide.add { it.has<DataInviser>() }
     }
@@ -253,21 +235,25 @@ class Electric(r: Resource, solider: Solider) {
 
     }
 }
+*/
 
-class Imitator(val spoter: Spoter, solider: Solider, val objs: () -> Objs) {
+class Imitator(r: Resource) {
     init {
-        solider.add(KindImitator)
-        spoter.listSkilByCopy.add { obj -> if (obj.kind == KindImitator) obj.shape.head.near.flatMap { objs().byPg(it) } else emptyList() }
-
+        val objs = injectObjs().value
+        val tls = r.tlsVoin("imitator")
+        injectValue<Solider>().add(tls.neut,30) {
+            it.data(DataTileObj(tls))
+            it.data(DataImitator)
+        }
+        injectValue<Spoter>().listSkilByCopy.add { obj ->
+            if (obj.has<DataImitator>()) {
+                val objsNear = obj.shape.near().map { objs()[it] }.filterNotNull()
+                if(objsNear.size == 1) objsNear.first() else null
+            }else null
+        }
     }
 
-    private object KindImitator : Kind()
-    //fun sideSpot(pg: Pg) = grid()[pg]?.side
-
-    //    fun spotByCopy(pgSpot: Pg): List<Pg> {
-    //        return pgSpot.near
-    //    }
+    private object DataImitator : Data
 }
-*/
 
 

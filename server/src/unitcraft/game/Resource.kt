@@ -12,12 +12,14 @@ import java.awt.Color
 import kotlin.reflect.*
 
 class Resource {
+
     val resTiles = ArrayList<ResTile>()
     val hintTiles = ArrayList<ResHintTile>()
     val hintTexts = ArrayList<ResHintText>()
     val buildiks = ArrayList<Int>()
 
     val hintTileDeploy = hintTile("")
+    val hintTileAktOff = hintTile("ctx.globalAlpha = 0.6")
     val hintTileDead = hintTile("")
     val hintTileTouch = hintTile("ctx.translate(0.3*rTile,0);ctx.translate(0.1*rTile,-0.1*rTile);ctx.scale(0.7,0.7);")
     val hintTileTurnR = hintTile("ctx.translate(rTile,0);ctx.rotate(Math.PI/2);")
@@ -43,7 +45,7 @@ class Resource {
             TlsBool(tile(name,effectEnemy),tile(name,effectEnemyTired)),
             TlsBool(tile(name,effectBlue),tile(name,effectYelw))
     )
-    fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt),tile("$name.$fix",effectAktOff))
+    fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt))
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
@@ -121,13 +123,6 @@ class Resource {
             shadow(Color.black)
         }
 
-        val effectAktOff = Effect("aktOff") {
-            fit()
-            extend()
-            shadow(Color.black)
-            opacity(50)
-        }
-
         val effectPlace = Effect("place") {
             place()
         }
@@ -159,8 +154,8 @@ class TlsObj(val neut: Tile, val ally: TlsBool, val enemy: TlsBool, val join: Tl
             if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
 }
 
-class TlsAkt(val aktOn:Tile,val aktOff:Tile){
-    operator fun invoke(isOn: Boolean) = if(isOn) aktOn else aktOff
+class TlsAkt(val aktOn:Tile){
+    operator fun invoke() = aktOn
 }
 
 class TlsBool(val tileTrue:Tile,val tileFalse:Tile){

@@ -31,7 +31,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Stager(r))
     register(Editor())
     register(Drawer())
-    register(Spoter())
+    register(Spoter(r))
     register(Flater())
     register(Sider())
     register(Tracer(r))
@@ -58,7 +58,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Telepath(r)
     Staziser(r)
     Inviser(r)
-    //Imitator(r)
+    Imitator(r)
     Redeployer(r)
     Warehouse(r)
     return r
@@ -114,7 +114,7 @@ class CmderUnitcraft : CmderGame {
     }
 
     private fun state(swapSide: SwapSide? = null): GameState {
-        return GameState(null, Side.ab.map { it to snap(it).toJson() }.toMap(), null, swapSide)
+        return GameState(data().allData.sideWin, Side.ab.map { it to snap(it).toJson() }.toMap(), null, swapSide)
     }
 
     override fun cmdRobot(sideRobot: Side) = when (stager.stage(sideRobot)) {

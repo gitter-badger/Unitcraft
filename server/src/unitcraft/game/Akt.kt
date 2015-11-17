@@ -18,21 +18,11 @@ import kotlin.properties.Delegates
 //    }
 //}
 
-abstract class Akt(val pg:Pg,val tlsAkt: TlsAkt){
-    open fun json(isOn:Boolean) = JSONObject().apply {
-        put("x", pg.x)
-        put("y", pg.y)
-        put("dab", DabTile(tlsAkt(isOn)))
-    }
-}
+abstract class Akt(val pg:Pg,val tlsAkt: TlsAkt)
 
 class AktSimple(pg:Pg,tlsAkt: TlsAkt, val fn: () -> Unit):Akt(pg,tlsAkt)
 
-class AktOpt(pg:Pg,tlsAkt: TlsAkt,val dabs:List<List<Dab>>, val fn: (Int) -> Unit):Akt(pg,tlsAkt){
-    override fun json(isOn: Boolean)= super.json(isOn).apply{
-        put("opter", Opter(dabs.map{Opt(it)}))
-    }
-}
+class AktOpt(pg:Pg,tlsAkt: TlsAkt,val dabs:List<List<Dab>>, val fn: (Int) -> Unit):Akt(pg,tlsAkt)
 
 // окно выбора
 class Opter(val opts : List<Opt>) : JSONAware{
@@ -47,13 +37,20 @@ class Opt(val dabs:List<Dab>): JSONAware{
     override fun toJSONString() = dabs.toJSONString()
 }
 
-class Sloy(var isOn:Boolean) : JSONAware {
+class Sloy(var isOn:Boolean,val hintTileAktOff:HintTile) : JSONAware {
     val akts = ArrayList<Akt>()
 
     fun aktByPg(pg: Pg) = akts.firstOrNull { it.pg == pg }
 
     override fun toJSONString() = jsonObj {
-        set("akts", akts.map{it.json(isOn)})
+        set("akts", akts.map{jsonAkt(it,isOn)})
         set("isOn", isOn)
+    }
+
+    fun jsonAkt(akt:Akt,isOn:Boolean) = JSONObject().apply {
+        put("x", akt.pg.x)
+        put("y", akt.pg.y)
+        put("dab", DabTile(akt.tlsAkt(),if(isOn) null else hintTileAktOff))
+        if(akt is AktOpt) put("opter", Opter(akt.dabs.map{Opt(it)}))
     }
 }

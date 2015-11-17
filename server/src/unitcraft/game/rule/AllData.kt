@@ -1,12 +1,14 @@
 package unitcraft.game.rule
 
 import unitcraft.game.Pg
+import unitcraft.game.Sequel
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.exclude
 import java.util.*
 
 class AllData {
+    var sideWin: Side? = null
     val objs = Objs()
     val flats = Flats()
 
@@ -39,9 +41,10 @@ class Flats : ListHasShape<Flat> {
 class Obj(shape: Shape) : HasShape(shape) {
     var side = Side.n
     var isFresh = false
-    var flip = false
+    var flip = shape.head.x > shape.head.pgser.xr / 2
     var life = 5
     var hide = false
+    var lastSequel: Sequel? = null
 
     fun isVid(sideVid: Side) = side.isN || side == sideVid || !hide
 
@@ -102,7 +105,7 @@ class Singl(head: Pg) : Shape(head) {
         return head.hashCode()
     }
 
-    override fun toString() = "+" + head
+    override fun toString() = head.toString()
 }
 
 class Quadr(head: Pg) : Shape(head) {
@@ -135,7 +138,11 @@ open class HasData {
 
     inline fun <reified T : Data> remove() = datas.exclude { it is T }
 
-    inline operator fun <reified T : Data> invoke(): T = datas.first { it is T } as T
+    inline operator fun <reified T : Data> invoke(): T {
+        val data = datas.firstOrNull { it is T }
+        if (data == null) println(T::class)
+        return data as T
+    }
 
     inline fun <reified T : Data> get() = datas.filterIsInstance<T>()
 

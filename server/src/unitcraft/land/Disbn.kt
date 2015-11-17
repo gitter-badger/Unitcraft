@@ -28,7 +28,7 @@ class Wave(val pgStart: Pg, val radius: Double? = null, val cost: (Pg) -> Double
         costs[pgStart] = 0.0
         val q = listOf(pgStart).toArrayList()
         while (!q.isEmpty()) {
-            val pgCur = q.remove(0)
+            val pgCur = q.removeAt(0)
             for ((pg, costNew) in pgsLinked(pgCur)) {
                 if (radius == null || costNew <= radius) {
                     costs[pg] = costNew
@@ -51,7 +51,7 @@ class Wave(val pgStart: Pg, val radius: Double? = null, val cost: (Pg) -> Double
 
     fun get(pg: Pg) = costs[pg]
 
-    fun pgs() = costs.keySet().toList()
+    fun pgs() = costs.keys.toList()
 
     // путь от начала волны pgStart до цели pgEnd
     fun path(pgEnd: Pg): List<Pg> {

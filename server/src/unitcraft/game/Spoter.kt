@@ -1,5 +1,6 @@
 package unitcraft.game
 
+import org.json.simple.JSONObject
 import unitcraft.game.rule.*
 import unitcraft.inject.inject
 import unitcraft.server.Err
@@ -7,15 +8,17 @@ import unitcraft.server.Side
 import unitcraft.server.Violation
 import java.util.*
 
-class Spoter {
+class Spoter(r:Resource) {
+    val hintTileAktOff = r.hintTileAktOff
     val stager: Stager  by inject()
     val allData:()-> AllData  by injectAllData()
 
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
-    val listSkil = ArrayList<(Obj)->Skil?>()
-    val listSkilByCopy = ArrayList<(Obj)->List<Obj>>()
+    val listSkil = ArrayList<(Obj)->((Side,Obj,Obj) -> List<Akt>)?>()
+    val listSkilByCopy = ArrayList<(Obj)->Obj?>()
+
     val listOnTire = ArrayList<(Obj) -> Unit>()
-    val slotStopSkils = ArrayList<(Obj,Skil)->Boolean>()
+    val slotStopSkils = ArrayList<(Obj,Data)->Boolean>()
 
     init{
         stager.onEndTurn {
@@ -38,8 +41,6 @@ class Spoter {
     }
 
     fun akt(sideVid:Side,pgFrom: Pg,index:Int,pgAkt: Pg,num:Int? = null){
-        var sm = 0
-
         val obj = objs()[pgFrom]?:throw Violation("obj not found")
         val sloy = sloysObj(obj,sideVid).elementAtOrNull(index)?: throw Violation("sloy not found")
         if (!sloy.isOn) throw Violation("sloy is off")
@@ -48,6 +49,7 @@ class Spoter {
             if (akt !is AktSimple) throw Violation("akt=$akt !is AktSimple")
             startAkt(obj, sideVid)
             akt.fn()
+            //obj.lastSequel = akt.fn()
             endAkt(obj, sideVid)
         }else{
             if (akt !is AktOpt) throw Violation("akt=$akt !is AktOpt")
@@ -67,18 +69,18 @@ class Spoter {
         allData().objAktLast?.let{ if(obj!=it) tire(it) }
     }
 
-    private fun skilsOwnObj(obj:Obj)=(obj.get<Skil>()+listSkil.map{it(obj)}.filterNotNull()).filter{skil -> slotStopSkils.any{it(obj,skil)}}
+    private fun skilsOwnObj(obj:Obj) = listSkil.map{it(obj)}.filterNotNull().map{obj to it}//.filter{skil -> slotStopSkils.any{it(obj,skil)}}
 
     private fun skilsObj(obj:Obj)=
-        (skilsOwnObj(obj) + listSkilByCopy.flatMap{it(obj)}.flatMap{skilsOwnObj(it)}).distinct()
+        skilsOwnObj(obj) + listSkilByCopy.map{it(obj)}.filterNotNull().flatMap{skilsOwnObj(it)}
 
 
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
         val isOn = if(stager.isTurn(sideVid) && obj.isFresh) listCanAkt.any{it(sideVid,obj)} else false
-        val r =  Raise(obj.shape.pgs,isOn)
-        for(skil in skilsObj(obj))
-            for(p in skil.akts(sideVid,obj))
-                r.addAkt(p)
+        val r =  Raise(obj.shape.pgs,isOn, hintTileAktOff)
+        for((objSrc,skil) in skilsObj(obj))
+            for(akt in skil(sideVid,obj,objSrc))
+                r.addAkt(akt)
         return r.sloys()
     }
 
@@ -86,28 +88,24 @@ class Spoter {
         obj.isFresh = false
         listOnTire.forEach{it(obj)}
     }
+
+    inline fun <reified D:Data> addSkil(noinline akts:(Side,Obj,Obj) -> List<Akt>){
+        listSkil.add{obj -> if(obj.has<D>()) akts else null}
+    }
 }
 
-interface Skil:Data{
+interface Sequel{
     fun akts(sideVid: Side,obj:Obj):List<Akt>
 }
 
-class Raise(val pgsErr: List<Pg>, val isOn: Boolean) {
+class Raise(val pgsErr: List<Pg>, val isOn: Boolean,val hintTileAktOff:HintTile) {
     private val listSloy = ArrayList<Sloy>()
-
-//    fun add(pgAkt: Pg, tlsAkt: TlsAkt, fn: () -> Unit) {
-//        addAkt(AktSimple(pgAkt, tlsAkt, fn))
-//    }
-//
-//    fun add(pgAim: Pg, tlsAkt: TlsAkt,dabs:List<List<Dab>>, fn: (Int) -> Unit){
-//        addAkt(AktOpt(pgAim, tlsAkt, dabs, fn))
-//    }
 
     fun addAkt(akt: Akt) {
         if(akt is AktOpt && akt.dabs.isEmpty()) return
-        //if (akt.pgAim in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pgAim}")
-        val idx = listSloy.indexOfFirst { it.aktByPg(akt.pg) != null } + 1
-        if (idx == listSloy.size) listSloy.add(Sloy(isOn))
+        if (akt.pg in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pg}")
+        val idx = listSloy.indexOfLast { it.aktByPg(akt.pg) != null } + 1
+        if (idx == listSloy.size) listSloy.add(Sloy(isOn,hintTileAktOff))
         listSloy[idx].akts.add(akt)
     }
 

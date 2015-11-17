@@ -23,14 +23,14 @@ class Stager(r: Resource) {
     fun endTurn() {
         val sideTurn = allData().sideTurn
         endTurns.forEach { it(sideTurn) }
-        allData().point[sideTurn] = allData().point[sideTurn]!! - 1
         allData().sideTurn = sideTurn.vs
         startTurns.forEach { it(sideTurn.vs) }
+        checkWin()
     }
 
     fun stage(sideVid: Side) = when {
-        allData().point[sideVid] == 0 -> Stage.winEnemy
-        allData().point[sideVid.vs] == 0 -> Stage.win
+        allData().sideWin == sideVid -> Stage.win
+        allData().sideWin == sideVid.vs -> Stage.winEnemy
         allData().bonus[sideVid] == null -> Stage.bonus
         allData().bonus[sideVid.vs] == null -> Stage.bonusEnemy
         allData().needJoin && sideTurn() == sideVid -> Stage.join
@@ -42,8 +42,7 @@ class Stager(r: Resource) {
 
     fun edge(sideVid: Side): DabTile {
         return when (stage(sideVid)) {
-            Stage.turn -> tileEdgeTurn
-            Stage.turnEnemy -> tileEdgeWait
+            Stage.turn,Stage.join,Stage.bonus -> tileEdgeTurn
             else -> tileEdgeWait
         }
     }
@@ -51,4 +50,9 @@ class Stager(r: Resource) {
     fun isBeforeTurn(sideVid: Side) = stage(sideVid).ordinal <= 3
 
     fun isTurn(sideVid: Side) = stage(sideVid) == Stage.turn
+
+    private fun checkWin(){
+        allData().sideWin = if(allData().point[Side.b] == 0 || allData().objs.bySide(Side.b).isEmpty()) Side.a else
+            if(allData().point[Side.a] == 0 || allData().objs.bySide(Side.a).isEmpty()) Side.b else null
+    }
 }

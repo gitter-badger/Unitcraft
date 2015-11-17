@@ -13,9 +13,14 @@ class Stazis(r: Resource) {
     val mover: Mover by inject()
     val flats: () -> Flats by injectFlats()
 
-
     init {
-        editor.onEdit(PriorDraw.overObj,listOf(tiles.last()), { pg, side, num -> plant(pg) }, { pg -> flats()[pg].remove<Stazis>() != null })
+        editor.onEdit(PriorDraw.overObj,listOf(tiles.last()), { pg, side, num -> plant(pg) }, { pg ->
+            val flat = flats()[pg]
+            if(flat.has<Stazis>()){
+                flat.remove<Stazis>()
+                true
+            }else false
+        })
         stager.onEndTurn {
             for ((flat,stazis) in flats().by<Stazis,Flat>()) {
                 stazis.value -= 1

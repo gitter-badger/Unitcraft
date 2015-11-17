@@ -127,26 +127,21 @@ class Water(r: Resource) {
 }
 
 /** если юнит стоит на катапульте, то он может прыгнуть в любую проходимую для него точку */
-class Catapult(val r: Resource) : Skil {
+class Catapult(r: Resource) {
     val tlsAkt = r.tlsAkt("catapult")
     val spoter: Spoter by inject()
     val mover: Mover by inject()
 
     init {
-        val flats = injectFlats().value
-        spoter.listSkil.add {
-            if (it.shape.pgs.intersect(flats().by<Catapult, Flat>().flatMap { it.first.shape.pgs }).isNotEmpty()) this else null
-        }
-
         val tile = r.tile("catapult")
         val ground = r.tileGround
         injectValue<Drawer>().onFlat<Catapult> { flat, data, side -> ground to tile }
         injectValue<Flater>().add(tile, TpFlat.special) { it.data(Catapult) }
-    }
 
-    override fun akts(sideVid: Side, obj: Obj) =
+        val flats = injectFlats().value
+        val skil = { side: Side, obj: Obj, objSrc: Obj ->
             obj.shape.head.all.map { pg ->
-                val move = Move(obj, obj.shape.headTo(pg), sideVid)
+                val move = Move(obj, obj.shape.headTo(pg), side)
                 val can = mover.canMove(move)
                 if (can != null) AktSimple(pg, tlsAkt) {
                     if (can()) {
@@ -155,26 +150,20 @@ class Catapult(val r: Resource) : Skil {
                     }
                 } else null
             }.filterNotNull()
+        }
+        spoter.listSkil.add {
+            if (it.shape.pgs.intersect(flats().by<Catapult, Flat>().flatMap { it.first.shape.pgs }).isNotEmpty()) skil else null
+        }
+    }
 
-
-    private object Catapult : Data
-    //        info<MsgSpot>(20) {
-    //            if (pgSrc in flats) g.voin(pgSpot,side)?.let {
-    //                val tggl = g.info(MsgTgglRaise(pgSpot, it))
-    //                if(!tggl.isCanceled) {
-    //                    val r = Raise(pgSpot, tggl.isOn)
-    //                    for (pg in g.pgs) if(!g.stop(EfkMove(pgSpot, pg, it))) r.add(pg, tlsAkt, EfkMove(pgSpot, pg, it))
-    //                    add(r)
-    //                }
-    //            }
-    //        }
+    object Catapult : Data
 }
 
 abstract class DataPoint(side: Side) : Data {
     open var side by Delegates.vetoable(side.apply { if (this == Side.n) throw Err("Side.n is not allowed") }) { prop, sideOld, sideNew -> sideNew != Side.n }
 }
 
-private inline fun <reified D : DataPoint> groundTilePoint(tile:Tile,grounds: List<Tile>) {
+private inline fun <reified D : DataPoint> groundTilePoint(tile: Tile, grounds: List<Tile>) {
     val stager = injectValue<Stager>()
     injectValue<Drawer>().onFlat<D> { flat, data, side ->
         val flag = flat<D>()
@@ -184,10 +173,21 @@ private inline fun <reified D : DataPoint> groundTilePoint(tile:Tile,grounds: Li
 
 class Flag(r: Resource) {
     init {
+        val allData = injectAllData().value
         val tile = r.tile("flag")
         val grounds = r.grounds
-        groundTilePoint<DataFlag>(tile,grounds)
+        groundTilePoint<DataFlag>(tile, grounds)
         injectValue<Flater>().addPoint(tile, TpFlat.flag) { flat, side -> flat.data(DataFlag(side)) }
+
+        val flats = injectFlats().value
+
+        injectValue<Stager>().onEndTurn { side ->
+            val p = flats().by<DataFlag,Flat>().partition { it.second.side==side}
+            if(p.first.size<=p.second.size)
+                allData().point[side] = allData().point[side]!! - 1
+            if(p.first.size>=p.second.size)
+                allData().point[side.vs] = allData().point[side.vs]!! - 1
+        }
     }
 
     private class DataFlag(side: Side) : DataPoint(side)
@@ -200,7 +200,7 @@ class Mine(r: Resource) {
         val flats = injectFlats().value
         val tile = r.tile("mine")
         val grounds = r.grounds
-        groundTilePoint<Mine>(tile,grounds)
+        groundTilePoint<Mine>(tile, grounds)
         flater.addPoint(tile, TpFlat.special) { flat, side -> flat.data(Mine(side)) }
         stager.onEndTurn {
             val gold = flats().by<Mine, Flat>().filter { it.second.side == stager.sideTurn() }.size
@@ -216,7 +216,7 @@ class Hospital(r: Resource) {
         val flater = injectValue<Flater>()
         val tile = r.tile("hospital")
         val grounds = r.grounds
-        groundTilePoint<Hospital>(tile,grounds)
+        groundTilePoint<Hospital>(tile, grounds)
         flater.addPoint(tile, TpFlat.special) { flat, side -> flat.data(Hospital(side)) }
     }
 

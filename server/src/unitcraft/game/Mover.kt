@@ -33,7 +33,7 @@ class Mover{
         return canBusy(move.shapeTo,move.sideVid)
     }
 
-    fun canBulid(shape: Shape,sideVid:Side): (()->Boolean)? {
+    fun canBuild(shape: Shape, sideVid:Side): (()->Boolean)? {
         if(slotStopBuild.any{it(shape)}) return null
         return canBusy(shape,sideVid)
     }
