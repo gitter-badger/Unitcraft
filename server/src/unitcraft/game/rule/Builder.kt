@@ -8,8 +8,6 @@ import unitcraft.server.Side
 import java.util.*
 
 class Builder(r: Resource) {
-    val tlsAkt = TlsAkt(r.tile("build", Resource.effectAkt))
-    val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
     val price = 5
     val fabriks = ArrayList<Fabrik>()
     val lifer: Lifer by inject()
@@ -17,6 +15,8 @@ class Builder(r: Resource) {
     val objs: () -> Objs by injectObjs()
 
     init {
+        val tileAkt = r.tile("build", Resource.effectAkt)
+        val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
         val lifer = injectValue<Lifer>()
         injectValue<Spoter>().addSkil<SkilBuild> { side, obj, objSrc ->
             val data = objSrc<SkilBuild>()
@@ -25,7 +25,7 @@ class Builder(r: Resource) {
             for (pg in data.zone(obj)) {
                 val can = mover.canBuild(Singl(pg), side)
                 if (can != null) {
-                    akts.add(AktOpt(pg, tlsAkt, dabs) {
+                    akts.add(AktOpt(pg, tileAkt, dabs) {
                         if (can()) {
                             val objCreated = Obj(Singl(pg))
                             objCreated.side = obj.side
@@ -64,18 +64,18 @@ class Redeployer(r: Resource) {
     init {
         val tls = r.tlsVoin("redeployer")
         val builder = injectValue<Builder>()
-        injectValue<Solider>().add(tls.neut, null, TpSolid.builder, false) {
+        injectValue<Solider>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
             it.data(DataRedeployer)
             builder.add(it, { it.near() }, {})
         }
 
-        val tlsAkt = r.tlsAkt("redeployer")
+        val tileAkt = r.tileAkt("redeployer")
         val objs = injectObjs().value
         val spoter = injectValue<Spoter>()
         spoter.addSkil<DataRedeployer>() { sideVid, obj, data ->
             obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false }.map {
-                AktSimple(it, tlsAkt) {
+                AktSimple(it, tileAkt) {
                     objs()[it]?.let {
                         objs().remove(it)
                         builder.plusGold(it.side, 5)

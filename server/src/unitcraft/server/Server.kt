@@ -48,7 +48,7 @@ class Server {
                 't' -> onVsRobot(prm)
                 'm' -> vsRobotMission(prm)
                 'a' -> akt(prm)
-                'r' -> refresh(prm)
+                'r' -> onRefresh(prm)
                 'w' -> land(prm)
                 'y' -> accept(prm)
                 'c' -> invite(prm)
@@ -69,10 +69,17 @@ class Server {
         ssns[key] = ssn
         log.open()
         if (isLocal) {
-            var id = Id("dev" + ssns.size)
-            val user = users[id]
-            if (user == null) users.add(id, "")
-            loginOk(id, 1)
+            var i = 0
+            while (true) {
+                val id = Id("dev$i")
+                if (ssnById(id) == null) {
+                    val user = users[id]
+                    if (user == null) users.add(id, "")
+                    loginOk(id, 0)
+                    break
+                }
+                i += 1
+            }
         }
     }
 
@@ -128,10 +135,7 @@ class Server {
             ssn.login(id)
             sendUser()
             ssn.bttl = bttls[id]
-            if (ssn.bttl != null)
-                send(bttler.refresh(ssn.id))
-            else
-                vsRobot(mission)
+            if (ssn.bttl != null) refresh() else vsRobot(mission)
         } else {
             send("w")
         }
@@ -158,10 +162,10 @@ class Server {
 
     fun play(min: Int, max: Int) {
         val play = Play(min, max)
-        val ssnsInQue = ssns.values.filter { it.play != null && it.play?.match == null && play.betIntersect(it.play!!)!=null }
+        val ssnsInQue = ssns.values.filter { it.play != null && it.play?.match == null && play.betIntersect(it.play!!) != null }
         ssn.play = play
-        val ssnFinded = ssnsInQue.maxBy{play.betIntersect(it.play!!)!!}
-        if (ssnFinded!= null) {
+        val ssnFinded = ssnsInQue.maxBy { play.betIntersect(it.play!!)!! }
+        if (ssnFinded != null) {
             ssn.play!!.match = Match(ssnFinded, play.betIntersect(ssnFinded.play!!)!!)
             ssnFinded.play!!.match = Match(ssn, 1)
             sendStatus()
@@ -248,9 +252,13 @@ class Server {
         ssn.invite = null
     }
 
-    fun refresh(prm: Prm) {
+    fun onRefresh(prm: Prm) {
         ensureLogin("refresh")
         prm.ensureEmpty()
+        refresh()
+    }
+
+    fun refresh() {
         bttl = ssn.bttl!!
         send(bttler.refresh(ssn.id))
     }
@@ -303,16 +311,16 @@ class Server {
         sendStatus(ssnB)
     }
 
-    fun send(msg: String,s: Ssn = ssn) {
+    fun send(msg: String, s: Ssn = ssn) {
         wser.send(s.key, msg)
     }
 
     fun send(chain: Chain) {
-        chain.list.forEach { wser.send(ssnById(it.first)!!.key, it.second) }
+        chain.list.forEach { elem -> ssnById(elem.first)?.let { wser.send(it.key, elem.second) } }
     }
 
     fun sendStatus(s: Ssn = ssn) {
-        send("s" + s.status(),s)
+        send("s" + s.status(), s)
     }
 
     fun sendStatus(id: Id) {
@@ -374,7 +382,7 @@ class Play(val min: Int, val max: Int) {
         if (min < 1 || min > max) throw IllegalArgumentException("BetRange min $min max $max")
     }
 
-    fun betIntersect(play: Play) = if(Math.max(min,play.min)<=Math.min(max,play.max)) Math.min(max,play.max) else null
+    fun betIntersect(play: Play) = if (Math.max(min, play.min) <= Math.min(max, play.max)) Math.min(max, play.max) else null
 }
 
 class Match(val ssnVs: Ssn, val bet: Int) {

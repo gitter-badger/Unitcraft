@@ -14,6 +14,7 @@ class Snap(
         val stage: Stage,
         val edge:DabTile,
         val focus:DabTile,
+        val vpoint:List<Int>,
         val opterTest:Opter?
 ) {
 
@@ -27,7 +28,7 @@ class Snap(
         put("traces", traces)
         put("edge", edge)
         put("focus",focus)
-        put("vpoint",listOf(15,7))
+        put("vpoint",vpoint)
         put("stage",stage.toString())
         if(opterTest!=null) put("opterTest",opterTest)
     }

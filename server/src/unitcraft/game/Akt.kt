@@ -18,11 +18,11 @@ import kotlin.properties.Delegates
 //    }
 //}
 
-abstract class Akt(val pg:Pg,val tlsAkt: TlsAkt)
+abstract class Akt(val pg:Pg,val tileAkt: Tile)
 
-class AktSimple(pg:Pg,tlsAkt: TlsAkt, val fn: () -> Unit):Akt(pg,tlsAkt)
+class AktSimple(pg:Pg, tileAkt: Tile, val fn: () -> Unit):Akt(pg, tileAkt)
 
-class AktOpt(pg:Pg,tlsAkt: TlsAkt,val dabs:List<List<Dab>>, val fn: (Int) -> Unit):Akt(pg,tlsAkt)
+class AktOpt(pg:Pg, tileAkt: Tile, val dabs:List<List<Dab>>, val fn: (Int) -> Unit):Akt(pg, tileAkt)
 
 // окно выбора
 class Opter(val opts : List<Opt>) : JSONAware{
@@ -50,7 +50,7 @@ class Sloy(var isOn:Boolean,val hintTileAktOff:HintTile) : JSONAware {
     fun jsonAkt(akt:Akt,isOn:Boolean) = JSONObject().apply {
         put("x", akt.pg.x)
         put("y", akt.pg.y)
-        put("dab", DabTile(akt.tlsAkt(),if(isOn) null else hintTileAktOff))
+        put("dab", DabTile(akt.tileAkt,if(isOn) null else hintTileAktOff))
         if(akt is AktOpt) put("opter", Opter(akt.dabs.map{Opt(it)}))
     }
 }

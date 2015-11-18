@@ -163,7 +163,7 @@ function redrawToolbar() {
     }
 
     function clock(ui, num) {
-        var ms = Math.max(ui.game.clock[num] - ui.intervalElapsed(), 0);
+        var ms = ui.game.clockIsOn[num]?Math.max(ui.game.clock[num] - ui.intervalElapsed(), 0):ui.game.clock[num];
         var min = div(ms, 60000);
         var sec = div((ms - min * 60000), 1000);
         return padClock(min) + ":" + padClock(sec);
@@ -188,12 +188,21 @@ function redrawToolbar() {
         ctx.restore();
     }
 
+    function drawAccept(ui) {
+        if(ui.status!="match") return;
+        ctx.save();
+        ctx.translate(ui.qdmnPanel(), ui.qdmnPanel());
+        drawPanel("accept", ui);
+        ctx.restore();
+    }
+
     function drawToolbar(ui) {
         ctx.save();
         var pst = ui.pstToolbar();
         ctx.translate(pst.x, pst.y);
         drawStage(ui);
         drawStatus(ui);
+        drawAccept(ui);
         ctx.restore();
     }
 

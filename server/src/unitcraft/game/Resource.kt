@@ -12,11 +12,9 @@ import java.awt.Color
 import kotlin.reflect.*
 
 class Resource {
-
     val resTiles = ArrayList<ResTile>()
     val hintTiles = ArrayList<ResHintTile>()
     val hintTexts = ArrayList<ResHintText>()
-    val buildiks = ArrayList<Int>()
 
     val hintTileDeploy = hintTile("")
     val hintTileAktOff = hintTile("ctx.globalAlpha = 0.6")
@@ -30,7 +28,7 @@ class Resource {
 
     val hintTextRedPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
 
-    val tlsAktMove = tlsAkt("move")
+    val tlsAktMove = tileAkt("move")
     val tileHide = tile("hide")
 
     val tileGround = tile("ground",effectPlace)
@@ -45,7 +43,7 @@ class Resource {
             TlsBool(tile(name,effectEnemy),tile(name,effectEnemyTired)),
             TlsBool(tile(name,effectBlue),tile(name,effectYelw))
     )
-    fun tlsAkt(name:String,fix:String = "akt") = TlsAkt(tile("$name.$fix",effectAkt))
+    fun tileAkt(name:String, fix:String = "akt") = tile("$name.$fix",effectAkt)
     fun tlsList(qnt: Int, name: String,effect: Effect = effectStandard) = idxsMap(qnt){tile(name+"."+it,effect)}
     fun tlsBool(nameTrue:String,nameFalse:String,effect: Effect =effectStandard) = TlsBool(tile(nameTrue,effect),tile(nameFalse,effect))
 
@@ -54,11 +52,6 @@ class Resource {
     fun hintTile(hintTile: String) = HintTile(hintTiles.idxOfOrAdd(ResHintTile(hintTile)))
 
     fun hintText(hintText: String) = HintText(hintTexts.idxOfOrAdd(ResHintText(hintText)))
-
-    fun buildik(tile: Int):Int {
-        buildiks.add(tile)
-        return buildiks.size-1
-    }
 
     companion object{
         fun <E> MutableList<E>.idxOfOrAdd(elem:E):Int{
@@ -79,6 +72,7 @@ class Resource {
         val effectNeut = Effect("neut") {
             fit()
             extendBottom()
+            light(0, 0, 50)
         }
 
         val effectFriend = Effect("friend") {
@@ -152,10 +146,6 @@ open class TlsFlatOwn(val ally:Tile,val enemy:Tile,val yellow:Tile,val blue:Tile
 class TlsObj(val neut: Tile, val ally: TlsBool, val enemy: TlsBool, val join: TlsBool){
     operator fun invoke(side:Side, sideOwn: Side, isFresh:Boolean) =
             if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
-}
-
-class TlsAkt(val aktOn:Tile){
-    operator fun invoke() = aktOn
 }
 
 class TlsBool(val tileTrue:Tile,val tileFalse:Tile){

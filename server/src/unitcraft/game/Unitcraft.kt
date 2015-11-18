@@ -30,9 +30,9 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
 
     register(Stager(r))
     register(Editor())
-    register(Drawer())
+    register(Drawer(r))
     register(Spoter(r))
-    register(Flater())
+    register(Flater(r))
     register(Sider())
     register(Tracer(r))
     register(Mover())
@@ -54,7 +54,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Hospital(r)
     Flag(r)
 
-    //Electric(r)
+    Electric(r)
     Telepath(r)
     Staziser(r)
     Inviser(r)
@@ -74,6 +74,7 @@ class CmderUnitcraft : CmderGame {
 
     val flater: Flater by inject()
     val solider: Solider by inject()
+    val builder: Builder by inject()
     val editor: Editor by inject()
     val stager: Stager by inject()
     val spoter: Spoter by inject()
@@ -113,9 +114,12 @@ class CmderUnitcraft : CmderGame {
         return state(swapSide)
     }
 
-    private fun state(swapSide: SwapSide? = null): GameState {
-        return GameState(data().allData.sideWin, Side.ab.map { it to snap(it).toJson() }.toMap(), null, swapSide)
-    }
+    private fun state(swapSide: SwapSide? = null) =
+            GameState(data().allData.sideWin, Side.ab.map { it to snap(it).toJson() }.toMap(), sideClockStop(), swapSide)
+
+    private fun sideClockStop() = if (allData().bonus.isEmpty()) null
+    else if (allData().bonus.size == 1) allData().bonus.keys.first()
+    else stager.sideTurn().vs
 
     override fun cmdRobot(sideRobot: Side) = when (stager.stage(sideRobot)) {
         Stage.bonus -> "s0"
@@ -132,17 +136,20 @@ class CmderUnitcraft : CmderGame {
         prm.ensureSize(1)
         val bonus = prm.int(0)
         if (bonus > 50) throw Violation("bonus $bonus too high")
-        data().allData.bonus[side] = bonus
-        data().allData.bonus[side.vs]?.let { data().allData.sideTurn = if (it >= bonus) side.vs else side }
+        allData().bonus[side] = bonus
+        allData().bonus[side.vs]?.let { allData().sideTurn = if (it >= bonus) side.vs else side }
     }
 
     private fun join(side: Side, prm: Prm): Boolean {
         if (stager.stage(side) != Stage.join) throw Violation("stage != join")
         prm.ensureSize(1)
         val num = prm.int(0)
-        if (num > 1) throw Violation("num $num must be 0 or 1")
-        data().allData.needJoin = false
-        return side != Side.ab[num]
+        if (num > 1) throw Violation("num($num) must be 0 or 1")
+        allData().needJoin = false
+        val sideJoined = Side.ab[num]
+        builder.plusGold(sideJoined.vs, allData().bonus[side]!!)
+        allData().sideTurn = sideJoined
+        return side != sideJoined
     }
 
     private fun editAdd(side: Side, prm: Prm) {
@@ -193,11 +200,18 @@ class CmderUnitcraft : CmderGame {
         if (!data().canEdit) throw Violation("only for canEdit game")
     }
 
+    private fun allData() = data().allData
+
     private fun snap(side: Side) = Snap(
             data().land.pgser.xr,
             data().land.pgser.yr,
             drawer.draw(side),
             spoter.spots(side),
-            tracer.traces(side), stager.stage(side), stager.edge(side), stager.focus, if (data().canEdit) editor.opterTest else null
+            tracer.traces(side),
+            stager.stage(side),
+            stager.edge(side),
+            stager.focus,
+            listOf(allData().point[side]!!, allData().point[side.vs]!!),
+            if (data().canEdit) editor.opterTest else null
     )
 }

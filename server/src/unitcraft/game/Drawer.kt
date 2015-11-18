@@ -1,17 +1,23 @@
 package unitcraft.game
 
-import unitcraft.game.rule.*
+import unitcraft.game.rule.AllData
+import unitcraft.game.rule.Data
+import unitcraft.game.rule.Flat
+import unitcraft.game.rule.Obj
 import unitcraft.server.Side
 import java.util.*
-import kotlin.reflect.KClass
 
-class Drawer {
+class Drawer(r: Resource) {
     val allData: () -> AllData  by injectAllData()
+
+    val ground = r.tileGround
+    val tileFlatNull = r.tile("null.flat")
+    val tileObjNull = r.tile("null.obj")
 
     fun draw(side: Side): List<DabOnGrid> {
         val ctx = CtxDraw(side)
         for (prior in PriorDraw.values) {
-            drawFlats(side,ctx)
+            drawFlats(side, ctx)
             draws[PriorDraw.flat]?.forEach { it(side, ctx) }
             drawObjs(side, ctx)
             draws[PriorDraw.obj]?.forEach { it(side, ctx) }
@@ -20,41 +26,33 @@ class Drawer {
         return ctx.dabOnGrids
     }
 
-    private fun drawFlats(side: Side,ctx: CtxDraw){
+    private fun drawFlats(side: Side, ctx: CtxDraw) {
         for (flat in allData().flats.sort()) {
-            for (data in flat.datas) {
-                val fn = tileWithGroundFlat[data.javaClass.kotlin]
-                if(fn!=null) {
-                    val gt = fn(flat, data, side)
-                    if (gt != null) {
-                        ctx.drawTile(flat.head(), gt.first)
-                        gt.second?.let { ctx.drawTile(flat.head(), it) }
-                        break
-                    }
-                }
+            val gt = tileWithGroundFlat.map { it(flat, side) }.firstOrNull { it != null }
+            if (gt != null) {
+                ctx.drawTile(flat.head(), gt.first)
+                gt.second?.let { ctx.drawTile(flat.head(), it) }
+            } else {
+                ctx.drawTile(flat.head(), ground)
+                ctx.drawTile(flat.head(), tileFlatNull)
             }
-            drawFlats.forEach{it(flat,side,ctx)}
+            drawFlats.forEach { it(flat, side, ctx) }
         }
     }
 
     private fun drawObjs(side: Side, ctx: CtxDraw) {
         for (obj in allData().objs.sort()) {
-            for (data in obj.datas) {
-                val fn = tileWithHintObj[data.javaClass.kotlin]
-                if(fn!=null) {
-                    val th = fn(obj, data, side)
-                    if (th != null) {
-                        ctx.drawTile(obj.head(), th.first, th.second)
-                        break
-                    }
-                }
-            }
-            drawObjs.forEach{it(obj,side,ctx)}
+            val th = tileWithHintObj.map { it(obj, side) }.firstOrNull { it != null }
+            if (th != null)
+                ctx.drawTile(obj.head(), th.first, th.second)
+            else
+                ctx.drawTile(obj.head(), tileObjNull)
+            drawObjs.forEach { it(obj, side, ctx) }
         }
     }
 
     val drawFlats = ArrayList<(Flat, Side, CtxDraw) -> Unit>()
-    val drawObjs = ArrayList<(Obj, Side,CtxDraw) -> Unit>()
+    val drawObjs = ArrayList<(Obj, Side, CtxDraw) -> Unit>()
 
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 
@@ -62,16 +60,16 @@ class Drawer {
         draws.getOrPut(prior) { ArrayList<(Side, CtxDraw) -> Unit>() }.add(onDraw)
     }
 
-    val tileWithGroundFlat = HashMap<KClass<out Data>,(Flat, Data, Side) -> Pair<Tile,Tile?>?>()
+    val tileWithGroundFlat = ArrayList<(Flat, Side) -> Pair<Tile, Tile?>?>()
 
-    inline fun <reified D:Data> onFlat(noinline tileWithGround:(Flat,D, Side) -> Pair<Tile,Tile?>?){
-        tileWithGroundFlat[D::class] = tileWithGround as (Flat, Data, Side) -> Pair<Tile,Tile?>?
+    inline fun <reified D : Data> onFlat(noinline tileWithGround: (Flat, D, Side) -> Pair<Tile, Tile?>) {
+        tileWithGroundFlat.add { flat, side -> if (flat.has<D>()) tileWithGround(flat, flat<D>(), side) else null }
     }
 
-    val tileWithHintObj = HashMap<KClass<out Data>,(Obj, Data, Side) -> Pair<Tile,HintTile?>?>()
+    val tileWithHintObj = ArrayList<(Obj, Side) -> Pair<Tile, HintTile?>?>()
 
-    inline fun <reified D:Data> onObj(noinline tileWithHint:(Obj, D, Side) -> Pair<Tile,HintTile?>?){
-        tileWithHintObj[D::class] = tileWithHint as (Obj, Data, Side) -> Pair<Tile,HintTile?>?
+    inline fun <reified D : Data> onObj(noinline tileWithHint: (Obj, D, Side) -> Pair<Tile, HintTile?>) {
+        tileWithHintObj.add { obj, side -> if (obj.has<D>()) tileWithHint(obj, obj<D>(), side) else null }
     }
 }
 

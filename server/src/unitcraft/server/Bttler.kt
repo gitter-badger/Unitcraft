@@ -1,12 +1,10 @@
 package unitcraft.server
 
 import org.json.simple.JSONObject
-import unitcraft.game.DataUnitcraft
 import unitcraft.inject.inject
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import kotlin.properties.Delegates
 
 // управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
 // TODO нужен контроль времени
@@ -18,6 +16,7 @@ class Bttler {
     fun start(mission: Int?, canEdit: Boolean): Chain {
         bttl().data = cmder.createData(mission, canEdit)
         bttl().state = cmder.reset()
+        updateClock()
         return sendGame(false)
     }
 
@@ -48,7 +47,6 @@ class Bttler {
 
     fun refresh(id: Id): Chain = sendGame(false, id)
 
-
     fun land(id: Id) {
         cmder.land()
     }
@@ -58,8 +56,9 @@ class Bttler {
             bttl().state = cmder.cmd(side, akt)
             bttl().cmds.add(Pair(side, akt))
             bttl().state.swapSide?.let {
-                if(it == SwapSide.usual || isVsRobot())  bttl().swapSide()
+                if (it == SwapSide.usual || isVsRobot()) bttl().swapSide()
             }
+            updateClock()
             return sendGame(false)
         } catch (ex: Violation) {
             throw ex
@@ -68,7 +67,6 @@ class Bttler {
             resetGame()
             return sendGame(true)
         }
-
     }
 
     private fun resetGame() {
@@ -85,11 +83,30 @@ class Bttler {
             val json = bttl.state.json[side]!!
             json["version"] = bttl.cmds.size
             json["bet"] = bttl.bet
-            json["clock"] = listOf(1000000, 198000)
+            json["clock"] = listOf(side, side.vs).map { bttl().clocks[it]!!.leftNow().toMillis() }
+            json["clockIsOn"] = listOf(side, side.vs).map { bttl().clocks[it]!!.started() }
             if (isErr) json["err"] = true else json.remove("err")
             chain.add(id, "g" + json)
         }
         return chain
+    }
+
+    private fun updateClock() {
+        if (isVsRobot()) return
+        val sideClockStop = bttl().state.sideClockStop
+        if (sideClockStop != null) {
+            bttl().clocks[sideClockStop]!!.stop()
+            val clockVs = bttl().clocks[sideClockStop.vs]!!
+            if(!clockVs.started()){
+                clockVs.extend()
+                clockVs.start(Instant.now())
+            }
+        }else {
+            val now = Instant.now()
+            bttl().clocks.values.forEach { it.start(now) }
+        }
+        if (bttl().idWin() != null) bttl().clocks.values.forEach { it.stop() }
+
     }
 }
 
@@ -110,7 +127,8 @@ class Chain() {
     }
 }
 
-class Clock(private var left: Duration) {
+class Clock {
+    private var left = Duration.ofMinutes(3)
     private var last: Instant? = null
 
     fun start(now: Instant) {
@@ -124,8 +142,8 @@ class Clock(private var left: Duration) {
         last = null
     }
 
-    fun add(dur: Duration) {
-        left += dur
+    fun extend() {
+        left += Duration.ofMinutes(2)
     }
 
     fun elapsed(): Boolean {
@@ -140,7 +158,7 @@ class Clock(private var left: Duration) {
 
     fun leftNow(): Duration {
         if (last != null) {
-            val dur = left.minus(Duration.between(Instant.now(), last))!!
+            val dur = left.minus(Duration.between(last,Instant.now()))!!
             return if (dur.isNegative) Duration.ZERO else dur
         } else {
             return left
@@ -150,14 +168,14 @@ class Clock(private var left: Duration) {
 
 interface CmderGame {
     // начинает партию и создает ее data
-    fun createData(mission:Int?, canEdit: Boolean):GameData
+    fun createData(mission: Int?, canEdit: Boolean): GameData
 
     // сбрасывает состояние игры до исходного
-    fun reset():GameState
+    fun reset(): GameState
 
     // возвращает сторону победителя
     // если null, значит игра еще не окончена
-    fun cmd(side: Side, cmd: String):GameState
+    fun cmd(side: Side, cmd: String): GameState
 
     // если не null, значит ИИ должен сходить
     fun cmdRobot(sideRobot: Side): String?
@@ -170,9 +188,9 @@ interface CmderGame {
 // определен ли победитель?
 // json расположения юнитов
 // [sideClockOn] - чей таймер должны быть запущен, null - оба таймеры запущены
-class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClockOn: Side?,val swapSide:SwapSide?)
+class GameState(val sideWin: Side?, val json: Map<Side, JSONObject>, val sideClockStop: Side?, val swapSide: SwapSide?)
 
-enum class SwapSide{
+enum class SwapSide {
     usual, ifRobot
 }
 
@@ -210,6 +228,8 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
         } else this[idPrim] = Side.a
     }
 
+    val clocks = mapOf(Side.a to Clock(), Side.b to Clock())
+
     companion object {
         val r = Random()
     }
@@ -219,7 +239,7 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
 
     fun swapSide() {
         sides[idPrim] = sides[idPrim]!!.vs
-        if(idSec != null) sides[idSec] = sides[idSec]!!.vs
+        if (idSec != null) sides[idSec] = sides[idSec]!!.vs
     }
 
     fun idWin(): Id? =

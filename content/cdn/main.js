@@ -139,6 +139,8 @@ function onClickToolbar(num, ui) {
         else if (ui.status == "queue" || ui.status == "macth" || ui.status == "invite") ws.send("d");
     } else if (num == 2) {
         // открыть чат
+    }else if (num == 9) {
+        ws.send("y");
     }
 }
 
@@ -334,14 +336,18 @@ function createUI(tileset, panelset, streamUi) {
             div(pst.x - this.pstOpter().x, this.qdmnTileOpter()) + div(pst.y - this.pstOpter().y, this.qdmnTileOpter()) * this.dmnOpter().xr : null;
         },
         numFromPstOnToolbar(pst){
-            return isPstInRect(pst, this.pstToolbar(), scaleDmn({xr: 1, yr: 4},
-                this.qdmnPanel())) ? div(pst.y - this.pstToolbar().y, this.qdmnPanel()) : null;
+            var pstT = ui.pstToolbar();
+            var qp = ui.qdmnPanel();
+            if (isPstInRect(pst, pstT, scaleDmn({xr: 1, yr: 4}, qp)))
+                return div(pst.y - this.pstToolbar().y, qp);
+            else if (ui.status == "match" && isPstInRect(pst, {x: pstT.x + qp, y: pstT.y + qp}, {xr: qp,yr: qp}))
+                return 9
         },
         bonusFromBonusBar(pst){
             if (ui.game.stage === "bonus") return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 12},
                 this.qdmnPanel() / 2)) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel() / 2) : null;
             else return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 2},
-                this.qdmnPanel())) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel())+12 : null;
+                this.qdmnPanel())) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel()) + 12 : null;
         },
         isAcceptFromPstOnToolbar(pst){
             var qdmn = this.qdmnPanel();

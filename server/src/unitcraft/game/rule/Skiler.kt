@@ -9,7 +9,7 @@ import java.util.*
 
 class SkilerMove(r: Resource){
     init{
-        val tlsAktMove = r.tlsAktMove
+        val tileAktMove = r.tlsAktMove
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
         spoter.listOnTire.add{obj ->
@@ -21,7 +21,7 @@ class SkilerMove(r: Resource){
             if(data.fuel>0) for(pg in obj.shape.head.near) {
                 val move = Move(obj, obj.shape.headTo(pg), side)
                 val can = mover.canMove(move)
-                if (can!=null) list.add(AktSimple(pg, tlsAktMove) {
+                if (can!=null) list.add(AktSimple(pg, tileAktMove) {
                     if(can()) {
                         mover.move(move)
                         if(obj==objSrc) data.fuel -= 1
@@ -43,7 +43,7 @@ class SkilMove(var fuelMax:Int = 3):Data{
 
 class SkilerHit(r:Resource){
     init{
-        val tlsAkt = r.tlsAkt("hit")
+        val tlsAkt = r.tileAkt("hit")
         val lifer = injectValue<Lifer>()
         val spoter =  injectValue<Spoter>()
         spoter.addSkil<DataHit>(){sideVid, obj, objSrc ->

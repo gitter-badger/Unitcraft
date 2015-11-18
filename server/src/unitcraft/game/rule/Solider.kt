@@ -14,8 +14,6 @@ class Solider(r: Resource) {
     private val hintTileHide = r.hintTile("ctx.globalAlpha=0.7;")
     private val hintTextEnergy = r.hintText("ctx.fillStyle = 'lightblue';ctx.translate(0.3*rTile,0);")
 
-
-    //
     private val tilesEditor = ArrayList<Tile>()
     private val creates = ArrayList<(Obj) -> Unit>()
 
@@ -97,6 +95,7 @@ class Solider(r: Resource) {
         for (solidL in solidsL) {
             val solid = Obj(solidL.shape)
             solid.side = solidL.side
+            solid.isFresh = true
             landTps[solidL.tpSolid]!![solidL.num](solid)
             objs().add(solid)
         }
@@ -124,7 +123,7 @@ class Telepath(r: Resource) {
         val enforcer = injectValue<Enforcer>()
         val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("telepath")
-        val tlsAkt = r.tlsAkt("telepath")
+        val tlsAkt = r.tileAkt("telepath")
         injectValue<Solider>().add(tls.neut,10) {
             it.data(DataTileObj(tls))
             it.data(DataTelepath)
@@ -145,7 +144,7 @@ class Staziser(r: Resource) {
     init {
         val stazis = injectValue<Stazis>()
         val tls = r.tlsVoin("staziser")
-        val tlsAkt = r.tlsAkt("staziser")
+        val tlsAkt = r.tileAkt("staziser")
         injectValue<Solider>().add(tls.neut,5) {
             it.data(DataTileObj(tls))
             it.data(DataStaziser)
@@ -178,70 +177,51 @@ class Inviser(r: Resource) {
 
     private object DataInviser : Data
 }
-/*
-class Electric(r: Resource, solider: Solider) {
-    //val tlsAkt = r.tlsAkt("electric")
-    val hintTrace = r.hintTileTouch
-    val tileTrace = r.tile("electric.akt")
 
+class Electric(r: Resource) {
     init {
         val tls = r.tlsVoin("electric")
         injectValue<Solider>().add(tls.neut,3){
             it.data(DataTileObj(tls))
             it.data(DataElectric)
         }
+
+        val tlsAkt = r.tileAkt("electric")
+        val lifer = injectValue<Lifer>()
+        val spoter = injectValue<Spoter>()
+        spoter.addSkil<DataElectric>(){ sideVid, obj, objSrc ->
+            obj.near().filter { lifer.canDamage(it) }.map {
+                AktSimple(it, tlsAkt) {
+                    wave(it,lifer,obj.shape.pgs).forEach { lifer.damage(it,1) }
+                    spoter.tire(obj)
+                }
+            }
+        }
     }
 
-    inner class SkilHit() : Skil {
-        override fun akts(sideVid: Side, obj: Obj) =
-                obj.near().filter { lifer.canDamage(it) }.map {
-                    AktSimple(it, tlsAkt) {
-                        lifer.damage(it,1)
-                        spoter.tire(obj)
-                    }
-                }
+    private fun wave(start: Pg, lifer: Lifer, pgsExclude:List<Pg>): List<Pg> {
+        val wave = ArrayList<Pg>()
+        val que = ArrayList<Pg>()
+        que.add(start)
+        wave.add(start)
+        while (true) {
+            if (que.isEmpty()) break
+            val next = que.removeAt(0).near.filter { lifer.canDamage(it) && it !in pgsExclude && it !in wave }
+            que.addAll(next)
+            wave.addAll(next)
+        }
+        return wave
     }
 
     private object DataElectric : Data
-    //    override fun focus() = grid().map{it.key to it.value.side}.toList()
-    //
-    //
-    //    override fun raise(aim: Aim, pg: Pg, pgSrc: Pg, side: Side,r:Raise) {
-    //        return
-    //    }
-
-    //    fun wave(pgs: HashMap<Pg, List<Voin>>,que:ArrayList<Pg>) {
-    //        que.firstOrNull()?.let { pg ->
-    //            que.remove(0)
-    //            pgs[pg] = g.info(MsgVoin(pg)).all
-    //            que.addAll(pg.near.filter { it !in pgs && g.info(MsgVoin(it)).all.isNotEmpty() })
-    //            wave(pgs,que)
-    //        }
-    //    }
-    //
-    //    fun hitElectro(pgAim:Pg,pgFrom:Pg){
-    //        val pgs = LinkedHashMap<Pg, List<Voin>>()
-    //        pgs[pgFrom] = emptyList()
-    //        val que = ArrayList<Pg>()
-    //        que.add(pgAim)
-    //        wave(pgs,que)
-    //        pgs.remove(pgFrom)
-    //        pgs.forEach{ p -> p.value.forEach{ g.make(EfkDmg(p.key,it)) }}
-    //        g.traces.add(TraceElectric(pgs.map { it.key }))
-    //    }
-    inner class TraceElectric(val pgs: List<Pg>) : Trace() {
-        override fun dabsOnGrid() =
-                pgs.map { DabOnGrid(it, DabTile(tileTrace, hintTrace)) }
-
-    }
 }
-*/
+
 
 class Imitator(r: Resource) {
     init {
         val objs = injectObjs().value
         val tls = r.tlsVoin("imitator")
-        injectValue<Solider>().add(tls.neut,30) {
+        injectValue<Solider>().add(tls.neut,null) {
             it.data(DataTileObj(tls))
             it.data(DataImitator)
         }
