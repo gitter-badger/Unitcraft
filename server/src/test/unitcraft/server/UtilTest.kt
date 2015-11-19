@@ -50,7 +50,7 @@ class WserTest:Wser{
 
     var closed:String? = null
 
-    override fun onOpen(fn: (String, Boolean) -> Unit) {
+    override fun onOpen(fn: (String) -> Unit) {
 
     }
 

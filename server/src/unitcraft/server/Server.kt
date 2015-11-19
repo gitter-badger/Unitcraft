@@ -6,7 +6,7 @@ import unitcraft.inject.inject
 import java.util.*
 import java.util.concurrent.Executors
 
-class Server {
+class Server(val isDebug:Boolean) {
     val wser: Wser by inject()
     val log: Log by inject()
     val threadMain = Executors.newSingleThreadExecutor()
@@ -20,7 +20,7 @@ class Server {
     lateinit var bttl: Bttl
 
     init {
-        wser.onOpen { key, isLocal -> threadMain.execute { onOpen(key, isLocal) } }
+        wser.onOpen { key -> threadMain.execute { onOpen(key) } }
         wser.onMsg { key, msg -> threadMain.execute { onMsg(key, msg) } }
         wser.onClose { key -> threadMain.execute { onClose(key) } }
     }
@@ -64,11 +64,11 @@ class Server {
         }
     }
 
-    fun onOpen(key: String, isLocal: Boolean) {
-        ssn = Ssn(key, isLocal)
+    fun onOpen(key: String) {
+        ssn = Ssn(key)
         ssns[key] = ssn
         log.open()
-        if (isLocal) {
+        if (isDebug) {
             var i = 0
             while (true) {
                 val id = Id("dev$i")
@@ -332,7 +332,7 @@ class Server {
 
 }
 
-class Ssn(val key: String, val isLocal: Boolean) {
+class Ssn(val key: String) {
 
     private var _id: Id? = null
 

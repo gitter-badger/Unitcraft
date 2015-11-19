@@ -9,11 +9,11 @@ import java.util.*
 class WserJavaWebSocket(val addr: InetSocketAddress) : WebSocketServer(addr), Wser {
     private var wss = HashMap<String, WebSocket>()
 
-    private lateinit var slotOnOpen: (String, Boolean) -> Unit
+    private lateinit var slotOnOpen: (String) -> Unit
     private lateinit var slotOnMsg: (String, String) -> Unit
     private lateinit var slotOnClose: (String) -> Unit
 
-    override fun onOpen(fn: (String, Boolean) -> Unit) {
+    override fun onOpen(fn: (String) -> Unit) {
         slotOnOpen = fn
     }
 
@@ -28,9 +28,7 @@ class WserJavaWebSocket(val addr: InetSocketAddress) : WebSocketServer(addr), Ws
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         val key = toKey(conn)
         wss[key] = conn
-        println("remote ${conn.remoteSocketAddress.address}")
-        println("local ${conn.localSocketAddress.address}")
-        slotOnOpen(key, conn.remoteSocketAddress.address.isLoopbackAddress)
+        slotOnOpen(key)
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
@@ -62,7 +60,7 @@ class WserJavaWebSocket(val addr: InetSocketAddress) : WebSocketServer(addr), Ws
 
 
 interface Wser {
-    fun onOpen(fn: (String, Boolean) -> Unit)
+    fun onOpen(fn: (String) -> Unit)
     fun onMsg(fn: (String, String) -> Unit)
     fun onClose(fn: (String) -> Unit)
     fun start()

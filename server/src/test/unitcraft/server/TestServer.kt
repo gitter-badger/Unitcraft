@@ -30,11 +30,11 @@ class TestServer {
     @Before fun before() {
         wser = WserTest()
         register<Wser>(wser)
-        server = Server()
+        server = Server(false)
     }
 
     @Test fun regAndChangeNick() {
-        server.onOpen(idSsn, false)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "n")
         Thread.sleep(300)
         assertEquals("msg n", log.last, "сообщения залогировано")
@@ -62,21 +62,21 @@ class TestServer {
     }
 
     @Test fun notExistCmd() {
-        server.onOpen(idSsn, false)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "xxx")
         assertTrue(log.last.startsWith("violation"))
         wser.assertClose(idSsn)
     }
 
     @Test fun emptyCmd() {
-        server.onOpen(idSsn, false)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "")
         log.assertLast("violation")
         wser.assertClose(idSsn)
     }
 
     @Test fun vsRobot() {
-        server.onOpen(idSsn, false)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "n")
         Thread.sleep(300)
         val pw = wser.msgLast.substring(1, wser.msgLast.length)
@@ -87,7 +87,7 @@ class TestServer {
     }
 
     @Test fun queueAndDecline() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "p1 5")
         wser.assertLast(idSsn, "squeue")
 
@@ -96,27 +96,27 @@ class TestServer {
     }
 
     @Test fun queueWrongBetRange() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "p5 1")
         log.assertLast("violation")
         wser.assertClose(idSsn)
     }
 
     @Test fun twoQueueWithoutIntersection() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "p1 5")
         wser.assertLast(idSsn,"squeue")
 
-        server.onOpen(idSsnVs, true)
+        server.onOpen(idSsnVs)
         server.onMsg(idSsnVs, "p10 15")
         wser.assertLast(idSsnVs,"squeue")
     }
 
     private fun twoMatch(){
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "p1 5")
 
-        server.onOpen(idSsnVs, true)
+        server.onOpen(idSsnVs)
         server.onMsg(idSsnVs, "p2 6")
     }
 
@@ -180,7 +180,7 @@ class TestServer {
     }
 
     @Test fun inviteThenDecline() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "cInvt 7")
         wser.assertLast(idSsn,"sinvite")
 
@@ -189,10 +189,10 @@ class TestServer {
     }
 
     @Test fun twoInviteEqual() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "cdev2 7")
 
-        server.onOpen(idSsnVs, true)
+        server.onOpen(idSsnVs)
         server.onMsg(idSsnVs, "cdev1 7")
 
         assertTrue(log.last.startsWith("vsPlayer"))
@@ -201,29 +201,29 @@ class TestServer {
     }
 
     @Test fun twoInviteIdNotEqual() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "cnoid 7")
         wser.assertLast(idSsn,"sinvite")
 
-        server.onOpen(idSsnVs, true)
+        server.onOpen(idSsnVs)
         server.onMsg(idSsnVs, "cnoid 7")
         wser.assertLast(idSsnVs,"sinvite")
     }
 
     @Test fun twoInviteBetNotEqual() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "cdev2 7")
         wser.assertLast(idSsn,"sinvite")
 
-        server.onOpen(idSsnVs, true)
+        server.onOpen(idSsnVs)
         server.onMsg(idSsnVs, "cdev1 8")
         wser.assertLast(idSsnVs, "sinvite")
     }
 
     @Test fun vsRobotOnGame() {
-        server.onOpen(idSsn, true)
+        server.onOpen(idSsn)
         server.onMsg(idSsn, "cdev2 7")
-        server.onOpen(idSsnVs, true)
+        server.onOpen(idSsnVs)
         server.onMsg(idSsnVs, "cdev1 7")
         server.onMsg(idSsn, "t")
 
