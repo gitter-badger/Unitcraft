@@ -160,22 +160,22 @@ class ServerCdn() : NanoHTTPD(8000) {
     }
 
     fun deploy(isTest:Boolean) {
-//        val dirPrepare =  File("githubpages/"+if(isTest) "test" else "")
-//        dirPrepare.walkBottomUp().treeFilter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
-//            if(it!=dirPrepare) it.delete()
-//        }
-//        dirPrepare.mkdirs()
-//        File(dirPrepare,"png/").mkdirs()
-//
-//        prepareJsServer(dirPrepare,"ws://"+(if(isTest) "test" else "main")+"-unitcraft.rhcloud.com:8000")
-//        for (qdmn in listQdmnTile) createTileset(qdmn,dirPrepare)
-//        for (qdmn in listQdmnPanel) createPanelset(qdmn,dirPrepare)
-//        val pathPrepare = dirPrepare.toPath()
-//        val pathCdn = dirCdn.toPath()
-//        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" }.forEach {
-//            val src = it.toPath()
-//            if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
-//        }
+        val dirPrepare =  File("githubpages/"+if(isTest) "test" else "")
+        dirPrepare.walkBottomUp().treeFilter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
+            if(it!=dirPrepare) it.delete()
+        }
+        dirPrepare.mkdirs()
+        File(dirPrepare,"png/").mkdirs()
+
+        prepareJsServer(dirPrepare,"ws://"+(if(isTest) "test" else "main")+"-unitcraft.rhcloud.com:8000")
+        for (qdmn in listQdmnTile) createTileset(qdmn,dirPrepare)
+        for (qdmn in listQdmnPanel) createPanelset(qdmn,dirPrepare)
+        val pathPrepare = dirPrepare.toPath()
+        val pathCdn = dirCdn.toPath()
+        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" }.forEach {
+            val src = it.toPath()
+            if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
+        }
         deployOpenshift(isTest)
     }
 
