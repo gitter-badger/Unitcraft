@@ -160,22 +160,22 @@ class ServerCdn() : NanoHTTPD(8000) {
     }
 
     fun deploy(isTest:Boolean) {
-        val dirPrepare =  File("githubpages/"+if(isTest) "test" else "")
-        dirPrepare.walkBottomUp().treeFilter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
-            if(it!=dirPrepare) it.delete()
-        }
-        dirPrepare.mkdirs()
-        File(dirPrepare,"png/").mkdirs()
-
-        prepareJsServer(dirPrepare,"ws://"+(if(isTest) "test" else "main")+"-unitcraft.rhcloud.com:8000")
-        for (qdmn in listQdmnTile) createTileset(qdmn,dirPrepare)
-        for (qdmn in listQdmnPanel) createPanelset(qdmn,dirPrepare)
-        val pathPrepare = dirPrepare.toPath()
-        val pathCdn = dirCdn.toPath()
-        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" }.forEach {
-            val src = it.toPath()
-            if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
-        }
+//        val dirPrepare =  File("githubpages/"+if(isTest) "test" else "")
+//        dirPrepare.walkBottomUp().treeFilter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
+//            if(it!=dirPrepare) it.delete()
+//        }
+//        dirPrepare.mkdirs()
+//        File(dirPrepare,"png/").mkdirs()
+//
+//        prepareJsServer(dirPrepare,"ws://"+(if(isTest) "test" else "main")+"-unitcraft.rhcloud.com:8000")
+//        for (qdmn in listQdmnTile) createTileset(qdmn,dirPrepare)
+//        for (qdmn in listQdmnPanel) createPanelset(qdmn,dirPrepare)
+//        val pathPrepare = dirPrepare.toPath()
+//        val pathCdn = dirCdn.toPath()
+//        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" }.forEach {
+//            val src = it.toPath()
+//            if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
+//        }
         deployOpenshift(isTest)
     }
 
@@ -203,16 +203,21 @@ val File.nameBase : String
 fun deployOpenshift(isTest:Boolean){
     val dirDeploy = Paths.get("openshift"+if(isTest) "Test" else "")
     var dirActionHooks = Files.createDirectories(dirDeploy.resolve(".openshift/action_hooks/"))
-    dirActionHooks.resolve("start").toFile().writeText(if(isTest) scriptStartOpenshift else scriptStartOpenshiftTest)
+    dirActionHooks.resolve("start").toFile().writeText(scriptStartOpenshift)
     dirActionHooks.resolve("stop").toFile().writeText(scriptStopOpenshift)
     Files.copy(Paths.get(".idea/out/unitcraft.jar"),dirDeploy.resolve("unitcraft.jar"),StandardCopyOption.REPLACE_EXISTING)
 }
 
-val scriptStartOpenshift = """#!/bin/bash
-nohup java -server -jar ${"$"}OPENSHIFT_REPO_DIR/unitcraft.jar > ${"$"}OPENSHIFT_DATA_DIR/start.log 2>&1 &"""
+val cp = listOf("unitcraft.jar","json-simple-1.1.1.jar","Java-WebSocket-1.3.0.jar","java-image-scaling-0.8.5.jar","kotlin-runtime.jar","kotlin-reflect.jar")
+        .map{"${"$"}OPENSHIFT_REPO_DIR/$it"}
+        .joinToString(":")
 
-val scriptStartOpenshiftTest = """#!/bin/bash
-nohup java -server -jar ${"$"}OPENSHIFT_REPO_DIR/unitcraft.jar test > ${"$"}OPENSHIFT_DATA_DIR/start.log 2>&1 &"""
+val osDataDir = "\$OPENSHIFT_DATA_DIR"
+
+val scriptStartOpenshift = """#!/bin/bash
+export JAVA_HOME="/etc/alternatives/java_sdk_1.8.0"
+export PATH=/etc/alternatives/java_sdk_1.8.0/bin:${"$"}PATH
+nohup java -server -cp $cp unitcraft.server.MainKt > $osDataDir/start.log 2>&1 &"""
 
 val scriptStopOpenshift = """#!/bin/bash
 if [ -z "$(ps -ef | grep unitcraft | grep -v grep)" ]

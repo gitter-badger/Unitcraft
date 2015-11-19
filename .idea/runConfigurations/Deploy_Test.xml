@@ -1,16 +1,14 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Deploy Test" type="JetRunConfigurationType" factoryName="Kotlin">
-    <option name="MAIN_CLASS_NAME" value="unitcraft.content.ContentPackage" />
+    <option name="MAIN_CLASS_NAME" value="unitcraft.content.ServerCdnKt" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-    <option name="ALTERNATIVE_JRE_PATH" />
+    <option name="ALTERNATIVE_JRE_PATH" value="" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="content" />
     <envs />
-    <RunnerSettings RunnerId="Run" />
-    <ConfigurationWrapper RunnerId="Run" />
     <method />
   </configuration>
 </component>

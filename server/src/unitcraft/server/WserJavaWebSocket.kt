@@ -28,6 +28,8 @@ class WserJavaWebSocket(val addr: InetSocketAddress) : WebSocketServer(addr), Ws
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         val key = toKey(conn)
         wss[key] = conn
+        println("remote ${conn.remoteSocketAddress.address}")
+        println("local ${conn.localSocketAddress.address}")
         slotOnOpen(key, conn.remoteSocketAddress.address.isLoopbackAddress)
     }
 

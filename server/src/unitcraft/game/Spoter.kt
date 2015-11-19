@@ -62,7 +62,7 @@ class Spoter(r:Resource) {
 
     private fun endAkt(obj:Obj,sideVid: Side){
         if(obj.isFresh && sloysObj(obj,sideVid).isEmpty()) tire(obj)
-        if(obj.isFresh) allData().objAktLast = obj
+        allData().objAktLast = if(obj.isFresh) obj else null
     }
 
     private fun startAkt(obj:Obj,sideVid: Side){

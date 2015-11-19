@@ -54,7 +54,7 @@ function redrawAkter() {
         var pst = ui.pstGrid();
         ctx.translate(pst.x, pst.y);
         drawDrawing(ctx, ui.akts, ui.tileset, ui.tile());
-        drawDabOnGrid(ctx, ui.game.focus, ui.focus.pg, ui.tileset, ui.tile());
+        drawDabOnGrid(ctx, ui.game.dabFocus, ui.focus.pg, ui.tileset, ui.tile());
         ctx.restore();
     }
 }
