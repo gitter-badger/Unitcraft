@@ -12,6 +12,9 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.HashMap
 import java.util.HashSet
 import javax.imageio.ImageIO
@@ -109,6 +112,10 @@ class ServerCdn() : NanoHTTPD(8000) {
         sb.appendln("""var urlWs = "$urlWs";""")
         sb.appendln()
 
+        val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yy.MM.dd.HH"))
+        sb.appendln("""var version = "$now";""")
+        sb.appendln()
+
         listQdmnPanel.joinTo(sb,",","var listQdmnPanel = [","];");
         sb.appendln()
 
@@ -160,6 +167,11 @@ class ServerCdn() : NanoHTTPD(8000) {
     }
 
     fun deploy(isTest:Boolean) {
+        deployGithub(isTest)
+        deployOpenshift(isTest)
+    }
+
+    fun deployGithub(isTest:Boolean){
         val dirPrepare =  File("githubpages/"+if(isTest) "test" else "")
         dirPrepare.walkBottomUp().treeFilter { it.name != ".git" && (isTest || it.name != "test") }.forEach {
             if(it!=dirPrepare) it.delete()
@@ -176,7 +188,6 @@ class ServerCdn() : NanoHTTPD(8000) {
             val src = it.toPath()
             if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
         }
-        deployOpenshift(isTest)
     }
 
     companion object{

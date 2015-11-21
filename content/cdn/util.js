@@ -93,7 +93,7 @@ function loadImage(prefix,qdmn){
             em.emit(img);
             em.end();
         };
-        img.src = "png/"+key+".png"+(isLocal?"?t="+Date.now():"");
+        img.src = "png/"+key+".png?t="+(isLocal?Date.now():version);
     });
 }
 

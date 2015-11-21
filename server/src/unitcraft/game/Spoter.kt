@@ -18,7 +18,7 @@ class Spoter(r:Resource) {
     val listSkilByCopy = ArrayList<(Obj)->Obj?>()
 
     val listOnTire = ArrayList<(Obj) -> Unit>()
-    val slotStopSkils = ArrayList<(Obj,Data)->Boolean>()
+    val slotStopSkils = ArrayList<(Obj)->Boolean>()
 
     init{
         stager.onEndTurn {
@@ -69,7 +69,7 @@ class Spoter(r:Resource) {
         allData().objAktLast?.let{ if(obj!=it) tire(it) }
     }
 
-    private fun skilsOwnObj(obj:Obj) = listSkil.map{it(obj)}.filterNotNull().map{obj to it}//.filter{skil -> slotStopSkils.any{it(obj,skil)}}
+    private fun skilsOwnObj(obj:Obj) = listSkil.map{it(obj)}.filterNotNull().map{obj to it}.filter{slotStopSkils.any{it(obj)}}
 
     private fun skilsObj(obj:Obj)=
         skilsOwnObj(obj) + listSkilByCopy.map{it(obj)}.filterNotNull().flatMap{skilsOwnObj(it)}
