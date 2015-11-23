@@ -1,7 +1,6 @@
 package unitcraft.game.rule
 
 import unitcraft.game.Pg
-import unitcraft.game.Sequel
 import unitcraft.server.Err
 import unitcraft.server.Side
 import unitcraft.server.exclude
@@ -44,7 +43,6 @@ class Obj(shape: Shape) : HasShape(shape) {
     var flip = shape.head.x > shape.head.pgser.xr / 2
     var life = 5
     var hide = false
-    var lastSequel: Sequel? = null
 
     fun isVid(sideVid: Side) = side.isN || side == sideVid || !hide
 
@@ -130,7 +128,8 @@ interface Data
 open class HasData {
     val datas = ArrayList<Data>()
 
-    fun data(data: Data) {
+    inline fun <reified T : Data> data(data: T) {
+        if(has<T>()) throw Err("duplicate data on $this")
         datas.add(data)
     }
 

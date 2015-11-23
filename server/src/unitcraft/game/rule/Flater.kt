@@ -105,7 +105,7 @@ class Forest(r: Resource) {
 
         val mover = injectValue<Mover>()
         mover.slotHide.add { flats()[it.head()].has<DataForest>() }
-        mover.slotMoveAfter.add { shapeFrom, move -> mover.rehide() }
+        //mover.slotMoveAfter.add { shapeFrom, move -> mover.rehide() }
     }
 
     object DataForest : Data
@@ -143,17 +143,17 @@ class Catapult(r: Resource) {
         val mover = injectValue<Mover>()
         val tileAkt = r.tileAkt("catapult")
         val flats = injectFlats().value
-        val skil = { side: Side, obj: Obj, objSrc: Obj ->
+        val skil = createSkil {
             obj.shape.head.all.map { pg ->
-                val move = Move(obj, obj.shape.headTo(pg), side)
+                val move = Move(obj, obj.shape.headTo(pg), sideVid)
                 val can = mover.canMove(move)
-                if (can != null) AktSimple(pg, tileAkt) {
+                if (can != null) akt(pg, tileAkt) {
                     if (can()) {
                         mover.move(move)
                         spoter.tire(obj)
                     }
-                } else null
-            }.filterNotNull()
+                }
+            }
         }
         spoter.listSkil.add {
             if (it.shape.pgs.intersect(flats().by<Catapult, Flat>().flatMap { it.first.shape.pgs }).isNotEmpty()) skil else null

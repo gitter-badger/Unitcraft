@@ -4,10 +4,10 @@ import java.util.*
 
 class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
 
-    val up by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x,y-1) }
-    val rt by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x+1,y) }
-    val dw by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x,y+1) }
-    val lf by lazy(LazyThreadSafetyMode.NONE) { pgser.pgOrNull(x-1,y) }
+    val up by lazy(LazyThreadSafetyMode.NONE) { plus(Dr.up) }
+    val rt by lazy(LazyThreadSafetyMode.NONE) { plus(Dr.rt) }
+    val dw by lazy(LazyThreadSafetyMode.NONE) { plus(Dr.dw) }
+    val lf by lazy(LazyThreadSafetyMode.NONE) { plus(Dr.lf) }
     val near by lazy(LazyThreadSafetyMode.NONE) { listOf(up, rt,pgser.pgOrNull(x,y+1),pgser.pgOrNull(x-1,y)).filterNotNull() }
 
     val all by lazy(LazyThreadSafetyMode.NONE) { pgser.pgs}
@@ -15,6 +15,8 @@ class Pg(val pgser: Pgser,val x:Int, val y:Int):Comparable<Pg>{
     override fun toString() = "$x $y"
 
     override fun compareTo(other: Pg) = x * pgser.yr + y - (other.x * pgser.yr + other.y)
+
+    fun plus(dr:Dr) = pgser.pgOrNull(x+dr.x,y+dr.y)
 }
 
 class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{
@@ -33,21 +35,8 @@ class Pgser(val xr:Int,val yr:Int):Sequence<Pg>{
     override fun iterator() = pgs.iterator()
 }
 
-// TODO превратить его в ArrayList
-class Grid<V:Any>:MutableMap<Pg, V> by HashMap<Pg,V>(){
+enum class Dr(val x:Int,val y:Int){
+    up(0,-1),rt(1,0),dw(0,1),lf(-1,0);
 
-//    fun get(pg:Pg) = objs[pg]
-//
-//    fun set(pg:Pg,value:V){ objs[pg] = value }
-//
-//    fun move(pgFrom:Pg,pgTo:Pg):V{
-//        objs[pgTo] = objs.remove(pgFrom)!!
-//        return objs[pgTo]
-//    }
-//
-//    fun remove(pg: Pg) = objs.remove(pg)!=null
-//
-//    fun contains(pg:Pg) = objs.contains(pg)
-
-//    override fun iterator() = objs.iterator()
+    operator fun unaryMinus() = values.first { it.x == -x && it.y == -y }
 }

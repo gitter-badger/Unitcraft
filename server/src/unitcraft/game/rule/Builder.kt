@@ -18,8 +18,8 @@ class Builder(r: Resource) {
         val tileAkt = r.tile("build", Resource.effectAkt)
         val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
         val lifer = injectValue<Lifer>()
-        injectValue<Spoter>().addSkil<SkilBuild> { side, obj, objSrc ->
-            val data = objSrc<SkilBuild>()
+        injectValue<Spoter>().addSkil<SkilBuild> { side, obj ->
+            val data = obj<SkilBuild>()
             val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
             val akts = ArrayList<AktOpt>()
             for (pg in data.zone(obj)) {
@@ -73,7 +73,7 @@ class Redeployer(r: Resource) {
         val tileAkt = r.tileAkt("redeployer")
         val objs = injectObjs().value
         val spoter = injectValue<Spoter>()
-        spoter.addSkil<DataRedeployer>() { sideVid, obj, data ->
+        spoter.addSkil<DataRedeployer>() { sideVid, obj ->
             obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false }.map {
                 AktSimple(it, tileAkt) {
                     objs()[it]?.let {

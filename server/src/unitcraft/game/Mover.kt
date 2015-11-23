@@ -11,8 +11,8 @@ class Mover{
     val stager: Stager by inject()
     val objs:()-> Objs by injectObjs()
     val slotStopMove = ArrayList<(Move)->Boolean>()
-    val slotStopBuild = ArrayList<(Shape)->Boolean>()
-    val slotMoveAfter = ArrayList<(Shape,Move)->Unit>()
+    val slotStopBuild = ArrayList<(Shape,Side)->Boolean>()
+    val slotMoveAfter = ArrayList<(Shape,Move)->Boolean>()
     val slotHide = ArrayList<(Obj)->Boolean>()
 
     init{
@@ -34,7 +34,7 @@ class Mover{
     }
 
     fun canBuild(shape: Shape, sideVid:Side): (()->Boolean)? {
-        if(slotStopBuild.any{it(shape)}) return null
+        if(slotStopBuild.any{it(shape,sideVid)}) return null
         return canBusy(shape,sideVid)
     }
 
@@ -46,7 +46,7 @@ class Mover{
         return { reveal(objHided);false}
     }
 
-    fun move(move: Move) {
+    fun move(move: Move):Boolean {
         if(objs().byClash(move.shapeTo).isNotEmpty()) throw Err("cant move obj=${move.obj} to shape=${move.shapeTo}")
         val shapeFrom = move.obj.shape
         move.obj.shape = move.shapeTo
@@ -54,7 +54,7 @@ class Mover{
             val pgsWt = pgsWatch(side)
             objs().filter { it.shape.pgs.intersect(pgsWt).isNotEmpty() }.forEach { it.hide = false }
         }
-        slotMoveAfter.forEach{it(shapeFrom,move)}
+        return slotMoveAfter.map{it(shapeFrom,move)}.any{it}
     }
 
     private fun pgsWatch(side:Side) = objs().bySide(side).flatMap { it.near() }.distinct()

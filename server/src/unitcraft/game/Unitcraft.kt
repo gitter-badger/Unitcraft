@@ -61,6 +61,8 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Imitator(r)
     Redeployer(r)
     Warehouse(r)
+    Frog(r)
+    Mina(r)
     return r
 }
 
@@ -211,8 +213,9 @@ class CmderUnitcraft : CmderGame {
             stager.stage(side),
             stager.edge(side),
             stager.focus,
-            allData().objAktLast?.head(),
+            spoter.pgFocus(),
             listOf(allData().point[side]!!, allData().point[side.vs]!!),
             if (data().canEdit) editor.opterTest else null
     )
+
 }

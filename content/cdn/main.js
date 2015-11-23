@@ -195,7 +195,7 @@ function onMemo(memo, ui) {
     var dmnGameOld = ui.game != null ? ui.game.dmn : null;
     ui.game = R.last(memo);
     ui.instant = Date.now();
-    if(ui.game.focus!=null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
+    if(ui.game.focus!=null && ui.game.spots[strPg(ui.game.focus)]!=null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
     if (dmnGameOld == null || !R.eqDeep(dmnGameOld, ui.game.dmn)) {
         updateScale(ui.scaleBest(), ui);
     }
