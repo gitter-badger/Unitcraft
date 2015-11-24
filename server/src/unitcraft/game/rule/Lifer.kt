@@ -3,10 +3,11 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.inject.inject
 import unitcraft.inject.injectValue
+import unitcraft.server.Err
 import java.util.*
 
 class Lifer(r: Resource) {
-    private val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
+    val slotAfterDamage = ArrayList<(List<Dmg>)->Unit>()
 
     val objs: ()->Objs by injectObjs()
 
@@ -14,9 +15,16 @@ class Lifer(r: Resource) {
         obj.life += value
     }
 
+    fun damage(dmgs:List<Dmg>){
+        dmgs.forEach {
+            it.obj.life -= it.value
+        }
+        slotAfterDamage.forEach { it(dmgs) }
+        funeral()
+    }
+
     fun damage(obj:Obj,value:Int){
-        obj.life -= value
-        if(obj.life<=0) objs().remove(obj)
+        damage(listOf(Dmg(obj,value)))
     }
 
     fun damage(pg:Pg,value:Int){
@@ -33,9 +41,20 @@ class Lifer(r: Resource) {
         obj.life = value
     }
 
+    private fun funeral(){
+        objs().forEach { if(it.life<=0) objs().remove(it) }
+    }
+
     init{
+        val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
         injectValue<Drawer>().drawObjs.add {obj,side,ctx ->
-            ctx.drawText(obj.head(), obj.life, hintTextLife)
+            ctx.drawText(obj.pg, obj.life, hintTextLife)
         }
+    }
+}
+
+data class Dmg(val obj:Obj,val value:Int){
+    init{
+        if(value==0) throw Err("dmg != 0")
     }
 }

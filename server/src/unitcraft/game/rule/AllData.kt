@@ -1,5 +1,6 @@
 package unitcraft.game.rule
 
+import unitcraft.game.DabOnGrid
 import unitcraft.game.Pg
 import unitcraft.server.Err
 import unitcraft.server.Side
@@ -14,8 +15,7 @@ class AllData {
     val bonus = HashMap<Side, Int>()
 
     val point = HashMap<Side, Int>().apply {
-        put(Side.a, 15)
-        put(Side.b, 15)
+        Side.ab.map{put(it, 15)}
     }
 
     var sideTurn: Side = Side.a
@@ -23,105 +23,65 @@ class AllData {
     var objAktLast: Obj? = null
 
     var needJoin = true
+
+    val traces = HashMap<Side,ArrayList<DabOnGrid>>().apply {
+        Side.ab.map{put(it, ArrayList<DabOnGrid>())}
+    }
 }
 
-class Flat(shape: Shape) : HasShape(shape) {
-    override fun toString() = "Flat $shape $datas"
+class Flat(pg: Pg) : HasPg(pg) {
+    override fun toString() = "Flat $pg $datas"
 }
 
 class Flats : ListHasShape<Flat> {
     override val list = ArrayList<Flat>()
 
-    fun sort() = list.apply { Collections.sort(list, compareBy { it.head() }) }
+    fun sort() = list.apply { Collections.sort(list, compareBy { it.pg }) }
 
     operator fun get(pg: Pg) = list.byPg(pg)!!
 }
 
-class Obj(shape: Shape) : HasShape(shape) {
+class Obj(pg: Pg) : HasPg(pg) {
     var side = Side.n
     var isFresh = false
-    var flip = shape.head.x > shape.head.pgser.xr / 2
+    var flip = pg.x > pg.pgser.xr / 2
     var life = 5
     var hide = false
 
     fun isVid(sideVid: Side) = side.isN || side == sideVid || !hide
 
-    override fun toString() = "Solid $shape $datas"
+    override fun toString() = "Solid $pg $datas"
 }
 
 class Objs : ListHasShape<Obj> {
     override val list = ArrayList<Obj>()
 
-    fun sort(): List<Obj> = list.apply { Collections.sort(list, compareBy { it.head() }) }
+    fun sort(): List<Obj> = list.apply { Collections.sort(list, compareBy { it.pg }) }
 
     fun bySide(side: Side) = list.bySide(side)
 
     operator fun get(pg: Pg) = list.byPg(pg)
 }
 
-inline fun <reified T : Data, A : HasShape> List<A>.by() = filter { it.has<T>() }.map { it to it<T>() }
-fun <H : HasShape> List<H>.byPg(pg: Pg) = firstOrNull() { pg in it.shape.pgs }
-fun <H : HasShape> List<H>.byClash(shape: Shape) = filter { obj -> shape.pgs.any { it in obj.shape.pgs } }
+inline fun <reified T : Data, A : HasPg> List<A>.by() = filter { it.has<T>() }.map { it to it<T>() }
+fun <H : HasPg> List<H>.byPg(pg: Pg) = firstOrNull() { pg == it.pg }
 fun List<Obj>.bySide(side: Side) = filter { it.side == side }
 
-interface ListHasShape<H : HasShape> : Iterable<H> {
+interface ListHasShape<H : HasPg> : Iterable<H> {
     val list: ArrayList<H>
 
     fun add(obj: H) {
-        if (byClash(obj.shape).isNotEmpty()) throw Err("obj=$obj clash")
+        if (byPg(obj.pg)!=null) throw Err("obj=$obj clash")
         list.add(obj)
     }
 
     override fun iterator() = list.iterator()
     fun remove(obj: H) = list.remove(obj)
 
-    fun byClash(shape: Shape) = list.byClash(shape)
+    fun byPg(pg: Pg) = list.byPg(pg)
 }
 
-inline fun <reified T : Data, H : HasShape> ListHasShape<H>.by() = list.by<T, H>()
-
-abstract class Shape(val head: Pg) {
-    abstract val pgs: List<Pg>
-    abstract fun headTo(pgTo: Pg): Shape
-    abstract fun near(): List<Pg>
-    val further: List<Pg> by lazy(LazyThreadSafetyMode.NONE) { near() + near().flatMap { it.near }.distinct().filter { it != head } }
-}
-
-class Singl(head: Pg) : Shape(head) {
-    override val pgs = listOf(head)
-    override fun headTo(pgTo: Pg) = Singl(pgTo)
-    override fun near() = head.near
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other?.javaClass != javaClass) return false
-        other as Singl
-        if (head != other.head) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return head.hashCode()
-    }
-
-    override fun toString() = head.toString()
-}
-
-class Quadr(head: Pg) : Shape(head) {
-    override val pgs = listOf(head, head.rt, head.dw, head.rt?.dw).requireNoNulls()
-    override fun headTo(pgTo: Pg) = Quadr(pgTo)
-    override fun near() = listOf(head.up, head.lf, head.dw?.lf, head.dw?.dw, head.rt?.up, head.rt?.rt).filterNotNull()
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other?.javaClass != javaClass) return false
-        other as Singl
-        if (head != other.head) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return head.hashCode()
-    }
-}
+inline fun <reified T : Data, H : HasPg> ListHasShape<H>.by() = list.by<T, H>()
 
 interface Data
 
@@ -148,8 +108,11 @@ open class HasData {
     inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { data(v()) }
 }
 
-open class HasShape(var shape: Shape) : HasData() {
-    fun head() = shape.head
-    fun near() = shape.near()
-    fun further() = shape.further
+open class HasPg(var pg: Pg) : HasData() {
+    fun near() = pg.near
+
+    fun further() = pg.further
+
 }
+
+

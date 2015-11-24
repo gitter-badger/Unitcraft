@@ -34,7 +34,6 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Spoter(r))
     register(Flater(r))
     register(Sider())
-    register(Tracer(r))
     register(Mover())
     register(Stazis(r))
     register(Lifer(r))
@@ -43,6 +42,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(SkilerHit(r))
     register(Builder(r))
     register(Solider(r))
+    register(Tracer(r))
 
     Forest(r)
     Grass(r)
@@ -82,6 +82,7 @@ class CmderUnitcraft : CmderGame {
     val spoter: Spoter by inject()
     val drawer: Drawer by inject()
     val tracer: Tracer by inject()
+    val lifer: Lifer by inject()
 
     override fun createData(mission: Int?, canEdit: Boolean) = DataUnitcraft(mission, canEdit)
 
@@ -157,6 +158,7 @@ class CmderUnitcraft : CmderGame {
     private fun editAdd(side: Side, prm: Prm) {
         ensureCanEdit()
         prm.ensureSize(3)
+        tracer.clear()
         val num = prm.int(2)
         if (num >= editor.opterTest.opts.size) throw Violation("editAdd out bound")
         editor.editAdd(prm.pg(0), side, num)
@@ -165,36 +167,42 @@ class CmderUnitcraft : CmderGame {
     private fun editRemove(prm: Prm) {
         ensureCanEdit()
         prm.ensureSize(2)
+        tracer.clear()
         editor.editRemove(prm.pg(0))
     }
 
     private fun editDestroy(prm: Prm) {
         ensureCanEdit()
         prm.ensureSize(2)
-        editor.editDestroy(prm.pg(0))
+        tracer.clear()
+        lifer.damage(prm.pg(0),1)
     }
 
     private fun editChange(side: Side, prm: Prm) {
         ensureCanEdit()
         prm.ensureSize(2)
+        tracer.clear()
         solider.editChange(prm.pg(0), side)
     }
 
     private fun akt(side: Side, prm: Prm) {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(5)
+        tracer.clear()
         spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3))
     }
 
     private fun aktOpt(side: Side, prm: Prm) {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(6)
+        tracer.clear()
         spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5))
     }
 
     private fun endTurn(side: Side, prm: Prm) {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(0)
+        tracer.clear()
         stager.endTurn()
     }
 
@@ -209,7 +217,7 @@ class CmderUnitcraft : CmderGame {
             data().land.pgser.yr,
             drawer.draw(side),
             spoter.spots(side),
-            tracer.traces(side),
+            allData().traces[side]!!,
             stager.stage(side),
             stager.edge(side),
             stager.focus,
@@ -217,5 +225,4 @@ class CmderUnitcraft : CmderGame {
             listOf(allData().point[side]!!, allData().point[side.vs]!!),
             if (data().canEdit) editor.opterTest else null
     )
-
 }

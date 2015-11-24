@@ -23,11 +23,11 @@ class Builder(r: Resource) {
             val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
             val akts = ArrayList<AktOpt>()
             for (pg in data.zone(obj)) {
-                val can = mover.canBuild(Singl(pg), side)
+                val can = mover.canBuild(pg, side)
                 if (can != null) {
                     akts.add(AktOpt(pg, tileAkt, dabs) {
                         if (can()) {
-                            val objCreated = Obj(Singl(pg))
+                            val objCreated = Obj(pg)
                             objCreated.side = obj.side
                             data.fabriks[it].create(objCreated)
                             objs().add(objCreated)

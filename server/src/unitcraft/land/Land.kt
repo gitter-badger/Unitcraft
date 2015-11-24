@@ -3,14 +3,12 @@ package unitcraft.land
 import unitcraft.game.Pg
 import unitcraft.game.Pgser
 import unitcraft.game.rule.Flater
-import unitcraft.game.rule.Singl
 import unitcraft.game.rule.Solider
 import unitcraft.inject.inject
 import unitcraft.land.TpFlat.*
-import unitcraft.land.TpSolid.*
+import unitcraft.land.TpSolid.builder
 import unitcraft.server.Err
 import unitcraft.server.Side
-import unitcraft.server.exclude
 import java.util.*
 
 class Land(val mission: Int?) {
@@ -21,8 +19,8 @@ class Land(val mission: Int?) {
     val r = Random(seed)
 
     val pgser = createPgser()
-    val yr = pgser.yr
     val xr = pgser.xr
+    val yr = pgser.yr
 
     val flats = ArrayList<Flat>()
     val solids = ArrayList<Solid>()
@@ -54,7 +52,7 @@ class Land(val mission: Int?) {
         }
         exc.addAll(cur)
 
-        cur = Algs.spray(this, exc, 1+r.nextInt(5))
+        cur = Algs.spray(this, exc, 1 + r.nextInt(5))
         cur.forEach { addFlat(it, special, idxFlatRnd(special)) }
         exc.addAll(cur)
 
@@ -70,13 +68,13 @@ class Land(val mission: Int?) {
         }
         exc.addAll(cur)
 
-        solids.add(Solid(pgser.pg(0, 3), builder, 0,Side.a))
-        solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1,Side.b))
+        solids.add(Solid(pgser.pg(0, 3), builder, 0, Side.a))
+        solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1, Side.b))
     }
 
-    fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int,side:Side = sideRnd()) {
+    fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int, side: Side = sideRnd()) {
         flats.removeIf { it.pg == pg }
-        flats.add(Flat(pg, tpFlat, idx,side))
+        flats.add(Flat(pg, tpFlat, idx, side))
     }
 
     fun sideRnd() = if (r.nextBoolean()) Side.a else Side.b
@@ -96,13 +94,13 @@ class Land(val mission: Int?) {
 
     fun idxSolidRnd(tpFlat: TpSolid) = r.nextInt(solider.maxFromTpSolid()[tpFlat]!!)
 
-    private fun createPgser():Pgser{
-        val (x,y) = selRnd(dmns)
-        return Pgser(x,y)
+    private fun createPgser(): Pgser {
+        val (x, y) = selRnd(dmns)
+        return Pgser(x, y)
     }
 
-    companion object{
-        val dmns = listOf(9 to 9,9 to 10,9 to 11,9 to 12,10 to 10,10 to 11, 10 to 12,11 to 12, 12 to 12)
+    companion object {
+        val dmns = (9..12).flatMap{yr -> (yr..12).map{it to yr}}
     }
 }
 
@@ -115,11 +113,11 @@ enum class TpSolid {
 }
 
 class Flat(val pg: Pg, val tpFlat: TpFlat, val num: Int, val side: Side) {
-    val shape = Singl(pg)
+
 }
 
 class Solid(val pg: Pg, val tpSolid: TpSolid, val num: Int, val side: Side) {
-    val shape = Singl(pg)
+
 }
 
 object Algs {

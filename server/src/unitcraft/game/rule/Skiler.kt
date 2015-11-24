@@ -7,90 +7,91 @@ import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
-class SkilerMove(r: Resource){
+class SkilerMove(r: Resource) {
     val mover by inject<Mover>()
 
-    init{
+    init {
         val tileAktMove = r.tlsAktMove
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
-        spoter.listOnTire.add{obj ->
-            if(obj.has<SkilMove>()) obj<SkilMove>().refuel()
+        spoter.listOnTire.add { obj ->
+            if (obj.has<SkilMove>()) obj<SkilMove>().refuel()
         }
         spoter.addSkilByBuilder<SkilMove> {
             val data = obj<SkilMove>()
-            if(data.fuel>0){
-                val wave = Wave(obj,data.fuel)
-                for(pg in wave.pgs) {
+            if (data.fuel > 0) {
+                val wave = Wave(obj, data.fuel, sideVid)
+                for (pg in wave.pgs()) {
                     //val move = Move(obj, obj.shape.headTo(pg), sideVid)
-
                     akt(pg, tileAktMove) {
                         val path = wave.path(pg)
-                        for((can,move) in path){
-                            if(can()) {
+                        for (pg in path) {
+                            val move = Move(obj, pg, sideVid)
+                            val can = mover.canMove(move)
+                            if (can != null && can()) {
                                 data.fuel -= 1
-                                if(mover.move(move)) break
+                                if (mover.move(move)) break
                             } else break
                         }
                     }
                 }
-            }            
+            }
         }
     }
 
-    inner class Wave(obj:Obj,fuel:Int){
-        val pgs = ArrayList<Pg>()
+    inner class Wave(obj: Obj, fuel: Int, sideVid: Side) {
+        private val map = HashMap<Pg, Int>()
 
-        init{
-            val que = ArrayList<Pg>()
-            que.add(obj.head())
-            while(true){
+        init {
+            val que = ArrayList<Pair<Pg, Int>>()
+            que.add(obj.pg to 0)
+            while (true) {
                 if (que.isEmpty()) break
-                val next = que.removeAt(0).near.filter {
-                    val move = Move(obj, obj.shape.headTo(pg), sideVid)
-                    mover.canMove(move) && it !in pgsExclude && it !in wave
-                }
+                val (cur, cost) = que.removeAt(0)
+                if (cost == fuel) continue
+                val next = cur.near.filter {
+                    val move = Move(obj, obj.pg, it, sideVid)
+                    mover.canMove(move) != null && it !in map && it != obj.pg
+                }.map { it to cost + 1 }
+                map.putAll(next)
+                que.addAll(next)
             }
         }
 
-        fun path(pg:Pg):List<Pair<()->Boolean,Move>>{
-
+        fun path(pgFinish: Pg): List<Pg> {
+            if (pgFinish !in map) throw Err("pgFinish($pgFinish) is not in wave")
+            val path = ArrayList<Pg>()
+            path.add(pgFinish)
+            var cur = pgFinish to map[pgFinish]!!
+            while (true) {
+                cur = cur.first.near.reversed().map { it to (map[it] ?: Int.MAX_VALUE) }.filter { it.second < cur.second }.minBy { it.second } ?: break
+                path.add(cur.first)
+            }
+            return path.reversed()
         }
-    }
 
-    private fun wave(start: Pg, lifer: Lifer, pgsExclude:List<Pg>): List<Pg> {
-        val wave = ArrayList<Pg>()
-        val que = ArrayList<Pg>()
-        que.add(start)
-        wave.add(start)
-        while (true) {
-            if (que.isEmpty()) break
-            val next = que.removeAt(0).near.filter { lifer.canDamage(it) && it !in pgsExclude && it !in wave }
-            que.addAll(next)
-            wave.addAll(next)
-        }
-        return wave
+        fun pgs() = map.keys
     }
 }
 
-class SkilMove(var fuelMax:Int = 3):Data{
+class SkilMove(var fuelMax: Int = 3) : Data {
     var fuel = fuelMax
 
-    fun refuel(){
+    fun refuel() {
         fuel = fuelMax
     }
 }
 
-class SkilerHit(r:Resource){
-    init{
+class SkilerHit(r: Resource) {
+    init {
         val tlsAkt = r.tileAkt("hit")
         val lifer = injectValue<Lifer>()
-        val spoter =  injectValue<Spoter>()
-        spoter.addSkil<DataHit>(){sideVid, obj ->
+        val spoter = injectValue<Spoter>()
+        spoter.addSkil<DataHit>() { sideVid, obj ->
             val data = obj<DataHit>()
             obj.near().filter { lifer.canDamage(it) }.map {
                 AktSimple(it, tlsAkt) {
-                    lifer.damage(it,data.dmg)
+                    lifer.damage(it, data.dmg)
                     spoter.tire(obj)
                 }
             }
@@ -98,4 +99,4 @@ class SkilerHit(r:Resource){
     }
 }
 
-class DataHit(val dmg:Int) : Data
+class DataHit(val dmg: Int) : Data

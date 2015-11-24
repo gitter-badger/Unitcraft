@@ -13,7 +13,7 @@ class Enforcer(r: Resource) {
     val objs: () -> Objs  by injectObjs()
 
     init {
-        drawer.drawObjs.add { obj,side,ctx  -> if(obj.has<Enforce>()) ctx.drawTile(obj.head(),tls(obj<Enforce>().isOn)) }
+        drawer.drawObjs.add { obj,side,ctx  -> if(obj.has<Enforce>()) ctx.drawTile(obj.pg,tls(obj<Enforce>().isOn)) }
         stager.onEndTurn { objs().forEach { it.remove<Enforce>() } }
         spoter.listCanAkt.add { side, obj -> obj.has<Enforce>() && obj<Enforce>().isOn }
     }

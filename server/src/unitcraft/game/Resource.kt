@@ -12,6 +12,7 @@ import java.awt.Color
 import kotlin.reflect.*
 
 class Resource {
+
     val resTiles = ArrayList<ResTile>()
     val hintTiles = ArrayList<ResHintTile>()
     val hintTexts = ArrayList<ResHintText>()
@@ -20,11 +21,13 @@ class Resource {
     val hintTileAktOff = hintTile("ctx.globalAlpha = 0.6")
     val hintTileDead = hintTile("")
     val hintTileTouch = hintTile("ctx.translate(0.3*rTile,0);ctx.translate(0.1*rTile,-0.1*rTile);ctx.scale(0.7,0.7);")
-    val hintTileTurnR = hintTile("ctx.translate(rTile,0);ctx.rotate(Math.PI/2);")
-    val hintTileTurnL = hintTile("")
-    val hintTileTurnD = hintTile("")
 
-    val hintTextNeutral = hintText("ctx.fillStyle = 'yellow';")
+    val hintTilesTurn = mapOf(
+            Dr.up to null,
+            Dr.rt to hintTile("ctx.translate(rTile,0);ctx.rotate(Math.PI/2);"),
+            Dr.dw to hintTile("ctx.translate(rTile,rTile);ctx.rotate(Math.PI);"),
+            Dr.lf to hintTile("ctx.translate(0,rTile);ctx.rotate(-Math.PI/2);")
+    )
 
     val hintTextRedPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
 

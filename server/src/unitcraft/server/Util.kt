@@ -16,6 +16,8 @@ inline fun <T> MutableIterable<T>.exclude(predicate: (T) -> Boolean) {
     for (elem in iter) if(predicate(elem)) iter.remove()
 }
 
+fun <T> lzy(fn:()->T) = lazy(LazyThreadSafetyMode.NONE,fn)
+
 // нарушение клиентом протокола, приводит к разрыву соединения с этим клиентом
 class Violation(msg: String) : Exception(msg)
 

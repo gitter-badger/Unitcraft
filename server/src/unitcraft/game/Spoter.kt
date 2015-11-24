@@ -32,9 +32,8 @@ class Spoter(r:Resource) {
         val spots = HashMap<Pg,ArrayList<Sloy>>()
         for(obj in objs()){
             val sloysObj = sloysObj(obj,sideVid)
-            if(sloysObj.isNotEmpty()) for(pg in obj.shape.pgs){
-                spots.getOrPut(pg){ArrayList<Sloy>()}.addAll(sloysObj)
-            }
+            if(sloysObj.isNotEmpty())
+                spots.getOrPut(obj.pg){ArrayList<Sloy>()}.addAll(sloysObj)
         }
         return spots
     }
@@ -72,11 +71,11 @@ class Spoter(r:Resource) {
         allData().objAktLast?.let{ if(obj!=it) tire(it) }
     }
 
-    private fun skilsObj(obj:Obj) = listSkil.map{it(obj)}.filterNotNull().filter{slotStopSkils.any{it(obj)}}
+    private fun skilsObj(obj:Obj) = listSkil.map{it(obj)}.filterNotNull().filterNot{slotStopSkils.any{it(obj)}}
 
     private fun sloysObj(obj:Obj,sideVid:Side):List<Sloy>{
         val isOn = if(stager.isTurn(sideVid) && obj.isFresh) listCanAkt.any{it(sideVid,obj)} else false
-        val r = Raise(obj.shape.pgs,isOn, hintTileAktOff)
+        val r = Raise(obj.pg,isOn, hintTileAktOff)
         val listAkts = skilsObj(obj).map{it(sideVid,obj)}
         val aktsModal = listAkts.firstOrNull(){it.isModal}
         if(aktsModal!=null){
@@ -95,7 +94,7 @@ class Spoter(r:Resource) {
         listOnTire.forEach{it(obj)}
     }
 
-    fun pgFocus() = allData().objAktLast?.head()
+    fun pgFocus() = allData().objAktLast?.pg
 
     inline fun <reified D:Data> addSkil(noinline akts:(Side,Obj) -> List<Akt>){
         val fn = {side:Side,obj:Obj ->
@@ -140,12 +139,12 @@ fun createSkil(build: Akts.() -> Unit)={ sideVid: Side, obj:Obj ->
     h
 }
 
-class Raise(val pgsErr: List<Pg>, val isOn: Boolean,val hintTileAktOff:HintTile) {
+class Raise(val pgErr: Pg, val isOn: Boolean,val hintTileAktOff:HintTile) {
     private val listSloy = ArrayList<Sloy>()
 
     fun addAkt(akt: Akt) {
         if(akt is AktOpt && akt.dabs.isEmpty()) return
-        if (akt.pg in pgsErr) throw Err("self-cast not implemented: akt at ${akt.pg}")
+        if (akt.pg == pgErr) throw Err("self-cast not implemented: akt at ${akt.pg}")
         val idx = listSloy.indexOfLast { it.aktByPg(akt.pg) != null } + 1
         if (idx == listSloy.size) listSloy.add(Sloy(isOn,hintTileAktOff))
         listSloy[idx].akts.add(akt)

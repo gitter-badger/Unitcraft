@@ -30,11 +30,11 @@ class Drawer(r: Resource) {
         for (flat in allData().flats.sort()) {
             val gt = tileWithGroundFlat.map { it(flat, side) }.firstOrNull { it != null }
             if (gt != null) {
-                ctx.drawTile(flat.head(), gt.first)
-                gt.second?.let { ctx.drawTile(flat.head(), it) }
+                ctx.drawTile(flat.pg, gt.first)
+                gt.second?.let { ctx.drawTile(flat.pg, it) }
             } else {
-                ctx.drawTile(flat.head(), ground)
-                ctx.drawTile(flat.head(), tileFlatNull)
+                ctx.drawTile(flat.pg, ground)
+                ctx.drawTile(flat.pg, tileFlatNull)
             }
             drawFlats.forEach { it(flat, side, ctx) }
         }
@@ -44,9 +44,9 @@ class Drawer(r: Resource) {
         for (obj in allData().objs.sort()) {
             val th = tileWithHintObj.map { it(obj, side) }.firstOrNull { it != null }
             if (th != null)
-                ctx.drawTile(obj.head(), th.first, th.second)
+                ctx.drawTile(obj.pg, th.first, th.second)
             else
-                ctx.drawTile(obj.head(), tileObjNull)
+                ctx.drawTile(obj.pg, tileObjNull)
             drawObjs.forEach { it(obj, side, ctx) }
         }
     }

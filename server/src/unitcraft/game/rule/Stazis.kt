@@ -28,11 +28,11 @@ class Stazis(r: Resource) {
             }
         }
         drawer.onDraw(PriorDraw.overObj) { side, ctx ->
-            for ((flat,stazis) in flats().by<Stazis,Flat>()) ctx.drawTile(flat.head(), tiles[stazis.value - 1])
+            for ((flat,stazis) in flats().by<Stazis,Flat>()) ctx.drawTile(flat.pg, tiles[stazis.value - 1])
         }
-        mover.slotStopMove.add{ it.shapeTo.pgs.any{it in this} }
-        mover.slotStopBuild.add{ shape, side -> shape.pgs.any{it in this} }
-        spoter.slotStopSkils.add{ obj -> obj.shape.pgs.all{it !in this}}
+        mover.slotStopMove.add{ it.pgTo in this || it.pgFrom in this }
+        mover.slotStopBuild.add{ pg, side -> pg in this }
+        spoter.slotStopSkils.add{ obj -> obj.pg in this }
     }
 
     fun plant(pg: Pg) {

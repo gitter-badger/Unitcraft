@@ -127,7 +127,7 @@ class ServerCdn() : NanoHTTPD(8000) {
         sb.appendln()
         sb.appendln()
 
-        res.hintTexts.map{"function(ctx,rTile){${it.script}}"}.joinTo(sb,",\n","var hintText = [","];");
+        res.hintTexts.map{"function(ctx,rTile,txt){${it.script}}"}.joinTo(sb,",\n","var hintText = [","];");
         sb.appendln()
         sb.appendln()
 

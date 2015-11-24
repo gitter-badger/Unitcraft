@@ -28,9 +28,8 @@ class Solider(r: Resource) {
 
     init {
         injectValue<Editor>().onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
-            val shape = Singl(pg)
-            objs().byClash(shape).forEach { objs().remove(it) }
-            val obj = Obj(shape)
+            objs()[pg]?.let { objs().remove(it) }
+            val obj = Obj(pg)
             obj.side = side
             obj.isFresh = true
             creates[num](obj)
@@ -42,10 +41,10 @@ class Solider(r: Resource) {
         })
         val tileHide = r.tile("hide")
         drawer.drawObjs.add { obj, side, ctx ->
-            if (!obj.isVid(side)) ctx.drawTile(obj.head(), tileHide)
+            if (!obj.isVid(side)) ctx.drawTile(obj.pg, tileHide)
         }
-        mover.slotMoveAfter.add { shapeFrom, move ->
-            val d = shapeFrom.head.x - move.shapeTo.head.x
+        mover.slotMoveAfter.add { move ->
+            val d = move.pgFrom.x - move.pgTo.x
             if (d != 0) move.obj.flip = d > 0
             false
         }
@@ -94,7 +93,7 @@ class Solider(r: Resource) {
 
     fun reset(solidsL: ArrayList<unitcraft.land.Solid>) {
         for (solidL in solidsL) {
-            val solid = Obj(solidL.shape)
+            val solid = Obj(solidL.pg)
             solid.side = solidL.side
             solid.isFresh = true
             landTps[solidL.tpSolid]!![solidL.num](solid)
@@ -171,7 +170,7 @@ class Inviser(r: Resource) {
         injectValue<Solider>().add(tls.neut,30) {
             it.data(DataTileObj(tls))
             it.data(DataInviser)
-            it.data(DataHit(1))
+            it.data(DataHit(-1))
         }
         mover.slotHide.add { it.has<DataInviser>() }
     }
@@ -193,21 +192,21 @@ class Electric(r: Resource) {
         spoter.addSkil<DataElectric>(){ sideVid, obj ->
             obj.near().filter { lifer.canDamage(it) }.map {
                 AktSimple(it, tlsAkt) {
-                    wave(it,lifer,obj.shape.pgs).forEach { lifer.damage(it,1) }
+                    wave(it,lifer,obj.pg).forEach { lifer.damage(it,1) }
                     spoter.tire(obj)
                 }
             }
         }
     }
 
-    private fun wave(start: Pg, lifer: Lifer, pgsExclude:List<Pg>): List<Pg> {
+    private fun wave(start: Pg, lifer: Lifer, pgExclude:Pg): List<Pg> {
         val wave = ArrayList<Pg>()
         val que = ArrayList<Pg>()
         que.add(start)
         wave.add(start)
         while (true) {
             if (que.isEmpty()) break
-            val next = que.removeAt(0).near.filter { lifer.canDamage(it) && it !in pgsExclude && it !in wave }
+            val next = que.removeAt(0).near.filter { lifer.canDamage(it) && it != pgExclude && it !in wave }
             que.addAll(next)
             wave.addAll(next)
         }
@@ -231,7 +230,7 @@ class Imitator(r: Resource) {
         injectValue<Spoter>().addSkil<DataImitator> { sideVid, obj ->
             val data = obj<DataImitator>()
             if(data.charged)
-            obj.near().map{objs()[it]}.filterNotNull().filter{!it.has<DataImitator>()}.map{ AktSimple(it.head(), tlsAkt) {
+            obj.near().map{objs()[it]}.filterNotNull().filter{!it.has<DataImitator>()}.map{ AktSimple(it.pg, tlsAkt) {
                 obj.datas.clear()
                 obj.datas.addAll(it.datas)
                 data.charged = false
@@ -270,14 +269,14 @@ class Frog(r:Resource){
             val data = obj<DataFrog>()
             if(data.drLastLeap!=null) modal()
             Dr.values.filter{ dr ->
-                dr!=data.drLastLeap && obj.head().plus(dr)?.let{
-                    mover.canMove(Move(obj,Singl(it),sideVid))==null
+                dr!=data.drLastLeap && obj.pg.plus(dr)?.let{
+                    mover.canMove(Move(obj,it,sideVid))==null
                 }?:false
             }.forEach { dr ->
-                val move = obj.head().plus(dr)!!.plus(dr)?.let{Move(obj, Singl(it), sideVid)}
+                val move = obj.pg.plus(dr)!!.plus(dr)?.let{Move(obj, it, sideVid)}
                 if(move!=null) {
                     val can = mover.canMove(move)
-                    val pgAim = obj.head().plus(dr)!!
+                    val pgAim = obj.pg.plus(dr)!!
                     if (can != null) akt(pgAim, tlsAkt) {
                         if(can()) {
                             data.drLastLeap = -dr

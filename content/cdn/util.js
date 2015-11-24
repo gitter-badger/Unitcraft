@@ -62,14 +62,20 @@ function drawDab(ctx,dab,tileset,qdmnTile){
             -qdmnTile/2,-qdmnTile/2,qdmnTile*2,qdmnTile*2
         );
     }else if(dab.text!=null){
-        if(dab.hint!=null) hintText[dab.hint](ctx,qdmnTile);
-        drawText(ctx,dab.text,0,0,qdmnTile*0.4);
+        setSizeFont(ctx,qdmnTile*0.4);
+        ctx.fillStyle = "magenta";
+        if(dab.hint!=null) hintText[dab.hint](ctx,qdmnTile,dab.text);
+        drawText(ctx,dab.text,0,0);
     }
 }
 
-function drawText(ctx,txt,x,y,size){
+function setSizeFont(ctx,size){
     ctx.textBaseline = "top";
     ctx.font = size+"px Arial";
+    ctx.sizeFont = size
+}
+
+function drawText(ctx,txt,x,y){
     ctx.save();
     ctx.fillStyle = "black";
     ctx.fillText(txt,x-1,y);
@@ -78,6 +84,14 @@ function drawText(ctx,txt,x,y,size){
     ctx.fillText(txt,x,y+1);
     ctx.restore();
     ctx.fillText(txt,x,y);
+}
+
+function xrText(ctx,txt) {
+    return ctx.measureText("" + txt).width;
+}
+
+function yrText(ctx) {
+    return ctx.sizeFont;
 }
 
 function strPg({x,y}){

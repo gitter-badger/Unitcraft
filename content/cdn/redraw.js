@@ -123,12 +123,13 @@ function redrawToolbar() {
 
         var p = prmDrawStage(ui);
         drawClock(ui, p);
+        setSizeFont(ctx,p.sizeFont);
         ctx.fillStyle = "lightgreen";
-        drawText(ctx, vpoint(ui, 0), p.qdmn - xrText(vpoint(ui, 0)) - p.pd, p.pd, p.sizeFont);
+        drawText(ctx, vpoint(ui, 0), p.qdmn - xrText(ctx,vpoint(ui, 0)) - p.pd, p.pd);
         ctx.fillStyle = "pink";
-        drawText(ctx, vpoint(ui, 1), p.pd + xrText("00") - xrText(vpoint(ui, 1)), p.yrRow + p.pd, p.sizeFont);
+        drawText(ctx, vpoint(ui, 1), p.pd + xrText(ctx,"00") - xrText(ctx,vpoint(ui, 1)), p.yrRow + p.pd);
         ctx.fillStyle = "white";
-        drawText(ctx, ui.game.bet, p.qdmn - xrText(ui.game.bet) - p.pd, p.yrRow * 3 + p.pd, p.sizeFont);
+        drawText(ctx, ui.game.bet, p.qdmn - xrText(ctx,ui.game.bet) - p.pd, p.yrRow * 3 + p.pd);
         ctx.restore();
     }
 
@@ -146,10 +147,11 @@ function redrawToolbar() {
             imgPanels[ui.game.stage] * ui.panelset.step + ui.panelset.step - xrClearImg, yrRowImg, xrClearImg, yrRowImg,
             p.qdmn - xrClear, p.yrRow, xrClear, p.yrRow
         );
+        setSizeFont(ctx,p.sizeFont);
         ctx.fillStyle = "lightgreen";
-        drawText(ctx, clock(ui, 0), p.pd, p.pd, p.sizeFont);
+        drawText(ctx, clock(ui, 0), p.pd, p.pd);
         ctx.fillStyle = "pink";
-        drawText(ctx, clock(ui, 1), p.qdmn - xrText(clock(ui, 1)) - p.pd, p.yrRow + p.pd, p.sizeFont);
+        drawText(ctx, clock(ui, 1), p.qdmn - xrText(ctx,clock(ui, 1)) - p.pd, p.yrRow + p.pd);
     }
 
     function prmDrawStage(ui) {
@@ -175,10 +177,6 @@ function redrawToolbar() {
 
     function vpoint(ui, num) {
         return ui.game.vpoint[num];
-    }
-
-    function xrText(txt) {
-        return ctx.measureText("" + txt).width;
     }
 
     function drawStatus(ui) {
@@ -220,7 +218,7 @@ function redrawToolbar() {
                 imgPanels["bonusBar"] * ui.panelset.step, 0, qd, qd,
                 0, 0, qd, qd
             );
-            drawText(ctx, "", 0, -qd * 10, sizeFont);
+            setSizeFont(ctx,sizeFont);
             for (var i = 0; i <= 9; i++) {
                 ctx.translate(0, qd);
                 ctx.drawImage(
@@ -228,7 +226,7 @@ function redrawToolbar() {
                     imgPanels["bonusBar"] * ui.panelset.step, qd, qd, qd,
                     0, 0, qd, qd
                 );
-                drawText(ctx, i, (qd - xrText(i)) / 2, (qd - sizeFont) / 2, sizeFont);
+                drawText(ctx, i, (qd - xrText(ctx,i)) / 2, (qd - yrText(ctx)) / 2);
             }
             ctx.translate(0, qd);
             ctx.drawImage(

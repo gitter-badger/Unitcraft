@@ -9,7 +9,7 @@ import unitcraft.server.Side
 import java.util.*
 import kotlin.properties.Delegates
 
-class Flater(r:Resource) {
+class Flater(r: Resource) {
     val allData: () -> AllData by injectAllData()
     val editor: Editor by inject()
 
@@ -24,19 +24,20 @@ class Flater(r:Resource) {
         val stager = injectValue<Stager>()
         editor.onEdit(PriorDraw.flat, tilesEditor, { pg, side, num ->
             flats().remove(flats()[pg])
-            val flat = Flat(Singl(pg))
+            val flat = Flat(pg)
             creates[num](flat, side)
             flats().add(flat)
         }, { pg -> false })
 
         stager.onEndTurn {
-            for ((flat, point) in allData().flats.by<DataPoint, Flat>())
-                for (voin in allData().objs)
-                    if (flat.shape.pgs.intersect(voin.shape.pgs).isNotEmpty())
-                        point.side = voin.side
+            for ((flat, point) in allData().flats.by<DataPoint, Flat>()) {
+                val obj = allData().objs[flat.pg]
+                if (obj != null && !obj.side.isN)
+                    point.side = obj.side
+            }
         }
         val grounds = r.grounds
-        injectValue<Drawer>().onFlat<DataPoint> { flat, data, side  ->
+        injectValue<Drawer>().onFlat<DataPoint> { flat, data, side ->
             (if (stager.isBeforeTurn(side)) grounds[data.side.ordinal + 2] else if (data.side == side) grounds[0] else grounds[1]) to data.tile
         }
     }
@@ -56,7 +57,7 @@ class Flater(r:Resource) {
     fun reset(flatsL: ArrayList<unitcraft.land.Flat>) {
         val flats = allData().flats
         for (flatL in flatsL) {
-            val flat = Flat(flatL.shape)
+            val flat = Flat(flatL.pg)
             landTps[flatL.tpFlat]!![flatL.num](flat, flatL.side)
             flats.add(flat)
         }
@@ -104,8 +105,11 @@ class Forest(r: Resource) {
         injectValue<Flater>().add(tiles[0], TpFlat.wild) { it.data(DataForest) }
 
         val mover = injectValue<Mover>()
-        mover.slotHide.add { flats()[it.head()].has<DataForest>() }
-        //mover.slotMoveAfter.add { shapeFrom, move -> mover.rehide() }
+        mover.slotHide.add { flats()[it.pg].has<DataForest>() }
+        mover.slotMoveAfter.add { move ->
+            if (flats()[move.pgFrom].has<DataForest>()) mover.rehide()
+            false
+        }
     }
 
     object DataForest : Data
@@ -144,8 +148,8 @@ class Catapult(r: Resource) {
         val tileAkt = r.tileAkt("catapult")
         val flats = injectFlats().value
         val skil = createSkil {
-            obj.shape.head.all.map { pg ->
-                val move = Move(obj, obj.shape.headTo(pg), sideVid)
+            obj.pg.all.map { pg ->
+                val move = Move(obj, pg, sideVid)
                 val can = mover.canMove(move)
                 if (can != null) akt(pg, tileAkt) {
                     if (can()) {
@@ -156,14 +160,14 @@ class Catapult(r: Resource) {
             }
         }
         spoter.listSkil.add {
-            if (it.shape.pgs.intersect(flats().by<Catapult, Flat>().flatMap { it.first.shape.pgs }).isNotEmpty()) skil else null
+            if (it.pg in flats().by<Catapult, Flat>().map { it.first.pg }) skil else null
         }
     }
 
     object Catapult : Data
 }
 
-abstract class DataPoint(val tile:Tile,side: Side) : Data {
+abstract class DataPoint(val tile: Tile, side: Side) : Data {
     var side by Delegates.vetoable(side.apply { if (this == Side.n) throw Err("Side.n is not allowed") }) { prop, sideOld, sideNew -> sideNew != Side.n }
 }
 
@@ -180,20 +184,20 @@ class Flag(r: Resource) {
         val allData = injectAllData().value
         val tile = r.tile("flag")
         injectValue<Flater>().addPoint(tile, TpFlat.flag) { flat, side ->
-            flat.data(DataFlag(tile,side))
+            flat.data(DataFlag(tile, side))
         }
 
         val flats = injectFlats().value
         injectValue<Stager>().onEndTurn { side ->
-            val p = flats().by<DataFlag,Flat>().partition { it.second.side==side}
-            if(p.first.size<=p.second.size)
+            val p = flats().by<DataFlag, Flat>().partition { it.second.side == side }
+            if (p.first.size <= p.second.size)
                 allData().point[side] = allData().point[side]!! - 1
-            if(p.first.size>=p.second.size)
+            if (p.first.size >= p.second.size)
                 allData().point[side.vs] = allData().point[side.vs]!! - 1
         }
     }
 
-    private class DataFlag(tile:Tile,side:Side):DataPoint(tile,side)
+    private class DataFlag(tile: Tile, side: Side) : DataPoint(tile, side)
 }
 
 class Mine(r: Resource) {
@@ -201,21 +205,21 @@ class Mine(r: Resource) {
         val builder = injectValue<Builder>()
         val flats = injectFlats().value
         val tile = r.tile("mine")
-        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Mine(tile,side)) }
-        injectValue<Stager>().onEndTurn {side ->
+        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Mine(tile, side)) }
+        injectValue<Stager>().onEndTurn { side ->
             val gold = flats().by<Mine, Flat>().filter { it.second.side == side }.size
-            builder.plusGold(side,gold)
+            builder.plusGold(side, gold)
         }
     }
 
-    private class Mine(tile:Tile,side: Side) : DataPoint(tile,side)
+    private class Mine(tile: Tile, side: Side) : DataPoint(tile, side)
 }
 
 class Hospital(r: Resource) {
     init {
         val tile = r.tile("hospital")
-        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Hospital(tile,side)) }
+        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Hospital(tile, side)) }
     }
 
-    private class Hospital(tile:Tile,side: Side) : DataPoint(tile,side)
+    private class Hospital(tile: Tile, side: Side) : DataPoint(tile, side)
 }
