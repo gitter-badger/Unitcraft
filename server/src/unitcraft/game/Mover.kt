@@ -44,6 +44,7 @@ class Mover {
             val fn = { reveal(obj);false };fn
         }
     }
+
     // todo перенести его внутрь canMove
     fun move(move: Move): Boolean {
         if (move.obj.pg != move.pgFrom) throw Err("obj.pg(${move.obj.pg} != pgFrom(${move.pgFrom})")

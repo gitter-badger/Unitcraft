@@ -19,7 +19,7 @@ class Resource {
 
     val hintTileDeploy = hintTile("")
     val hintTileAktOff = hintTile("ctx.globalAlpha = 0.6")
-    val hintTileDead = hintTile("")
+
     val hintTileTouch = hintTile("ctx.translate(0.3*rTile,0);ctx.translate(0.1*rTile,-0.1*rTile);ctx.scale(0.7,0.7);")
 
     val hintTilesTurn = mapOf(

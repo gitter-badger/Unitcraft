@@ -8,8 +8,13 @@ import java.util.*
 
 class Lifer(r: Resource) {
     val slotAfterDamage = ArrayList<(List<Dmg>)->Unit>()
+    val slotAfterDeaths = ArrayList<(List<Obj>)->Unit>()
 
-    val objs: ()->Objs by injectObjs()
+    val allData by injectAllData()
+
+    fun objs() = allData().objs
+
+    fun corpses() = allData().corpses
 
     fun heal(obj:Obj,value:Int){
         obj.life += value
@@ -50,7 +55,16 @@ class Lifer(r: Resource) {
     }
 
     private fun funeral(){
-        objs().forEach { if(it.life<=0) objs().remove(it) }
+        while(true) {
+            val deads = objs().filter { it.life <= 0 }
+            if(deads.isEmpty()) break
+            slotAfterDeaths.forEach { it(deads) }
+            objs().list.removeAll(deads)
+            deads.forEach {
+                corpses().replace(it)
+            }
+        }
+        objs().list.removeIf { it.life<=0 }
     }
 
     init{

@@ -11,21 +11,23 @@ class AllData {
     var sideWin: Side? = null
     val objs = Objs()
     val flats = Flats()
+    val corpses = Objs()
 
     val bonus = HashMap<Side, Int>()
 
     val point = HashMap<Side, Int>().apply {
-        Side.ab.map{put(it, 15)}
+        Side.ab.map { put(it, 15) }
     }
 
     var sideTurn: Side = Side.a
 
     var objAktLast: Obj? = null
+    var objNeedTire: Obj? = null
 
     var needJoin = true
 
-    val traces = HashMap<Side,ArrayList<DabOnGrid>>().apply {
-        Side.ab.map{put(it, ArrayList<DabOnGrid>())}
+    val traces = HashMap<Side, ArrayList<DabOnGrid>>().apply {
+        Side.ab.map { put(it, ArrayList<DabOnGrid>()) }
     }
 }
 
@@ -56,7 +58,7 @@ class Obj(pg: Pg) : HasPg(pg) {
 class Objs : ListHasShape<Obj> {
     override val list = ArrayList<Obj>()
 
-    fun sort(): List<Obj> = list.apply { Collections.sort(list, compareBy { it.pg }) }
+    fun sort(): List<Obj> = list.apply { list.sort(compareBy { it.pg }) }
 
     fun bySide(side: Side) = list.bySide(side)
 
@@ -71,7 +73,7 @@ interface ListHasShape<H : HasPg> : Iterable<H> {
     val list: ArrayList<H>
 
     fun add(obj: H) {
-        if (byPg(obj.pg)!=null) throw Err("obj=$obj clash")
+        if (byPg(obj.pg) != null) throw Err("obj=$obj clash")
         list.add(obj)
     }
 
@@ -79,6 +81,11 @@ interface ListHasShape<H : HasPg> : Iterable<H> {
     fun remove(obj: H) = list.remove(obj)
 
     fun byPg(pg: Pg) = list.byPg(pg)
+
+    fun replace(obj: H){
+        byPg(obj.pg)?.let{list.remove(obj)}
+        list.add(obj)
+    }
 }
 
 inline fun <reified T : Data, H : HasPg> ListHasShape<H>.by() = list.by<T, H>()
@@ -89,7 +96,7 @@ open class HasData {
     val datas = ArrayList<Data>()
 
     inline fun <reified T : Data> data(data: T) {
-        if(has<T>()) throw Err("duplicate data on $this")
+        if (has<T>()) throw Err("duplicate data on $this")
         datas.add(data)
     }
 

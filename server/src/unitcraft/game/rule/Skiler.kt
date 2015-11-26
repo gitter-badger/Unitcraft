@@ -74,9 +74,7 @@ class SkilerMove(r: Resource) {
     }
 
     fun slow(obj: Obj) {
-        if (!obj.has<SkilMove>()) return
-        val data = obj<SkilMove>()
-        data.fuelMax -= 1
+        if (obj.has<SkilMove>()) obj<SkilMove>().fuelMax -= 1
     }
 }
 
