@@ -128,7 +128,7 @@ class Chain() {
 }
 
 class Clock {
-    private var left = Duration.ofSeconds(3)
+    private var left = Duration.ofMinutes(3)
     private var last: Instant? = null
 
     fun start(now: Instant) {

@@ -23,6 +23,10 @@ class Lifer(r: Resource) {
         funeral()
     }
 
+    fun damage(aims:List<Obj>,value:Int){
+        damage(aims.map{Dmg(it,value)})
+    }
+
     fun damage(obj:Obj,value:Int){
         damage(listOf(Dmg(obj,value)))
     }
@@ -35,6 +39,10 @@ class Lifer(r: Resource) {
 
     fun canDamage(pg: Pg):Boolean{
         return objs()[pg]!=null
+    }
+
+    fun canDamage(obj:Obj):Boolean{
+        return true
     }
 
     fun change(obj:Obj, value:Int){

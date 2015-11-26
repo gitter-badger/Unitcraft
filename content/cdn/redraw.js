@@ -186,6 +186,24 @@ function redrawToolbar() {
         ctx.restore();
     }
 
+    function drawSettins(ui) {
+        ctx.save();
+        var qp = ui.qdmnPanel()
+        ctx.translate(0, qp*2);
+        ctx.fillStyle = "DarkSeaGreen";
+        ctx.fillRect(0,0,qp,qp);
+        ctx.restore();
+    }
+
+    function drawChat(ui) {
+        ctx.save();
+        var qp = ui.qdmnPanel()
+        ctx.translate(0, qp*3);
+        ctx.fillStyle = "MediumAquaMarine";
+        ctx.fillRect(0,0,qp,qp);
+        ctx.restore();
+    }
+
     function drawAccept(ui) {
         if(ui.status!="match") return;
         ctx.save();
@@ -201,6 +219,8 @@ function redrawToolbar() {
         drawStage(ui);
         drawStatus(ui);
         drawAccept(ui);
+        drawSettins(ui);
+        drawChat(ui);
         ctx.restore();
     }
 

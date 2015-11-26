@@ -72,6 +72,12 @@ class SkilerMove(r: Resource) {
 
         fun pgs() = map.keys
     }
+
+    fun slow(obj: Obj) {
+        if (!obj.has<SkilMove>()) return
+        val data = obj<SkilMove>()
+        data.fuelMax -= 1
+    }
 }
 
 class SkilMove(var fuelMax: Int = 3) : Data {

@@ -49,20 +49,24 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Water(r)
     Sand(r)
     Catapult(r)
-
     Mine(r)
     Hospital(r)
     Flag(r)
 
+    Redeployer(r)
+    Armorer(r)
+    Airport(r)
+    Inviser(r)
+
     Electric(r)
     Telepath(r)
     Staziser(r)
-    Inviser(r)
     Imitator(r)
-    Redeployer(r)
-    Warehouse(r)
     Frog(r)
     Mina(r)
+    Kicker(r)
+    Jumper(r)
+
     return r
 }
 

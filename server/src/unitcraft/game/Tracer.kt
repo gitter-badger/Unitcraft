@@ -20,17 +20,6 @@ class Tracer(r:Resource) {
             }
             false
         }
-        val tileDamage = r.tile("trace.damage")
-        val tileHeal = r.tile("trace.heal")
-        val hintTextDamage = r.hintText("setSizeFont(ctx,rTile/2);ctx.fillStyle = 'hotpink';ctx.translate((rTile-xrText(ctx,txt))/2,(rTile-yrText(ctx))/2);")
-        injectValue<Lifer>().slotAfterDamage.add{ dmgs ->
-            dmgs.forEach { dmg ->
-                Side.ab.forEach { side ->
-                    traceTile(side,dmg.obj.pg, if (dmg.value > 0) tileDamage else tileHeal)
-                    traceText(side,dmg.obj.pg, Math.abs(dmg.value),hintTextDamage)
-                }
-            }
-        }
     }
 
     private fun traceTile(side:Side,pg: Pg, tile:Tile, hintTile:HintTile? = null) {

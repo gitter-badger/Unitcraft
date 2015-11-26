@@ -52,7 +52,7 @@ class Builder(r: Resource) {
 
     fun addFabrik(prior: Int, tile: Tile, create: (Obj) -> Unit) {
         fabriks.add(Fabrik(prior, tile, create))
-        fabriks.sortedBy { it.prior }
+        fabriks.sort(compareBy { it.prior })
     }
 
     inner class SkilBuild(val zone: (Obj) -> List<Pg>, val fabriks: List<Fabrik>, val refine: (Obj) -> Unit) : Data
@@ -89,15 +89,47 @@ class Redeployer(r: Resource) {
     object DataRedeployer : Data
 }
 
-class Warehouse(r: Resource) {
+class Armorer(r: Resource) {
     init {
         val solider = injectValue<Solider>()
         val builder = injectValue<Builder>()
         val lifer = injectValue<Lifer>()
-        val tls = r.tlsVoin("warehouse")
+        val skilerMove = injectValue<SkilerMove>()
+        val tls = r.tlsVoin("armorer")
         solider.add(tls.neut, null, TpSolid.builder, false) {
-            solider.addTls(it, tls)
-            builder.add(it, { it.further() }, { lifer.heal(it, 2) })
+            it.data(DataTileObj(tls))
+            builder.add(it, { it.further() }, {
+                skilerMove.slow(it)
+                lifer.heal(it, 1)
+            })
         }
     }
+}
+
+class Airport(r: Resource) {
+    init {
+        val solider = injectValue<Solider>()
+        val builder = injectValue<Builder>()
+        val tls = r.tlsVoin("airport")
+        solider.add(tls.neut, null, TpSolid.builder, false) {
+            it.data(DataTileObj(tls))
+            builder.add(it, { it.pg.pgser.pgs }, {})
+        }
+    }
+}
+
+class Inviser(r: Resource) {
+    init {
+        val mover = injectValue<Mover>()
+        val tls = r.tlsVoin("inviser")
+        val builder = injectValue<Builder>()
+        injectValue<Solider>().add(tls.neut, null, TpSolid.builder) {
+            it.data(DataTileObj(tls))
+            it.data(DataInviser)
+            builder.add(it, { it.near() }, {it.data(DataInviser)})
+        }
+        mover.slotHide.add { it.has<DataInviser>() }
+    }
+
+    private object DataInviser : Data
 }

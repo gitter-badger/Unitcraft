@@ -46,10 +46,10 @@ class Flater(r: Resource) {
         addPoint(tileEditor, tpFlat, { f, s -> create(f) })
     }
 
-    fun addPoint(tileEditor: Tile, tpFlat: TpFlat, create: (Flat, Side) -> Unit) {
+    fun addPoint(tileEditor: Tile, tpFlat: TpFlat?, create: (Flat, Side) -> Unit) {
         tilesEditor.add(tileEditor)
         creates.add(create)
-        landTps.getOrPut(tpFlat) { ArrayList<(Flat, Side) -> Unit>() }.add(create)
+        if(tpFlat!=null) landTps.getOrPut(tpFlat) { ArrayList<(Flat, Side) -> Unit>() }.add(create)
     }
 
     fun maxFromTpFlat() = landTps.mapValues { it.value.size }
@@ -218,7 +218,7 @@ class Mine(r: Resource) {
 class Hospital(r: Resource) {
     init {
         val tile = r.tile("hospital")
-        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Hospital(tile, side)) }
+        injectValue<Flater>().addPoint(tile, null) { flat, side -> flat.data(Hospital(tile, side)) }
     }
 
     private class Hospital(tile: Tile, side: Side) : DataPoint(tile, side)

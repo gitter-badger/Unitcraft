@@ -10,8 +10,11 @@ import java.util.*
 
 class Spoter(r:Resource) {
     val hintTileAktOff = r.hintTileAktOff
-    val stager: Stager  by inject()
+
     val allData:()-> AllData  by injectAllData()
+    val stager: Stager by inject()
+    val mover: Mover by inject()
+
 
     val listCanAkt = ArrayList<(Side,Obj)->Boolean>()
     val listSkil = ArrayList<(Obj)->((Side,Obj) -> Akts)?>()
@@ -30,10 +33,9 @@ class Spoter(r:Resource) {
 
     fun spots(sideVid: Side): Map<Pg,List<Sloy>>{
         val spots = HashMap<Pg,ArrayList<Sloy>>()
-        for(obj in objs()){
+        for(obj in objs()) if(obj.isVid(sideVid)){
             val sloysObj = sloysObj(obj,sideVid)
-            if(sloysObj.isNotEmpty())
-                spots.getOrPut(obj.pg){ArrayList<Sloy>()}.addAll(sloysObj)
+            if(sloysObj.isNotEmpty()) spots.getOrPut(obj.pg){ArrayList<Sloy>()}.addAll(sloysObj)
         }
         return spots
     }

@@ -16,9 +16,9 @@ class Mover {
     val slotHide = ArrayList<(Obj) -> Boolean>()
 
     init {
-        stager.onStartTurn {
+        stager.onStartTurn { side ->
             objs().forEach { obj ->
-                obj.hide = slotHide.any { it(obj) }
+                if(obj.side==side) obj.hide = slotHide.any { it(obj) }
             }
         }
     }
@@ -44,7 +44,7 @@ class Mover {
             val fn = { reveal(obj);false };fn
         }
     }
-
+    // todo перенести его внутрь canMove
     fun move(move: Move): Boolean {
         if (move.obj.pg != move.pgFrom) throw Err("obj.pg(${move.obj.pg} != pgFrom(${move.pgFrom})")
         if (objs()[move.pgTo] != null) throw Err("cant move obj=${move.obj} to pg=${move.pgTo}")
