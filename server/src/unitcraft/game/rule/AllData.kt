@@ -104,13 +104,9 @@ open class HasData {
 
     inline fun <reified T : Data> remove() = datas.exclude { it is T }
 
-    inline operator fun <reified T : Data> invoke(): T {
-        val data = datas.firstOrNull { it is T }
-        if (data == null) println(T::class)
-        return data as T
-    }
+    inline operator fun <reified T : Data> invoke() = datas.first { it is T } as T
 
-    inline fun <reified T : Data> get() = datas.filterIsInstance<T>()
+    inline fun <reified T : Data> get() = datas.firstOrNull { it is T } as T?
 
     inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { data(v()) }
 }

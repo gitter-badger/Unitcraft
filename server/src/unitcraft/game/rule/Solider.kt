@@ -161,7 +161,6 @@ class Staziser(r: Resource) {
 }
 
 
-
 class Electric(r: Resource) {
     init {
         val tls = r.tlsVoin("electric")
@@ -304,7 +303,7 @@ class Kicker(r: Resource) {
                 val move = aim.pg.plus(dr)?.let { Move(aim, it, sideVid) }
                 val can = move?.let { mover.canMove(it) }
                 if (can != null || lifer.canDamage(aim)) akt(aim.pg, tileAkt) {
-                    if(can?.invoke()?:false) mover.move(move!!)
+                    if (can?.invoke() ?: false) mover.move(move!!)
                     lifer.damage(aim, 1)
                     spoter.tire(obj)
                 }
@@ -313,46 +312,75 @@ class Kicker(r: Resource) {
         }
     }
 
-//    fun findMove():Pair<>{
-//        var move:Move? = null
-//        //var pgFrom = aim.pg.plus(dr)
-//        var pgTo = aim.pg.plus(dr)?.plus(dr)
-//        while (true) {
-//            if(pgTo==null) break
-//            move = Move(aim,pgTo, sideVid)
-//            if(c)
-//        }
-//    }
+    //    fun findMove():Pair<>{
+    //        var move:Move? = null
+    //        //var pgFrom = aim.pg.plus(dr)
+    //        var pgTo = aim.pg.plus(dr)?.plus(dr)
+    //        while (true) {
+    //            if(pgTo==null) break
+    //            move = Move(aim,pgTo, sideVid)
+    //            if(c)
+    //        }
+    //    }
 
     private object DataKicker : Data
 }
 
-class Jumper(r:Resource){
+class Jumper(r: Resource) {
     init {
         val objs = injectObjs().value
         val tls = r.tlsVoin("jumper")
-        injectValue<Solider>().add(tls.neut, 40, null,false) {
+        injectValue<Solider>().add(tls.neut, 40, null, false) {
             it.data(DataTileObj(tls))
-            it.data(DataJumper)
+            it.data(DataJumper())
         }
 
         val tileAkt = r.tileAkt("jumper")
+        val tileAktDest = r.tileAkt("jumper","dest")
         val lifer = injectValue<Lifer>()
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
         spoter.addSkilByBuilder<DataJumper> {
-            objs().filter { it!=obj && !it.pg.isNear(obj.pg) }.flatMap { it.near() }.distinct().forEach {
-                val move = Move(obj,it,sideVid)
-                val can = mover.canMove(move)
-                if(can!=null) akt(it, tileAkt) {
-                    if(can()) {
-                        mover.move(move)
-                        lifer.damage(it.near.map{objs()[it]}.filterNotNull(), 1)
+            val data = obj<DataJumper>()
+            val pgDest = data.pgDest
+            if (pgDest == null) {
+                objs().filter { it != obj && !it.pg.isNear(obj.pg) }.flatMap { it.near() }.distinct().forEach {
+                    val move = Move(obj, it, sideVid)
+                    val can = mover.canMove(move)
+                    if (can != null) {
+                        if (it.near.filter { it!=obj.pg && lifer.canDamage(it) }.size == 1) {
+                            akt(it, tileAkt) {
+                                if (can()) {
+                                    mover.move(move)
+                                    lifer.damage(it.near.map { objs()[it] }.filterNotNull(), 1)
+                                }
+                                spoter.tire(obj)
+                            }
+                        } else {
+                            akt(it, tileAktDest) {
+                                data.pgDest = it
+                            }
+                        }
                     }
-                    spoter.tire(obj)
+                }
+            } else {
+                pgDest.near.filter { lifer.canDamage(it) }.forEach {
+                    val move = Move(obj, pgDest, sideVid)
+                    val can = mover.canMove(move)
+                    if (can != null) akt(it,tileAkt){
+                        if (can()) {
+                            mover.move(move)
+                            lifer.damage(it,1)
+                        }
+                        data.pgDest = null
+                        spoter.tire(obj)
+                    }
                 }
             }
         }
     }
-    private object DataJumper : Data
+
+    private class DataJumper : Data {
+        var pgDest: Pg? = null
+    }
 }

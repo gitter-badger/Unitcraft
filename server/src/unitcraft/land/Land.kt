@@ -68,8 +68,10 @@ class Land(val mission: Int?) {
         }
         exc.addAll(cur)
 
-        solids.add(Solid(pgser.pg(0, 3), builder, 0, Side.a))
-        solids.add(Solid(pgser.pg(xr - 1, yr - 4), builder, 1, Side.b))
+        val pgBaseA = pgRnd{it.isEdge()}
+        solids.add(Solid(pgBaseA, builder, idxSolidRnd(builder), Side.a))
+        val pgBaseB = pgRnd{it.isEdge() && it.distance(pgBaseA)>=8}
+        solids.add(Solid(pgBaseB, builder, idxSolidRnd(builder), Side.b))
     }
 
     fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int, side: Side = sideRnd()) {

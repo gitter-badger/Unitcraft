@@ -74,7 +74,7 @@ class SkilerMove(r: Resource) {
     }
 
     fun slow(obj: Obj) {
-        if (obj.has<SkilMove>()) obj<SkilMove>().fuelMax -= 1
+        obj.get<SkilMove>()?.slow()
     }
 }
 
@@ -83,6 +83,11 @@ class SkilMove(var fuelMax: Int = 3) : Data {
 
     fun refuel() {
         fuel = fuelMax
+    }
+
+    fun slow(){
+        fuelMax -= 1
+        if(fuel>fuelMax) fuel = fuelMax
     }
 }
 
