@@ -341,7 +341,7 @@ class Jumper(r:Resource){
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
         spoter.addSkilByBuilder<DataJumper> {
-            objs().filter { it!=obj && it.pg.isNear(obj.pg) }.flatMap { it.near() }.distinct().forEach {
+            objs().filter { it!=obj && !it.pg.isNear(obj.pg) }.flatMap { it.near() }.distinct().forEach {
                 val move = Move(obj,it,sideVid)
                 val can = mover.canMove(move)
                 if(can!=null) akt(it, tileAkt) {
