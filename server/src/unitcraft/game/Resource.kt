@@ -20,7 +20,7 @@ class Resource {
     val hintTileDeploy = hintTile("")
     val hintTileAktOff = hintTile("ctx.globalAlpha = 0.6")
 
-    val hintTileTouch = hintTile("ctx.translate(0.3*rTile,0);ctx.translate(0.1*rTile,-0.1*rTile);ctx.scale(0.7,0.7);")
+
 
     val hintTilesTurn = mapOf(
             Dr.up to null,
@@ -146,10 +146,7 @@ open class TlsFlatOwn(val ally:Tile,val enemy:Tile,val yellow:Tile,val blue:Tile
     operator fun invoke(sideVid:Side, sideOwn: Side) = if(sideOwn == sideVid) ally else enemy
 }
 
-class TlsObj(val neut: Tile, val ally: TlsBool, val enemy: TlsBool, val join: TlsBool){
-    operator fun invoke(side:Side, sideOwn: Side, isFresh:Boolean) =
-            if(sideOwn.isN) neut else if(sideOwn == side) ally(isFresh) else enemy(isFresh)
-}
+class TlsObj(val neut: Tile, val ally: TlsBool, val enemy: TlsBool, val join: TlsBool)
 
 class TlsBool(val tileTrue:Tile,val tileFalse:Tile){
     operator fun invoke(b: Boolean) = if(b) tileTrue else tileFalse

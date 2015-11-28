@@ -38,6 +38,11 @@ class Flat(pg: Pg) : HasPg(pg) {
 class Flats : ListHasShape<Flat> {
     override val list = ArrayList<Flat>()
 
+    fun add(flat: Flat) {
+        if (byPg(flat.pg) != null) throw Err("flat=$flat clash")
+        list.add(flat)
+    }
+
     fun sort() = list.apply { Collections.sort(list, compareBy { it.pg }) }
 
     operator fun get(pg: Pg) = list.byPg(pg)!!
@@ -71,11 +76,6 @@ fun List<Obj>.bySide(side: Side) = filter { it.side == side }
 
 interface ListHasShape<H : HasPg> : Iterable<H> {
     val list: ArrayList<H>
-
-    fun add(obj: H) {
-        if (byPg(obj.pg) != null) throw Err("obj=$obj clash")
-        list.add(obj)
-    }
 
     override fun iterator() = list.iterator()
     fun remove(obj: H) = list.remove(obj)

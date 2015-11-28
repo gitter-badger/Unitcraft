@@ -24,35 +24,27 @@ class Land(val mission: Int?) {
 
     val flats = ArrayList<Flat>()
     val solids = ArrayList<Solid>()
+    val exc = ArrayList<Pg>()
 
     init {
         for (pg in pgser) {
             addFlat(pg, none, 0)
         }
 
-        val exc = ArrayList<Pg>()
-        var cur = Algs.spot(this, exc, 10)
-        var idx = idxFlatRnd(wild)
-        cur.forEach {
-            addFlat(it, wild, idx)
-        }
-        exc.addAll(cur)
+        repeat(rndInt(1,3)){makeSpotWild()}
 
-        cur = Algs.spot(this, exc, 10)
-        idx = idxFlatRnd(wild)
-        cur.forEach {
-            addFlat(it, wild, idx)
-        }
-        exc.addAll(cur)
+        var cur:List<Pg>
 
-        cur = Algs.river(this, exc)
-        idx = idxFlatRnd(liquid)
-        cur.forEach {
-            addFlat(it, liquid, idx)
+        if(r.nextBoolean()) {
+            cur = Algs.river(this, exc)
+            val idx = idxFlatRnd(liquid)
+            cur.forEach {
+                addFlat(it, liquid, idx)
+            }
+            exc.addAll(cur)
         }
-        exc.addAll(cur)
 
-        cur = Algs.spray(this, exc, 1 + r.nextInt(5))
+        cur = Algs.spray(this, exc, rndInt(0,5))
         cur.forEach { addFlat(it, special, idxFlatRnd(special)) }
         exc.addAll(cur)
 
@@ -74,6 +66,15 @@ class Land(val mission: Int?) {
         solids.add(Solid(pgBaseB, builder, idxSolidRnd(builder), Side.b))
     }
 
+    private fun makeSpotWild(){
+        var cur = Algs.spot(this, exc, rndInt(5,15))
+        var idx = idxFlatRnd(wild)
+        cur.forEach {
+            addFlat(it, wild, idx)
+        }
+        exc.addAll(cur)
+    }
+
     fun addFlat(pg: Pg, tpFlat: TpFlat, idx: Int, side: Side = sideRnd()) {
         flats.removeIf { it.pg == pg }
         flats.add(Flat(pg, tpFlat, idx, side))
@@ -90,7 +91,9 @@ class Land(val mission: Int?) {
 
     fun pgRnd() = selRnd(pgser.pgs)
 
-    fun <E> selRnd(list: List<E>) = if (!list.isEmpty()) list[r.nextInt(list.size)] else throw Err("list is empty")
+    fun <E> selRnd(list: List<E>) = selRndOrNull(list)!!
+
+    fun <E> selRndOrNull(list: List<E>) = if (!list.isEmpty()) list[r.nextInt(list.size)] else null
 
     fun idxFlatRnd(tpFlat: TpFlat) = r.nextInt(flater.maxFromTpFlat()[tpFlat]!!)
 
@@ -101,9 +104,12 @@ class Land(val mission: Int?) {
         return Pgser(x, y)
     }
 
+    private fun rndInt(a:Int,b:Int) = a+r.nextInt(b+1)
+
     companion object {
         val dmns = (9..12).flatMap{yr -> (yr..12).map{it to yr}}
     }
+
 }
 
 enum class TpFlat {
@@ -133,9 +139,9 @@ object Algs {
 
     fun spot(land: Land, exc: List<Pg>, qnt: Int): List<Pg> {
         val lst = ArrayList<Pg>()
-        lst.add(land.pgRnd { it !in exc })
-        repeat(qnt - 1) {
-            lst.add(land.pgRnd { it !in exc && it !in lst && it.near.any { it in lst } })
+        land.pgRndOrNull { it !in exc }?.let{lst.add(it)}
+        while(lst.size<qnt) {
+            land.selRndOrNull(lst.flatMap{it.near}.filterNot { it in exc || it in lst } )?.let{ lst.add(it) }?:break
         }
         return lst
     }

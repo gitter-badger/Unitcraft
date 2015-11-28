@@ -26,12 +26,10 @@ class SkilerMove(r: Resource) {
                     akt(pg, tileAktMove) {
                         val path = wave.path(pg)
                         for (pg in path) {
-                            val move = Move(obj, pg, sideVid)
-                            val can = mover.canMove(move)
-                            if (can != null && can()) {
+                            val abort = mover.canMove(obj, pg, sideVid){
                                 data.fuel -= 1
-                                if (mover.move(move)) break
-                            } else break
+                            }
+                            if(abort==null || abort()) break
                         }
                     }
                 }
@@ -50,8 +48,7 @@ class SkilerMove(r: Resource) {
                 val (cur, cost) = que.removeAt(0)
                 if (cost == fuel) continue
                 val next = cur.near.filter {
-                    val move = Move(obj, obj.pg, it, sideVid)
-                    mover.canMove(move) != null && it !in map && it != obj.pg
+                    mover.canMove(obj, cur, it, sideVid){} != null && it !in map && it != obj.pg
                 }.map { it to cost + 1 }
                 map.putAll(next)
                 que.addAll(next)

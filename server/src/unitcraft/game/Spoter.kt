@@ -103,6 +103,7 @@ class Spoter(r: Resource) {
     }
 
     fun tire(obj: Obj) {
+        if(!obj.isFresh) return
         obj.isFresh = false
         listOnTire.forEach { it(obj) }
     }

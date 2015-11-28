@@ -34,7 +34,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Spoter(r))
     register(Flater(r))
     register(Sider())
-    register(Mover())
+    register(Mover(r))
     register(Stazis(r))
     register(Lifer(r))
     register(Enforcer(r))

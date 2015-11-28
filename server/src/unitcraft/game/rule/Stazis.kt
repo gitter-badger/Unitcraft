@@ -31,7 +31,7 @@ class Stazis(r: Resource) {
             for ((flat,stazis) in flats().by<Stazis,Flat>()) ctx.drawTile(flat.pg, tiles[stazis.value - 1])
         }
         mover.slotStopMove.add{ it.pgTo in this || it.pgFrom in this }
-        mover.slotStopBuild.add{ pg, side -> pg in this }
+        mover.slotStopAdd.add{ pg, side -> pg in this }
         spoter.slotStopSkils.add{ obj -> obj.pg in this }
     }
 

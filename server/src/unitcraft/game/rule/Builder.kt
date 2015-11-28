@@ -18,26 +18,15 @@ class Builder(r: Resource) {
         val tileAkt = r.tile("build", Resource.effectAkt)
         val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
         val lifer = injectValue<Lifer>()
-        injectValue<Spoter>().addSkil<SkilBuild> { side, obj ->
+        injectValue<Spoter>().addSkilByBuilder<SkilBuild> {
             val data = obj<SkilBuild>()
             val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
-            val akts = ArrayList<AktOpt>()
-            for (pg in data.zone(obj)) {
-                val can = mover.canBuild(pg, side)
-                if (can != null) {
-                    akts.add(AktOpt(pg, tileAkt, dabs) {
-                        if (can()) {
-                            val objCreated = Obj(pg)
-                            objCreated.side = obj.side
-                            data.fabriks[it].create(objCreated)
-                            objs().add(objCreated)
-                            data.refine(objCreated)
-                            lifer.damage(obj, price)
-                        }
-                    })
-                }
-            }
-            akts
+            for (pg in data.zone(obj)) mover.canAdd(pg, sideVid) { objNew, num ->
+                objNew.side = obj.side
+                data.fabriks[num].create(objNew)
+                data.refine(objNew)
+                lifer.damage(obj, price)
+            }?.let { aktOpt(pg, tileAkt, dabs, it) }
         }
     }
 
@@ -126,7 +115,7 @@ class Inviser(r: Resource) {
         injectValue<Solider>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
             it.data(DataInviser)
-            builder.add(it, { it.near() }, {it.data(DataInviser)})
+            builder.add(it, { it.near() }, { it.data(DataInviser) })
         }
         mover.slotHide.add { it.has<DataInviser>() }
     }

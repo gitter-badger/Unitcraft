@@ -18,7 +18,7 @@ class Enforcer(r: Resource) {
         spoter.listCanAkt.add { side, obj -> obj.has<Enforce>() && obj<Enforce>().isOn }
     }
 
-    fun canEnforce(pg: Pg,sideVid: Side) = objs()[pg]?.let{ it.isVid(sideVid) && !it.has<Enforce>() }?:false
+    fun canEnforce(pg: Pg,sideVid: Side) = objs()[pg]?.let{ it.side!=sideVid && it.isVid(sideVid) && !it.has<Enforce>() }?:false
 
     fun enforce(pg: Pg) {
         objs()[pg]?.data(Enforce(true))
