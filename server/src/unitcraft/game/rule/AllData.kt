@@ -108,7 +108,7 @@ open class HasData {
 
     inline fun <reified T : Data> get() = datas.firstOrNull { it is T } as T?
 
-    inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { data(v()) }
+    inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { data(this) }
 }
 
 open class HasPg(var pg: Pg) : HasData() {

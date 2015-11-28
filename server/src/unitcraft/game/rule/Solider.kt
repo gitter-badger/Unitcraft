@@ -23,7 +23,6 @@ class Solider(r: Resource) {
     val mover: Mover  by inject()
     val builder: Builder by inject()
     val stager: Stager by inject()
-    val skilerMove: SkilerMove by inject()
     val objs: () -> Objs by injectObjs()
 
     init {
@@ -33,7 +32,7 @@ class Solider(r: Resource) {
                 obj.side = side
                 obj.isFresh = true
                 creates[num](obj)
-            }!!(0)
+            }?.invoke(0)
         }, { pg ->
             objs()[pg]?.let {
                 objs().remove(it)
@@ -262,9 +261,13 @@ class Frog(r: Resource) {
                 val pgAim = obj.pg.plus(dr)!!
                 val pgTo = pgAim.plus(dr)
                 if (pgTo != null) mover.canMove(obj, pgTo, sideVid) {
-                    data.drLastLeap = -dr
                     lifer.damage(pgAim, 1)
-                }?.let { akt(pgAim, tileAkt) { it() } }
+                }?.let {
+                    akt(pgAim, tileAkt) {
+                        it()
+                        data.drLastLeap = -dr
+                    }
+                }
             }
         }
         spoter.listOnTire.add { obj ->
@@ -294,10 +297,13 @@ class Kicker(r: Resource) {
         spoter.addSkilByBuilder<DataKicker> {
             for (dr in Dr.values) {
                 val aim = obj.pg.plus(dr)?.let { objs()[it] } ?: continue
-                val pgTo = aim.pg.plus(dr) ?: continue
-                val can = mover.canMove(aim, pgTo, sideVid, true) { spoter.tire(obj) }
-                if (can != null || lifer.canDamage(aim)) akt(aim.pg, tileAkt) {
-                    can?.invoke()
+                //val pgTo = aim.pg.plus(dr) ?: continue
+                //val can = mover.canMove(aim, pgTo, sideVid, true) { spoter.tire(obj) }
+                val ray = rayKick(aim, dr, sideVid, mover)
+                if (ray.isNotEmpty() || lifer.canDamage(aim)) akt(aim.pg, tileAkt) {
+                    for (pg in ray) {
+                        mover.canMove(aim, pg, sideVid,true){}?.let{it()}?:break
+                    }
                     lifer.damage(aim, 1)
                     tracer.touch(aim.pg, tileAkt)
                     spoter.tire(obj)
@@ -306,16 +312,18 @@ class Kicker(r: Resource) {
         }
     }
 
-    //    fun findMove():Pair<>{
-    //        var move:Move? = null
-    //        //var pgFrom = aim.pg.plus(dr)
-    //        var pgTo = aim.pg.plus(dr)?.plus(dr)
-    //        while (true) {
-    //            if(pgTo==null) break
-    //            move = Move(aim,pgTo, sideVid)
-    //            if(c)
-    //        }
-    //    }
+    private fun rayKick(obj: Obj, dr: Dr, side: Side, mover: Mover): List<Pg> {
+        val ray = ArrayList<Pg>()
+        var cur = obj.pg
+        while (true) {
+            val next = cur.plus(dr) ?: break
+            if (mover.isMove(obj, cur, next, side, true)){
+                ray.add(next)
+                cur = next
+            }else break
+        }
+        return ray
+    }
 
     private object DataKicker : Data
 }

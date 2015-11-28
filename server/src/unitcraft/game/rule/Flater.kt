@@ -158,6 +158,20 @@ class Catapult(r: Resource) {
     object Catapult : Data
 }
 
+/** если юнит стоит на крепости, то его нельзя поранить*/
+class Fortress(r: Resource) {
+    init {
+        val tile = r.tile("fortress")
+        val ground = r.tileGround
+        injectValue<Drawer>().onFlat<Fortress> { flat, data, side -> ground to tile }
+        injectValue<Flater>().add(tile, TpFlat.special) { it.data(Fortress) }
+        val flats = injectFlats().value
+        injectValue<Lifer>().slotStopDamage.add{ obj -> flats()[obj.pg].has<Fortress>()}
+    }
+
+    object Fortress : Data
+}
+
 abstract class DataPoint(val tile: Tile, side: Side) : Data {
     var side by Delegates.vetoable(side.apply { if (this == Side.n) throw Err("Side.n is not allowed") }) { prop, sideOld, sideNew -> sideNew != Side.n }
 }
@@ -171,6 +185,7 @@ abstract class DataPoint(val tile: Tile, side: Side) : Data {
 //}
 
 class Flag(r: Resource) {
+    val flats by injectFlats()
     init {
         val allData = injectAllData().value
         val tile = r.tile("flag")
@@ -178,14 +193,16 @@ class Flag(r: Resource) {
             flat.data(DataFlag(tile, side))
         }
 
-        val flats = injectFlats().value
+
         injectValue<Stager>().onEndTurn { side ->
-            val p = flats().by<DataFlag, Flat>().partition { it.second.side == side }
-            if (p.first.size <= p.second.size)
-                allData().point[side] = allData().point[side]!! - 1
-            if (p.first.size >= p.second.size)
-                allData().point[side.vs] = allData().point[side.vs]!! - 1
+            val sideLost = sideMost().vs
+            allData().point[sideLost] = allData().point[sideLost]!! - 1
         }
+    }
+
+    fun sideMost():Side{
+        val flags = flats().by<DataFlag, Flat>()
+        return if(flags.filter { it.second.side == Side.a }.size*2>flags.size) Side.a else Side.b
     }
 
     private class DataFlag(tile: Tile, side: Side) : DataPoint(tile, side)

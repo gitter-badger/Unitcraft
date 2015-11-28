@@ -50,7 +50,9 @@ class Mover(r:Resource) {
 
     fun isMove(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side, isKick: Boolean = false):Boolean{
         val move = Move(obj, pgFrom, pgTo, sideVid, isKick)
-        return if (slotStopMove.any { it(move) }) false else objs()[pgTo] == null
+        return if (slotStopMove.any { it(move) }) false else {
+            !(objs()[pgTo]?.isVid(sideVid)?:false)
+        }
     }
 
     fun isMove(obj: Obj, pgTo: Pg, sideVid: Side, isKick: Boolean = false)=

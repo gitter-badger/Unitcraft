@@ -7,6 +7,7 @@ import unitcraft.server.Err
 import java.util.*
 
 class Lifer(r: Resource) {
+    val slotStopDamage = ArrayList<(Obj)->Boolean>()
     val slotAfterDamage = ArrayList<(List<Dmg>)->Unit>()
     val slotAfterDeaths = ArrayList<(List<Obj>)->Unit>()
 
@@ -22,7 +23,7 @@ class Lifer(r: Resource) {
 
     fun damage(dmgs:List<Dmg>){
         dmgs.forEach {
-            it.obj.life -= it.value
+            if(canDamage(it.obj)) it.obj.life -= it.value
         }
         slotAfterDamage.forEach { it(dmgs) }
         funeral()
@@ -42,13 +43,9 @@ class Lifer(r: Resource) {
         }
     }
 
-    fun canDamage(pg: Pg):Boolean{
-        return objs()[pg]!=null
-    }
+    fun canDamage(pg: Pg) = objs()[pg]?.let{canDamage(it)}?:false
 
-    fun canDamage(obj:Obj):Boolean{
-        return true
-    }
+    fun canDamage(obj:Obj) = !slotStopDamage.any{it(obj)}
 
     fun change(obj:Obj, value:Int){
         obj.life = value

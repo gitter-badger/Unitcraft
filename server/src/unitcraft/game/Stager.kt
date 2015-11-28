@@ -1,12 +1,15 @@
 package unitcraft.game
 
 import unitcraft.game.rule.AllData
+import unitcraft.game.rule.Flag
+import unitcraft.inject.inject
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
 
 class Stager(r: Resource) {
     val allData: () -> AllData by injectAllData()
+    val flag by inject<Flag>()
     val tileEdgeTurn = DabTile(r.tile("edgeTurn", Resource.effectPlace))
     val tileEdgeWait = DabTile(r.tile("edgeWait", Resource.effectPlace))
 
@@ -52,7 +55,7 @@ class Stager(r: Resource) {
     fun isTurn(sideVid: Side) = stage(sideVid) == Stage.turn
 
     private fun checkWin(){
-        allData().sideWin = if(allData().point[Side.b] == 0 || allData().objs.bySide(Side.b).isEmpty()) Side.a else
-            if(allData().point[Side.a] == 0 || allData().objs.bySide(Side.a).isEmpty()) Side.b else null
+        allData().sideWin = if(Side.ab.all{allData().objs.bySide(it).isEmpty()}) flag.sideMost()
+        else Side.ab.firstOrNull{allData().point[it] == 0 || allData().objs.bySide(it).isEmpty()}?.vs
     }
 }
