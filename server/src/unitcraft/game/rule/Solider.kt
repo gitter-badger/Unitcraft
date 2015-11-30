@@ -28,11 +28,11 @@ class Solider(r: Resource) {
     init {
         injectValue<Editor>().onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
             objs()[pg]?.let { objs().remove(it) }
-            mover.canAdd(pg, side) { obj, n ->
-                obj.side = side
-                obj.isFresh = true
-                creates[num](obj)
-            }?.invoke(0)
+            val obj = Obj(pg)
+            objs().list.add(obj)
+            obj.side = side
+            obj.isFresh = true
+            creates[num](obj)
         }, { pg ->
             objs()[pg]?.let {
                 objs().remove(it)
@@ -385,12 +385,13 @@ class Pusher(r: Resource) {
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
         val tracer = injectValue<Tracer>()
+        val skilerMove = injectValue<SkilerMove>()
         spoter.addSkilByBuilder<DataPusher> {
-            for (dr in Dr.values) {
+            if(skilerMove.fuel(obj)>=1) for (dr in Dr.values) {
                 val pgDr = obj.pg.plus(dr) ?: continue
                 val aims = objsLine(obj, dr)
                 if (aims.isNotEmpty()) {
-                    if (!slotStopPush.any { it(dr to aims) }) akt(pgDr, tileAkt) {
+                    if (!slotStopPush.any { it(dr to aims) } && mover.isMovePhantom(obj,obj.pg,pgDr,sideVid)) akt(pgDr, tileAkt) {
                         val last = aims.last()
                         if (last.pg.isEdge()) {
                             aims.removeAt(aims.lastIndex)
@@ -399,6 +400,7 @@ class Pusher(r: Resource) {
                         mover.jumpAll(aims.map { it to it.pg.plus(dr)!! })
                         mover.move(obj, obj.pg.plus(dr)!!, sideVid)?.invoke()
                         aims.forEach { tracer.touch(it.pg, tileAkt) }
+                        skilerMove.spend(obj)
                         spoter.tire(obj)
                     }
                 } else for (pg in pgDr.ray(dr, 3)) {
@@ -439,8 +441,9 @@ class Spider(r: Resource) {
         }
         val lifer = injectValue<Lifer>()
         val spoter = injectValue<Spoter>()
+        val magic = injectValue<Magic>()
         spoter.addSkilByBuilder<DataSpider> {
-            obj.near().filter { !adhesive.hasAdhesive(it) }.forEach {
+            obj.near().filter { !adhesive.hasAdhesive(it) && magic.canMagic(it) }.forEach {
                 akt(it, tlsAkt) {
                     adhesive.plant(it)
                     lifer.damage(obj, 1)

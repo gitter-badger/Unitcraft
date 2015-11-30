@@ -29,7 +29,7 @@ class Resource {
             Dr.lf to hintTile("ctx.translate(0,rTile);ctx.rotate(-Math.PI/2);")
     )
 
-    val hintTextRedPrice = hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
+
 
     val tlsAktMove = tileAkt("move")
     val tileHide = tile("hide")

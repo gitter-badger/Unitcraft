@@ -28,7 +28,6 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
 
     val r = Resource()
 
-
     register(Stager(r))
     register(Editor())
     register(Drawer(r))
@@ -38,6 +37,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Mover(r))
     register(Lifer(r))
     register(Tracer(r))
+    register(Magic())
 
     register(Enforcer(r))
     register(SkilerMove(r))

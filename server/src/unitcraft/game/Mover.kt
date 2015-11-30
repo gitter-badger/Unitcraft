@@ -23,7 +23,6 @@ class Mover(r: Resource) {
         stager.onStartTurn { side -> objs().bySide(side).forEach { hideIfNeed(it) } }
     }
 
-
     /**
      * Перемещает объект, если это возможно.
      * null - движение недоступно
@@ -59,27 +58,26 @@ class Mover(r: Resource) {
         }
     }
 
-    fun jumpAll(jumps: List<Pair<Obj, Pg>>) {
+    fun jumpAll(jumps: List<Pair<Obj, Pg>>): Boolean {
         for ((obj, pg) in jumps) obj.pg = pg
         if (objs().distinctBy { it.pg }.size < objs().list.size) throw Err("obj clash after jumpAll")
-        watch()
+        return watch()
     }
 
-    fun isMove(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side): Boolean {
-        val move = Move(obj, pgFrom, pgTo, sideVid, false)
-        return if (slotStopMove.any { it(move) }) false else {
-            !(objs()[pgTo]?.isVid(sideVid) ?: false)
-        }
-    }
+    fun isMove(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side) = doIsMove(obj, pgFrom, pgTo, sideVid, false, false)
 
-    fun isMove(obj: Obj, pgTo: Pg, sideVid: Side) =
-            isMove(obj, obj.pg, pgTo, sideVid)
+    fun isMovePhantom(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side) = doIsMove(obj, pgFrom, pgTo, sideVid, false, true)
 
-    fun isKick(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side): Boolean {
-        val move = Move(obj, pgFrom, pgTo, sideVid, true)
-        return if (slotStopMove.any { it(move) }) false else {
-            !(objs()[pgTo]?.isVid(sideVid) ?: false)
-        }
+    fun isMove(obj: Obj, pgTo: Pg, sideVid: Side) = isMove(obj, obj.pg, pgTo, sideVid)
+
+    fun isKick(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side) = doIsMove(obj, pgFrom, pgTo, sideVid, true, false)
+
+    private fun doIsMove(obj: Obj, pgFrom: Pg, pgTo: Pg, sideVid: Side, isKick: Boolean, isPhantom: Boolean): Boolean {
+        val move = Move(obj, pgFrom, pgTo, sideVid, isKick)
+        if (slotStopMove.any { it(move) }) return false
+        if (isPhantom) return true
+        val obj = objs()[pgTo] ?: return true
+        return !obj.isVid(sideVid)
     }
 
     /**
@@ -87,19 +85,20 @@ class Mover(r: Resource) {
      * null - движение недоступно
      * ()->Unit - совершает движение и выполняет ifMove, или еслив pgTo невидимка, то раскрывает его
      */
-    fun canAdd(pg: Pg, sideVid: Side, ifAdd: (Obj, Int) -> Unit): ((Int) -> Unit)? {
+    fun canAdd(pg: Pg, sideVid: Side): (((Obj)->Unit) -> Unit)? {
         if (slotStopAdd.any { it(pg, sideVid) }) return null
-        val obj = objs()[pg] ?: return { num ->
-            Obj(pg).apply {
-                ifAdd(this, num)
-                if (objs()[this.pg] != null) throw Err("obj=$this clash")
-                objs().list.add(this)
-                hideIfNeed(this)
-                watch()
-            }
+        val obj = objs()[pg] ?: return { refine ->
+            if (objs()[pg] != null) throw Err("obj=$this clash")
+            val obj = Obj(pg)
+            objs().list.add(obj)
+            refine(obj)
+            hideIfNeed(obj)
+            watch()
+            obj
         }
         return if (obj.isVid(sideVid)) null else {
-            val fn = { num: Int -> reveal(obj) };fn
+            val fn:((Obj)->Unit) -> Unit = { refine -> reveal(obj) }
+            fn
         }
     }
 
@@ -113,13 +112,12 @@ class Mover(r: Resource) {
     }
 
     private fun doMove(move: Move): Boolean {
-        jumpAll(listOf(move.obj to move.pgTo))
-        return slotMoveAfter.map { it(move) }.any { it }
+        val isRevealed = jumpAll(listOf(move.obj to move.pgTo))
+        val isInterrupted = slotMoveAfter.map { it(move) }.any { it }
+        return isRevealed || isInterrupted
     }
 
-    private fun watch() {
-        for (side in Side.ab) objs().filter { !it.isVid(side) && isWatched(it) }.forEach { reveal(it) }
-    }
+    private fun watch() = Side.ab.any { side -> objs().filter { !it.isVid(side) && isWatched(it) }.any { reveal(it) } }
 
     private fun isWatched(obj: Obj) = obj.pg.near.any { objs()[it]?.let { it.side == obj.side.vs } ?: false }
 
@@ -133,12 +131,11 @@ class Mover(r: Resource) {
         }
     }
 
-    fun reveal(obj: Obj) {
-        if (obj.hide) {
-            obj.hide = false
-            tracer.touch(obj.pg, tileReveal)
-        }
-    }
+    fun reveal(obj: Obj) = if (obj.hide) {
+        obj.hide = false
+        tracer.touch(obj.pg, tileReveal)
+        true
+    } else false
 
     fun remove(obj: Obj) {
         objs().list.remove(obj)

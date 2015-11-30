@@ -31,7 +31,7 @@ class Spoter(r: Resource) {
         }
         val tileLastAkt = r.tile("lastAkt")
         injectValue<Drawer>().onDraw(PriorDraw.overObj) { side, ctx ->
-            allData().objAktLast?.let { ctx.drawTile(it.pg, tileLastAkt) }
+            allData().objAktLast?.let { if(it.isVid(side)) ctx.drawTile(it.pg, tileLastAkt) }
         }
     }
 

@@ -17,18 +17,25 @@ class Builder(r: Resource) {
     init {
         val tileAkt = r.tile("build", Resource.effectAkt)
         val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
+        val hintTextRed = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
         val lifer = injectValue<Lifer>()
         val tracer = injectValue<Tracer>()
         injectValue<Spoter>().addSkilByBuilder<SkilBuild> {
             val data = obj<SkilBuild>()
-            val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
-            for (pg in data.zone(obj)) mover.canAdd(pg, sideVid) { objNew, num ->
-                objNew.side = obj.side
-                data.fabriks[num].create(objNew)
-                data.refine(objNew)
-                tracer.touch(objNew,tileAkt)
-                lifer.damage(obj, price)
-            }?.let { aktOpt(pg, tileAkt, dabs, it) }
+            val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), if (obj.life >= price) hintText else hintTextRed)) }
+            for (pg in data.zone(obj)) {
+                val ok = mover.canAdd(pg, sideVid)
+                if (ok != null) aktOpt(pg, tileAkt, dabs) { num ->
+                    ok{objNew ->
+                        objNew.side = obj.side
+                        data.fabriks[num].create(objNew)
+                        data.refine(objNew)
+                        tracer.touch(objNew, tileAkt, objNew.sidesVid())
+                        lifer.damage(obj, price)
+                    }
+                }
+            }
+
         }
     }
 
@@ -64,9 +71,10 @@ class Redeployer(r: Resource) {
         val tileAkt = r.tileAkt("redeployer")
         val objs = injectObjs().value
         val spoter = injectValue<Spoter>()
-        spoter.addSkil<DataRedeployer>() { sideVid, obj ->
-            obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false }.map {
-                AktSimple(it, tileAkt) {
+        val magic = injectValue<Magic>()
+        spoter.addSkilByBuilder<DataRedeployer> {
+            obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false && magic.canMagic(it) }.forEach {
+                akt(it, tileAkt) {
                     objs()[it]?.let {
                         objs().remove(it)
                         builder.plusGold(it.side, 5)

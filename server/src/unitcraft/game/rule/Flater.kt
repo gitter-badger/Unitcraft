@@ -127,7 +127,7 @@ class Grass(r: Resource) {
 
 class Water(r: Resource) {
     init {
-        val tiles = r.tlsList(1, "water", Resource.effectPlace)
+        val tiles = r.tlsList(3, "water", Resource.effectPlace)
         injectValue<Flater>().add(tiles[0], TpFlat.liquid) { it.data(DataWater) }
         groundTilePlace<DataWater>(tiles)
     }

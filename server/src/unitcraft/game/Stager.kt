@@ -28,7 +28,7 @@ class Stager(r: Resource) {
         endTurns.forEach { it(sideTurn) }
         allData().sideTurn = sideTurn.vs
         startTurns.forEach { it(sideTurn.vs) }
-        checkWin()
+        allData().sideWin = checkSideWin()
     }
 
     fun stage(sideVid: Side) = when {
@@ -45,7 +45,7 @@ class Stager(r: Resource) {
 
     fun edge(sideVid: Side): DabTile {
         return when (stage(sideVid)) {
-            Stage.turn,Stage.join,Stage.bonus -> tileEdgeTurn
+            Stage.turn, Stage.join, Stage.bonus -> tileEdgeTurn
             else -> tileEdgeWait
         }
     }
@@ -54,8 +54,33 @@ class Stager(r: Resource) {
 
     fun isTurn(sideVid: Side) = stage(sideVid) == Stage.turn
 
-    private fun checkWin(){
-        allData().sideWin = if(Side.ab.all{allData().objs.bySide(it).isEmpty()}) flag.sideMost()
-        else Side.ab.firstOrNull{allData().point[it] == 0 || allData().objs.bySide(it).isEmpty()}?.vs
+    private fun checkSideWin() =
+            if (Side.ab.all { allData().objs.bySide(it).isEmpty() }) flag.sideMost()
+            else Side.ab.firstOrNull { allData().point[it] == 0 || allData().objs.bySide(it).isEmpty() }?.vs
+
+}
+
+class Slot<T>(val title: String) {
+    private val list = ArrayList<EntrySlot<(T) -> Unit>>()
+
+    fun add(prior: Int, desc: String, fn: (T) -> Unit) {
+        list.add(EntrySlot(prior, desc, fn))
+        Collections.sort(list)
+    }
+
+    fun printDesc(sb: StringBuffer) {
+        sb.appendln("=" + title)
+        list.forEach {
+            sb.appendln("**${it.prior}** ${it.desc}")
+            sb.appendln()
+        }
+    }
+
+    fun exe(prm: T) {
+        list.forEach { it.fn(prm) }
+    }
+
+    private data class EntrySlot<F>(val prior: Int, val desc: String, val fn: F) : Comparable<EntrySlot<F>> {
+        override fun compareTo(other: EntrySlot<F>) = compareValues(prior, other.prior)
     }
 }

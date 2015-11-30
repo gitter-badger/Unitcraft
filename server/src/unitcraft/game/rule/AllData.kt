@@ -58,6 +58,8 @@ class Obj(pg: Pg) : HasPg(pg) {
     fun isVid(sideVid: Side) = side.isN || side == sideVid || !hide
 
     override fun toString() = "Solid $pg $datas"
+
+    fun sidesVid() = Side.ab.filter { isVid(it) }
 }
 
 class Objs : ListHasShape<Obj> {
@@ -82,8 +84,8 @@ interface ListHasShape<H : HasPg> : Iterable<H> {
 
     fun byPg(pg: Pg) = list.byPg(pg)
 
-    fun replace(obj: H){
-        byPg(obj.pg)?.let{list.remove(obj)}
+    fun replace(obj: H) {
+        byPg(obj.pg)?.let { list.remove(obj) }
         list.add(obj)
     }
 }
