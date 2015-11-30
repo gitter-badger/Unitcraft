@@ -183,6 +183,4 @@ object Algs {
 
 fun Pg.isCorner() = x == 0 && y == 0 || x == pgser.xr - 1 && y == 0 || x == pgser.xr - 1 && y == pgser.yr - 1 || x == 0 && y == pgser.yr - 1
 
-fun Pg.isEdge() = x == 0 || x == pgser.xr - 1 || y == 0 || y == pgser.yr - 1
-
 fun dist2(pg: Pg, pgOther: Pg) = Math.sqrt(Math.pow(pg.x.toDouble() - pgOther.x, 2.0) + Math.pow(pg.y.toDouble() - pgOther.y, 2.0))

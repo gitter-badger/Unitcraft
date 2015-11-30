@@ -1,6 +1,7 @@
 package unitcraft.game
 
 import unitcraft.game.rule.Lifer
+import unitcraft.game.rule.Obj
 import unitcraft.inject.injectValue
 import unitcraft.server.Side
 
@@ -46,4 +47,6 @@ class Tracer(r:Resource) {
     fun touch(pg:Pg,tile:Tile){
         Side.ab.forEach { side -> traceTile(side,pg,tile,htTouch)}
     }
+
+    fun touch(obj: Obj, tile:Tile) = touch(obj.pg,tile)
 }

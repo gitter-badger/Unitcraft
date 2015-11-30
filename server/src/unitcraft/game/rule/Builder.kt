@@ -18,6 +18,7 @@ class Builder(r: Resource) {
         val tileAkt = r.tile("build", Resource.effectAkt)
         val hintText = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'white';")
         val lifer = injectValue<Lifer>()
+        val tracer = injectValue<Tracer>()
         injectValue<Spoter>().addSkilByBuilder<SkilBuild> {
             val data = obj<SkilBuild>()
             val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), hintText)) }
@@ -25,6 +26,7 @@ class Builder(r: Resource) {
                 objNew.side = obj.side
                 data.fabriks[num].create(objNew)
                 data.refine(objNew)
+                tracer.touch(objNew,tileAkt)
                 lifer.damage(obj, price)
             }?.let { aktOpt(pg, tileAkt, dabs, it) }
         }

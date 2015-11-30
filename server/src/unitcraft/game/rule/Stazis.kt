@@ -6,8 +6,6 @@ import unitcraft.inject.injectValue
 import unitcraft.server.exclude
 
 class Stazis(r: Resource) {
-
-
     val flats: () -> Flats by injectFlats()
 
     init {
@@ -30,22 +28,25 @@ class Stazis(r: Resource) {
         }
 
         val mover = injectValue<Mover>()
-        mover.slotStopMove.add{ it.pgTo in this || it.pgFrom in this }
-        mover.slotStopAdd.add{ pg, side -> pg in this }
+        mover.slotStopMove.add{ it.pgTo.isStazis() || it.pgFrom.isStazis() }
+        mover.slotStopAdd.add{ pg, side -> pg.isStazis() }
 
-        injectValue<Spoter>().slotStopSkils.add{ obj -> obj.pg in this }
-        injectValue<Lifer>().slotStopDamage.add{ obj -> obj.pg in this }
+        injectValue<Spoter>().slotStopSkils.add{ obj -> obj.pg.isStazis() }
+        injectValue<Lifer>().slotStopDamage.add{ obj -> obj.pg.isStazis() }
+        injectValue<Pusher>().slotStopPush.add{ it.second.last().pg.plus(it.first)?.let{it.isStazis()}?:false || it.second.any{it.pg.isStazis()} }
     }
 
     fun plant(pg: Pg) {
         flats()[pg].orPut { Stazis() }
     }
 
-    operator fun contains(pg:Pg) = flats()[pg].has<Stazis>()
+    private fun Pg.isStazis() = hasStazis(this)
 
     class Stazis:Data{
         var value = 5
     }
+
+    fun hasStazis(pg: Pg) = flats()[pg].has<Stazis>()
 }
 
 

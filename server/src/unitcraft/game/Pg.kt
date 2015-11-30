@@ -26,6 +26,19 @@ class Pg(val pgser: Pgser, val x: Int, val y: Int) : Comparable<Pg> {
     fun distance(pg:Pg) = Math.abs(pg.x - x) + Math.abs(pg.y - y)
 
     fun dr(pg: Pg) = Dr.values.first {it.x == Integer.signum(pg.x-x) && it.y == Integer.signum(pg.y-y)}
+
+    fun isEdge() = x == 0 || x == pgser.xr - 1 || y == 0 || y == pgser.yr - 1
+
+    fun ray(dr: Dr,sizeMax:Int?=null): List<Pg> {
+        val list = ArrayList<Pg>()
+        var cur = this
+        while(true){
+            cur = cur.plus(dr)?:break
+            list.add(cur)
+            if(sizeMax!=null && list.size>=sizeMax) break
+        }
+        return list
+    }
 }
 
 class Pgser(val xr: Int, val yr: Int) : Sequence<Pg> {

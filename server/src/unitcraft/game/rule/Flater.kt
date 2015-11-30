@@ -148,7 +148,9 @@ class Catapult(r: Resource) {
         val tileAkt = r.tileAkt("catapult")
         val flats = injectFlats().value
         val skil = createSkil {
-            obj.pg.all.map { pg -> mover.canMove(obj, pg, sideVid){ spoter.tire(obj) }?.let{ akt(pg, tileAkt){it()} } }
+            obj.pg.all.map { pg -> mover.move(obj, pg, sideVid)?.let{ akt(pg, tileAkt){
+                if(it()) spoter.tire(obj)
+            }}}
         }
         spoter.listSkil.add {
             if (it.pg in flats().by<Catapult, Flat>().map { it.first.pg }) skil else null

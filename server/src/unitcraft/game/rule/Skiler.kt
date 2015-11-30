@@ -24,13 +24,10 @@ class SkilerMove(r: Resource) {
                 for (pg in wave.pgs()) {
                     //val move = Move(obj, obj.shape.headTo(pg), sideVid)
                     akt(pg, tileAktMove) {
+                        val pgOld = obj.pg
                         val path = wave.path(pg)
-                        for (pg in path) {
-                            val abort = mover.canMove(obj, pg, sideVid){
-                                data.fuel -= 1
-                            }
-                            if(abort==null || abort()) break
-                        }
+                        mover.movePath(obj, path, sideVid)
+                        data.fuel -= obj.pg.distance(pgOld)
                     }
                 }
             }
@@ -48,7 +45,7 @@ class SkilerMove(r: Resource) {
                 val (cur, cost) = que.removeAt(0)
                 if (cost == fuel) continue
                 val next = cur.near.filter {
-                    mover.canMove(obj, cur, it, sideVid){} != null && it !in map && it != obj.pg
+                    mover.isMove(obj, cur, it, sideVid) && it !in map && it != obj.pg
                 }.map { it to cost + 1 }
                 map.putAll(next)
                 que.addAll(next)
