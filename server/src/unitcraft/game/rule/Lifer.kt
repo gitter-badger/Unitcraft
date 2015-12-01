@@ -66,7 +66,7 @@ class Lifer(r: Resource) {
 
     init{
         val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
-        injectValue<Solider>().drawObjs.add {obj,side,ctx ->
+        injectValue<Objer>().slotDrawObjPost.add(100,this,"рисует прочность") {
             ctx.drawText(obj.pg, obj.life, hintTextLife)
         }
     }

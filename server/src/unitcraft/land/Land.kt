@@ -3,7 +3,7 @@ package unitcraft.land
 import unitcraft.game.Pg
 import unitcraft.game.Pgser
 import unitcraft.game.rule.Flater
-import unitcraft.game.rule.Solider
+import unitcraft.game.rule.Objer
 import unitcraft.inject.inject
 import unitcraft.land.TpFlat.*
 import unitcraft.land.TpSolid.builder
@@ -12,7 +12,7 @@ import unitcraft.server.Side
 import java.util.*
 
 class Land(val mission: Int?) {
-    val solider: Solider by inject()
+    val objer: Objer by inject()
     val flater: Flater by inject()
 
     val seed = mission?.toLong() ?: System.nanoTime()
@@ -97,7 +97,7 @@ class Land(val mission: Int?) {
 
     fun idxFlatRnd(tpFlat: TpFlat) = r.nextInt(flater.maxFromTpFlat()[tpFlat]!!)
 
-    fun idxSolidRnd(tpFlat: TpSolid) = r.nextInt(solider.maxFromTpSolid()[tpFlat]!!)
+    fun idxSolidRnd(tpFlat: TpSolid) = r.nextInt(objer.maxFromTpSolid()[tpFlat]!!)
 
     private fun createPgser(): Pgser {
         val (x, y) = selRnd(dmns)

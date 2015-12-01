@@ -3,10 +3,8 @@ package unitcraft.game
 import unitcraft.game.rule.AllData
 import unitcraft.game.rule.Flag
 import unitcraft.inject.inject
-import unitcraft.inject.injectValue
 import unitcraft.server.Err
 import unitcraft.server.Side
-import java.util.*
 
 class Stager(r: Resource) {
     val allData: () -> AllData by injectAllData()
@@ -16,22 +14,16 @@ class Stager(r: Resource) {
 
     val focus = DabTile(r.tile("focus"))
 
-    val slotEndTurn = Slot<Side>("После конца хода")
-    private val startTurns = ArrayList<(Side) -> Unit>()
-
-    init{
-        injectValue<Descer>().add(slotEndTurn)
-    }
-
-    fun onStartTurn(fn: (Side) -> Unit) = startTurns.add(fn)
+    val slotTurnStart = r.slot<AideSide>("Начало хода")
+    val slotTurnEnd = r.slot<AideSide>("Конец хода")
 
     fun sideTurn() = allData().sideTurn
 
     fun endTurn() {
         val sideTurn = allData().sideTurn
-        slotEndTurn.exe(sideTurn)
+        slotTurnEnd.exe(AideSide(sideTurn))
         allData().sideTurn = sideTurn.vs
-        startTurns.forEach { it(sideTurn.vs) }
+        slotTurnStart.exe(AideSide(sideTurn.vs))
         allData().sideWin = checkSideWin()
     }
 
@@ -62,3 +54,5 @@ class Stager(r: Resource) {
             if (Side.ab.all { allData().objs.bySide(it).isEmpty() }) flag.sideMost()
             else Side.ab.firstOrNull { allData().point[it] == 0 || allData().objs.bySide(it).isEmpty() }?.vs
 }
+
+class AideSide(val side: Side) : Aide

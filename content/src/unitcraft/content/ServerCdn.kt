@@ -136,7 +136,7 @@ class ServerCdn() : NanoHTTPD(8000) {
         files.withIndex().map{it.value.nameBase+":"+it.index}.joinTo(sb,",","var imgPanels = {","};");
         sb.appendln();
         File(dirOut, "server.js").writeText(sb.toString())
-        File(dirOut, "rule.html").writeText(res.htmlRule)
+        File(dirOut, "rule.html").writeText(res.htmlRule())
     }
 
     private fun fileFromTile(resTile: ResTile) = File(dirTiles + resTile.name + ".png")

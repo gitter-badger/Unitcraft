@@ -39,8 +39,8 @@ class Builder(r: Resource) {
         }
     }
 
-    fun plusGold(side: Side, value: Int) {
-        objs().bySide(side).by<SkilBuild, Obj>().forEach { lifer.heal(it.first, value) }
+    fun plusGold(side: Side?, value: Int) {
+        objs().bothBy<SkilBuild>(side).forEach { lifer.heal(it.first, value) }
     }
 
     fun add(obj: Obj, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
@@ -62,7 +62,7 @@ class Redeployer(r: Resource) {
     init {
         val tls = r.tlsVoin("redeployer")
         val builder = injectValue<Builder>()
-        injectValue<Solider>().add(tls.neut, null, TpSolid.builder) {
+        injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
             it.data(DataRedeployer)
             builder.add(it, { it.near() }, {})
@@ -90,7 +90,7 @@ class Redeployer(r: Resource) {
 
 class Armorer(r: Resource) {
     init {
-        val solider = injectValue<Solider>()
+        val solider = injectValue<Objer>()
         val builder = injectValue<Builder>()
         val lifer = injectValue<Lifer>()
         val skilerMove = injectValue<SkilerMove>()
@@ -107,7 +107,7 @@ class Armorer(r: Resource) {
 
 class Airport(r: Resource) {
     init {
-        val solider = injectValue<Solider>()
+        val solider = injectValue<Objer>()
         val builder = injectValue<Builder>()
         val tls = r.tlsVoin("airport")
         solider.add(tls.neut, null, TpSolid.builder, false) {
@@ -122,7 +122,7 @@ class Inviser(r: Resource) {
         val mover = injectValue<Mover>()
         val tls = r.tlsVoin("inviser")
         val builder = injectValue<Builder>()
-        injectValue<Solider>().add(tls.neut, null, TpSolid.builder) {
+        injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
             it.data(DataInviser)
             builder.add(it, { it.near() }, { it.data(DataInviser) })

@@ -18,12 +18,12 @@ class Adhesive(r: Resource){
             }else false
         })
 
-        injectValue<Drawer>().onDraw(PriorDraw.flat) { side, ctx ->
-            for ((flat,stazis) in flats().by<Adhesive,Flat>()) ctx.drawTile(flat.pg, tile)
+        injectValue<Flater>().slotDrawFlat.add(5,this,"рисует паутину на земле") {
+            for (flat in flats().by<Adhesive>()) ctx.drawTile(flat.pg, tile)
         }
 
-        injectValue<Drawer>().onDraw(PriorDraw.overObj) { side, ctx ->
-            for ((flat,stazis) in flats().by<Adhesive,Flat>()) if(objs()[flat.pg]!=null) ctx.drawTile(flat.pg, tileObj)
+        injectValue<Objer>().slotDrawObjPost.add(20,this,"рисует паутину на объекте") {
+            if(flats()[obj.pg].has<Adhesive>()) ctx.drawTile(obj.pg, tileObj)
         }
 
         injectValue<Mover>().slotStopMove.add{ !it.isKick && hasAdhesive(it.pgFrom) }

@@ -31,17 +31,16 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
 
     val r = Resource()
 
-    register(Descer())
     register(Stager(r))
     register(Editor())
     register(Drawer(r))
-    register(Spoter(r))
     register(Flater(r))
-    register(Sider())
     register(Mover(r))
     register(Tracer(r))
     register(Magic())
-    register(Solider(r))
+    register(Objer(r))
+    register(Spoter(r))
+    register(Sider())
     register(Enforce(r))
     register(Lifer(r))
     register(SkilerMove(r))
@@ -54,7 +53,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Sand(r)
     Catapult(r)
     Fortress(r)
-    Mine(r)
+    Goldmine(r)
     Hospital(r)
     register(Flag(r))
 
@@ -79,8 +78,6 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Adhesive(r))
     Spider(r)
 
-    r.htmlRule = injectValue<Descer>().html()
-
     return r
 }
 
@@ -93,7 +90,7 @@ class CmderUnitcraft : CmderGame {
     val data: () -> DataUnitcraft by injectData()
 
     val flater: Flater by inject()
-    val solider: Solider by inject()
+    val objer: Objer by inject()
     val builder: Builder by inject()
     val editor: Editor by inject()
     val stager: Stager by inject()
@@ -107,12 +104,11 @@ class CmderUnitcraft : CmderGame {
     override fun reset(): GameState {
         data().allData = AllData()
         flater.reset(data().land.flats)
-        solider.reset(data().land.solids)
+        objer.reset(data().land.solids)
         return state()
     }
 
     override fun cmd(side: Side, cmd: String): GameState {
-        if (side.isN) throw throw Err("side is neutral")
         if (cmd.isEmpty()) throw Violation("cmd is empty")
         val prm = Prm(data().land.pgser, cmd[1, cmd.length].toString())
         var swapSide: SwapSide? = null
@@ -200,7 +196,7 @@ class CmderUnitcraft : CmderGame {
         ensureCanEdit()
         prm.ensureSize(2)
         tracer.clear()
-        solider.editChange(prm.pg(0), side)
+        objer.editChange(prm.pg(0), side)
     }
 
     private fun akt(side: Side, prm: Prm) {

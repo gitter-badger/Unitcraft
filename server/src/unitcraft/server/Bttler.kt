@@ -195,20 +195,17 @@ enum class SwapSide {
 }
 
 enum class Side {
-    a, b, n;
+    a, b;
 
-    val vs: Side by lazy(LazyThreadSafetyMode.NONE) {
+    val vs: Side by lzy {
         when (this) {
             a -> b
             b -> a
-            n -> n
         }
     }
 
-    val isN: Boolean by lazy(LazyThreadSafetyMode.NONE) { this == n }
-
     companion object {
-        val ab = listOf(Side.a, Side.b).requireNoNulls()
+        val ab = listOf(Side.a, Side.b)
     }
 }
 

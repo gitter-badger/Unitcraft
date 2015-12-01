@@ -46,20 +46,28 @@ class Flats : ListHasShape<Flat> {
     fun sort() = list.apply { Collections.sort(list, compareBy { it.pg }) }
 
     operator fun get(pg: Pg) = list.byPg(pg)!!
+
+    inline fun <reified D : Data> by() = filter { it.has<D>() }
+
+    inline fun <reified T : Data> bothBy() = filter { it.has<T>() }.map { it to it<T>() }
 }
 
 class Obj(pg: Pg) : HasPg(pg) {
-    var side = Side.n
+    var side:Side? = null
     var isFresh = false
     var flip = pg.x > pg.pgser.xr / 2
     var life = 5
     var hide = false
 
-    fun isVid(sideVid: Side) = side.isN || side == sideVid || !hide
-
-    override fun toString() = "Solid $pg $datas"
+    fun isVid(sideVid: Side) = side==null || side == sideVid || !hide
 
     fun sidesVid() = Side.ab.filter { isVid(it) }
+
+    fun isEnemy(side: Side?) = if(side==null) false else this.side == side.vs
+
+    fun isAlly(side: Side?) = if(side==null) false else this.side == side
+
+    override fun toString() = "Solid $pg $datas"
 }
 
 class Objs : ListHasShape<Obj> {
@@ -67,14 +75,19 @@ class Objs : ListHasShape<Obj> {
 
     fun sort(): List<Obj> = list.apply { list.sort(compareBy { it.pg }) }
 
-    fun bySide(side: Side) = list.bySide(side)
+    fun bySide(side: Side?) = list.bySide(side)
+
+    inline fun <reified D : Data> by() = filter { it.has<D>() }
+
+    inline fun <reified T : Data> bothBy() = filter { it.has<T>() }.map { it to it<T>() }
+
+    inline fun <reified T : Data> bothBy(side:Side?) = filter { it.side == side && it.has<T>() }.map { it to it<T>() }
 
     operator fun get(pg: Pg) = list.byPg(pg)
 }
 
-inline fun <reified T : Data, A : HasPg> List<A>.by() = filter { it.has<T>() }.map { it to it<T>() }
 fun <H : HasPg> List<H>.byPg(pg: Pg) = firstOrNull() { pg == it.pg }
-fun List<Obj>.bySide(side: Side) = filter { it.side == side }
+fun List<Obj>.bySide(side: Side?) = filter { it.side == side }
 
 interface ListHasShape<H : HasPg> : Iterable<H> {
     val list: ArrayList<H>
@@ -90,7 +103,7 @@ interface ListHasShape<H : HasPg> : Iterable<H> {
     }
 }
 
-inline fun <reified T : Data, H : HasPg> ListHasShape<H>.by() = list.by<T, H>()
+
 
 interface Data
 

@@ -3,6 +3,7 @@ package unitcraft.game
 import unitcraft.game.rule.AllData
 import unitcraft.game.rule.Data
 import unitcraft.game.rule.Obj
+import unitcraft.game.rule.Objer
 import unitcraft.inject.inject
 import unitcraft.inject.injectValue
 import unitcraft.server.Err
@@ -24,14 +25,21 @@ class Spoter(r: Resource) {
     val slotStopSkils = ArrayList<(Obj) -> Boolean>()
 
     init {
-        stager.slotEndTurn.add(0,"spoter: устает последний сходивший, союзники теряют усталость") { side ->
+        stager.slotTurnEnd.add(0,this,"устает последний сходивший, союзники теряют усталость") {
             tireLast()
             allData().objAktLast = null
             objs().bySide(side).forEach { it.isFresh = true }
         }
+
+        val tileReady = r.tile("ready")
+        val tileNeedTire = r.tile("needTire")
+        val objer = injectValue<Objer>()
+        objer.slotDrawObjPre.add(90,this,"рисует ready и needTire") {
+            if(canAkt(obj,side)) ctx.drawTile(obj.pg, if(obj==allData().objNeedTire) tileNeedTire else tileReady)
+        }
         val tileLastAkt = r.tile("lastAkt")
-        injectValue<Drawer>().onDraw(PriorDraw.overObj) { side, ctx ->
-            allData().objAktLast?.let { if(it.isVid(side)) ctx.drawTile(it.pg, tileLastAkt) }
+        objer.slotDrawObjPost.add(90,this,"рисует lastAkt над последним сходившим") {
+            if(obj == allData().objAktLast) ctx.drawTile(obj.pg, tileLastAkt)
         }
     }
 
@@ -87,7 +95,7 @@ class Spoter(r: Resource) {
     private fun skilsObj(obj: Obj) = listSkil.map { it(obj) }.filterNotNull().filterNot { slotStopSkils.any { it(obj) } }
 
     private fun sloysObj(obj: Obj, sideVid: Side): List<Sloy> {
-        val isOn = if (stager.isTurn(sideVid) && obj.isFresh) listCanAkt.any { it(sideVid, obj) } else false
+        val isOn = canAkt(obj,sideVid)
         val r = Raise(obj.pg, isOn, hintTileAktOff)
         val listAkts = skilsObj(obj).map { it(sideVid, obj) }
         val aktsModal = listAkts.firstOrNull() { it.isModal }
@@ -101,6 +109,8 @@ class Spoter(r: Resource) {
         }
         return r.sloys()
     }
+
+    private fun canAkt(obj:Obj,sideVid: Side) = if (stager.isTurn(sideVid) && obj.isFresh) listCanAkt.any { it(sideVid, obj) } else false
 
     fun tire(obj: Obj) {
         if(!obj.isFresh) return

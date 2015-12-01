@@ -2,13 +2,9 @@ package unitcraft.game
 
 import java.util.*
 
-class Descer {
-    private val slots = ArrayList<Slot<*>>()
+class HtmlRule(val slots :List<Slot<*>>) {
+    //private val slots = ArrayList<Slot<*>>()
     private val sb = StringBuilder()
-
-    fun add(vararg slot: Slot<*>) {
-        slots.addAll(slot)
-    }
 
     fun html():String {
         sb.appendln("<!DOCTYPE html>")

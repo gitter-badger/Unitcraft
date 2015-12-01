@@ -14,8 +14,8 @@ class Enforce(r: Resource) {
     val objs: () -> Objs  by injectObjs()
 
     init {
-        injectValue<Solider>().drawObjs.add { obj,side,ctx  -> if(obj.has<DataEnforce>()) ctx.drawTile(obj.pg,tls(obj<DataEnforce>().isOn)) }
-        stager.slotEndTurn.add(1,"Enforce: удаляет статус Enforce у всех юнитов")  { objs().forEach { it.remove<DataEnforce>() } }
+        injectValue<Objer>().slotDrawObjPost.add(5,this,"рисует статус Enforce") { if(obj.has<DataEnforce>()) ctx.drawTile(obj.pg,tls(obj<DataEnforce>().isOn)) }
+        stager.slotTurnEnd.add(1,this,"удаляет статус Enforce у всех юнитов")  { objs().forEach { it.remove<DataEnforce>() } }
         spoter.listCanAkt.add { side, obj -> obj.has<DataEnforce>() && obj<DataEnforce>().isOn }
     }
 

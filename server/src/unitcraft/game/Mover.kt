@@ -20,7 +20,7 @@ class Mover(r: Resource) {
     val tileReveal = r.tile("reveal")
 
     init {
-        stager.onStartTurn { side -> objs().bySide(side).forEach { hideIfNeed(it) } }
+        stager.slotTurnStart.add(100,this,"скрывает юнитов получивших невидимость") { objs().bySide(side).forEach { hideIfNeed(it) } }
     }
 
     /**
@@ -76,8 +76,8 @@ class Mover(r: Resource) {
         val move = Move(obj, pgFrom, pgTo, sideVid, isKick)
         if (slotStopMove.any { it(move) }) return false
         if (isPhantom) return true
-        val obj = objs()[pgTo] ?: return true
-        return !obj.isVid(sideVid)
+        val objTo = objs()[pgTo] ?: return true
+        return !objTo.isVid(sideVid)
     }
 
     /**
@@ -85,7 +85,7 @@ class Mover(r: Resource) {
      * null - движение недоступно
      * ()->Unit - совершает движение и выполняет ifMove, или еслив pgTo невидимка, то раскрывает его
      */
-    fun canAdd(pg: Pg, sideVid: Side): (((Obj)->Unit) -> Unit)? {
+    fun canAdd(pg: Pg, sideVid: Side): (((Obj) -> Unit) -> Unit)? {
         if (slotStopAdd.any { it(pg, sideVid) }) return null
         val obj = objs()[pg] ?: return { refine ->
             if (objs()[pg] != null) throw Err("obj=$this clash")
@@ -94,10 +94,9 @@ class Mover(r: Resource) {
             refine(obj)
             hideIfNeed(obj)
             watch()
-            obj
         }
         return if (obj.isVid(sideVid)) null else {
-            val fn:((Obj)->Unit) -> Unit = { refine -> reveal(obj) }
+            val fn: ((Obj) -> Unit) -> Unit = { refine -> reveal(obj) }
             fn
         }
     }
@@ -117,9 +116,13 @@ class Mover(r: Resource) {
         return isRevealed || isInterrupted
     }
 
-    private fun watch() = Side.ab.any { side -> objs().filter { !it.isVid(side) && isWatched(it) }.any { reveal(it) } }
+    private fun watch() = Side.ab.any { side ->
+        val revaled = objs().filter { !it.isVid(side) && isWatched(it) }
+        revaled.forEach { reveal(it) }
+        return revaled.isNotEmpty()
+    }
 
-    private fun isWatched(obj: Obj) = obj.pg.near.any { objs()[it]?.let { it.side == obj.side.vs } ?: false }
+    private fun isWatched(obj: Obj) = obj.pg.near.any { objs()[it]?.let { it.isEnemy(obj.side) } ?: false }
 
     fun hideIfNeed(obj: Obj) {
         if (!isWatched(obj) && slotHide.any { it(obj) }) obj.hide = true
@@ -131,11 +134,12 @@ class Mover(r: Resource) {
         }
     }
 
-    fun reveal(obj: Obj) = if (obj.hide) {
-        obj.hide = false
-        tracer.touch(obj.pg, tileReveal)
-        true
-    } else false
+    fun reveal(obj: Obj) {
+        if (obj.hide) {
+            obj.hide = false
+            tracer.touch(obj.pg, tileReveal)
+        }
+    }
 
     fun remove(obj: Obj) {
         objs().list.remove(obj)
