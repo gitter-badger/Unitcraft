@@ -1,10 +1,13 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
+import unitcraft.inject.clearAllInjects
 import unitcraft.inject.inject
+import unitcraft.inject.injectValue
 import unitcraft.inject.register
 import unitcraft.land.Land
 import unitcraft.server.*
+import java.io.File
 
 object FncUnitcraft {
     lateinit var data: () -> DataUnitcraft
@@ -28,6 +31,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
 
     val r = Resource()
 
+    register(Descer())
     register(Stager(r))
     register(Editor())
     register(Drawer(r))
@@ -35,15 +39,14 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Flater(r))
     register(Sider())
     register(Mover(r))
-    register(Lifer(r))
     register(Tracer(r))
     register(Magic())
-
-    register(Enforcer(r))
+    register(Solider(r))
+    register(Enforce(r))
+    register(Lifer(r))
     register(SkilerMove(r))
     register(SkilerHit(r))
     register(Builder(r))
-    register(Solider(r))
 
     Forest(r)
     Grass(r)
@@ -75,6 +78,8 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
 
     register(Adhesive(r))
     Spider(r)
+
+    r.htmlRule = injectValue<Descer>().html()
 
     return r
 }

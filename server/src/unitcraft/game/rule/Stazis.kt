@@ -17,7 +17,7 @@ class Stazis(r: Resource) {
                 true
             }else false
         })
-        injectValue<Stager>().onEndTurn {
+        injectValue<Stager>().slotEndTurn.add(-1,"Stazis: стазисы теряют заряд")  {
             for ((flat,stazis) in flats().by<Stazis,Flat>()) {
                 stazis.value -= 1
                 if(stazis.value==0) flat.remove<Stazis>()

@@ -98,7 +98,7 @@ open class HasData {
     val datas = ArrayList<Data>()
 
     inline fun <reified T : Data> data(data: T) {
-        if (has<T>()) throw Err("duplicate data on $this")
+        if (has<T>()) remove<T>()
         datas.add(data)
     }
 

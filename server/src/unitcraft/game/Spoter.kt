@@ -24,10 +24,10 @@ class Spoter(r: Resource) {
     val slotStopSkils = ArrayList<(Obj) -> Boolean>()
 
     init {
-        stager.onEndTurn {
+        stager.slotEndTurn.add(0,"spoter: устает последний сходивший, союзники теряют усталость") { side ->
             tireLast()
             allData().objAktLast = null
-            objs().forEach { it.isFresh = true }
+            objs().bySide(side).forEach { it.isFresh = true }
         }
         val tileLastAkt = r.tile("lastAkt")
         injectValue<Drawer>().onDraw(PriorDraw.overObj) { side, ctx ->

@@ -1,6 +1,6 @@
-package unitcraft.game
+package unitcraft.game.rule
 
-import unitcraft.game.rule.*
+import unitcraft.game.*
 import unitcraft.inject.injectValue
 import unitcraft.server.Side
 
@@ -18,7 +18,7 @@ class Mina(r: Resource) {
                 true
             } else false
         })
-        injectValue<Drawer>().onDraw(PriorDraw.overObj) { side, ctx ->
+        injectValue<Drawer>().onDraw(PriorDraw.flat) { side, ctx ->
             for ((flat, mina) in flats().by<Mina, Flat>()) if (mina.side == side)
                 ctx.drawTile(flat.pg, tile)
         }

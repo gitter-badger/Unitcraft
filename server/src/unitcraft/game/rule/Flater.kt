@@ -29,7 +29,7 @@ class Flater(r: Resource) {
             flats().add(flat)
         }, { pg -> false })
 
-        stager.onEndTurn {
+        stager.slotEndTurn.add(50,"Flater: захватываются плоскуны контроля")  {
             for ((flat, point) in allData().flats.by<DataPoint, Flat>()) {
                 val obj = allData().objs[flat.pg]
                 if (obj != null && !obj.side.isN)
@@ -196,7 +196,7 @@ class Flag(r: Resource) {
         }
 
 
-        injectValue<Stager>().onEndTurn { side ->
+        injectValue<Stager>().slotEndTurn.add(51,"Flag: игрок с меньшинством флагов теряет 1 очко")  { side ->
             val sideLost = sideMost().vs
             allData().point[sideLost] = allData().point[sideLost]!! - 1
         }
@@ -216,9 +216,8 @@ class Mine(r: Resource) {
         val flats = injectFlats().value
         val tile = r.tile("mine")
         injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Mine(tile, side)) }
-        injectValue<Stager>().onEndTurn { side ->
-            val gold = flats().by<Mine, Flat>().filter { it.second.side == side }.size
-            builder.plusGold(side, gold)
+        injectValue<Stager>().slotEndTurn.add(60,"Mine: захваченные золотые шахты дают золото")  { side ->
+            builder.plusGold(side, flats().by<Mine, Flat>().count { it.second.side == side })
         }
     }
 

@@ -66,7 +66,7 @@ class Lifer(r: Resource) {
 
     init{
         val hintTextLife = r.hintText("ctx.fillStyle = 'white';")
-        injectValue<Drawer>().drawObjs.add {obj,side,ctx ->
+        injectValue<Solider>().drawObjs.add {obj,side,ctx ->
             ctx.drawText(obj.pg, obj.life, hintTextLife)
         }
     }

@@ -12,6 +12,7 @@ import java.awt.Color
 import kotlin.reflect.*
 
 class Resource {
+    lateinit var htmlRule: String
 
     val resTiles = ArrayList<ResTile>()
     val hintTiles = ArrayList<ResHintTile>()
@@ -20,16 +21,12 @@ class Resource {
     val hintTileDeploy = hintTile("")
     val hintTileAktOff = hintTile("ctx.globalAlpha = 0.6")
 
-
-
     val hintTilesTurn = mapOf(
             Dr.up to null,
             Dr.rt to hintTile("ctx.translate(rTile,0);ctx.rotate(Math.PI/2);"),
             Dr.dw to hintTile("ctx.translate(rTile,rTile);ctx.rotate(Math.PI);"),
             Dr.lf to hintTile("ctx.translate(0,rTile);ctx.rotate(-Math.PI/2);")
     )
-
-
 
     val tlsAktMove = tileAkt("move")
     val tileHide = tile("hide")
@@ -140,10 +137,6 @@ class Resource {
 //            r.optsTest.mapTo(prmsTestAdd) { it.component2() }
 //        }
 //    }
-}
-
-open class TlsFlatOwn(val ally:Tile,val enemy:Tile,val yellow:Tile,val blue:Tile){
-    operator fun invoke(sideVid:Side, sideOwn: Side) = if(sideOwn == sideVid) ally else enemy
 }
 
 class TlsObj(val neut: Tile, val ally: TlsBool, val enemy: TlsBool, val join: TlsBool)

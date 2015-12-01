@@ -3,6 +3,7 @@ package unitcraft.game
 import unitcraft.game.rule.AllData
 import unitcraft.game.rule.Flag
 import unitcraft.inject.inject
+import unitcraft.inject.injectValue
 import unitcraft.server.Err
 import unitcraft.server.Side
 import java.util.*
@@ -15,17 +16,20 @@ class Stager(r: Resource) {
 
     val focus = DabTile(r.tile("focus"))
 
-    private val endTurns = ArrayList<(Side) -> Unit>()
+    val slotEndTurn = Slot<Side>("После конца хода")
     private val startTurns = ArrayList<(Side) -> Unit>()
 
-    fun onEndTurn(fn: (Side) -> Unit) = endTurns.add(fn)
+    init{
+        injectValue<Descer>().add(slotEndTurn)
+    }
+
     fun onStartTurn(fn: (Side) -> Unit) = startTurns.add(fn)
 
     fun sideTurn() = allData().sideTurn
 
     fun endTurn() {
         val sideTurn = allData().sideTurn
-        endTurns.forEach { it(sideTurn) }
+        slotEndTurn.exe(sideTurn)
         allData().sideTurn = sideTurn.vs
         startTurns.forEach { it(sideTurn.vs) }
         allData().sideWin = checkSideWin()
@@ -57,30 +61,4 @@ class Stager(r: Resource) {
     private fun checkSideWin() =
             if (Side.ab.all { allData().objs.bySide(it).isEmpty() }) flag.sideMost()
             else Side.ab.firstOrNull { allData().point[it] == 0 || allData().objs.bySide(it).isEmpty() }?.vs
-
-}
-
-class Slot<T>(val title: String) {
-    private val list = ArrayList<EntrySlot<(T) -> Unit>>()
-
-    fun add(prior: Int, desc: String, fn: (T) -> Unit) {
-        list.add(EntrySlot(prior, desc, fn))
-        Collections.sort(list)
-    }
-
-    fun printDesc(sb: StringBuffer) {
-        sb.appendln("=" + title)
-        list.forEach {
-            sb.appendln("**${it.prior}** ${it.desc}")
-            sb.appendln()
-        }
-    }
-
-    fun exe(prm: T) {
-        list.forEach { it.fn(prm) }
-    }
-
-    private data class EntrySlot<F>(val prior: Int, val desc: String, val fn: F) : Comparable<EntrySlot<F>> {
-        override fun compareTo(other: EntrySlot<F>) = compareValues(prior, other.prior)
-    }
 }

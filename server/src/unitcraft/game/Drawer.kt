@@ -12,17 +12,12 @@ class Drawer(r: Resource) {
 
     val ground = r.tileGround
     val tileFlatNull = r.tile("null.flat")
-    val tileObjNull = r.tile("null.obj")
-    val tileGrave = r.tile("grave")
-    val htCorpse = r.hintTile("ctx.globalAlpha=0.8;ctx.translate(0.3*rTile,0.3*rTile);ctx.scale(0.4,0.4);")
 
     fun draw(side: Side): List<DabOnGrid> {
         val ctx = CtxDraw(side)
         for (prior in PriorDraw.values) {
             drawFlats(side, ctx)
-            drawCorpses(side, ctx)
             draws[PriorDraw.flat]?.forEach { it(side, ctx) }
-            drawObjs(side, ctx)
             draws[PriorDraw.obj]?.forEach { it(side, ctx) }
             draws[PriorDraw.overObj]?.forEach { it(side, ctx) }
         }
@@ -43,30 +38,7 @@ class Drawer(r: Resource) {
         }
     }
 
-    private fun drawObjs(side: Side, ctx: CtxDraw) {
-        for (obj in allData().objs.sort()) {
-            val th = tileWithHintObj.map { it(obj, side) }.firstOrNull { it != null }
-            if (th != null)
-                ctx.drawTile(obj.pg, th.first, th.second)
-            else
-                ctx.drawTile(obj.pg, tileObjNull)
-            drawObjs.forEach { it(obj, side, ctx) }
-        }
-    }
-
-    private fun drawCorpses(side: Side, ctx: CtxDraw) {
-        for (obj in allData().corpses.sort()) {
-            ctx.drawTile(obj.pg, tileGrave)
-            val th = tileWithHintObj.map { it(obj, side) }.firstOrNull { it != null }
-            if (th != null)
-                ctx.drawTile(obj.pg, th.first, htCorpse)
-            else
-                ctx.drawTile(obj.pg, tileObjNull, htCorpse)
-        }
-    }
-
     val drawFlats = ArrayList<(Flat, Side, CtxDraw) -> Unit>()
-    val drawObjs = ArrayList<(Obj, Side, CtxDraw) -> Unit>()
 
     private val draws = HashMap<PriorDraw, MutableList<(Side, CtxDraw) -> Unit>>()
 

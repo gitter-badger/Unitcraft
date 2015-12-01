@@ -24,6 +24,9 @@ class Solider(r: Resource) {
     val builder: Builder by inject()
     val stager: Stager by inject()
     val objs: () -> Objs by injectObjs()
+    val allData: () -> AllData by injectAllData()
+
+    val drawObjs = ArrayList<(Obj, Side, CtxDraw) -> Unit>()
 
     init {
         injectValue<Editor>().onEdit(PriorDraw.obj, tilesEditor, { pg, side, num ->
@@ -38,10 +41,6 @@ class Solider(r: Resource) {
                 objs().remove(it)
             } ?: false
         })
-        val tileHide = r.tile("hide")
-        drawer.drawObjs.add { obj, side, ctx ->
-            if (!obj.isVid(side)) ctx.drawTile(obj.pg, tileHide)
-        }
         mover.slotMoveAfter.add { move ->
             if (!move.isKick) {
                 val d = move.pgFrom.x - move.pgTo.x
@@ -49,27 +48,66 @@ class Solider(r: Resource) {
             }
             false
         }
-        drawer.onObj<DataTileObj> { obj, data, side ->
-            val hided = !obj.isVid(side.vs)
-            val tile = if (stager.isBeforeTurn(side)) data.tlsObj.join(obj.side == Side.a) else {
-                if (obj.side.isN) data.tlsObj.neut
-                else {
-                    if (stager.isTurn(side)) {
-                        if (obj.side == side) data.tlsObj.ally(obj.isFresh)
-                        else data.tlsObj.enemy(true)
-                    } else {
-                        if (obj.side == side) data.tlsObj.ally(false)
-                        else data.tlsObj.enemy(obj.isFresh)
+        //        drawer.onObj<DataTileObj> { obj, data, side ->
+        //            val hided = !obj.isVid(side.vs)
+        //            val tile = if (stager.isBeforeTurn(side)) data.tlsObj.join(obj.side == Side.a) else {
+        //                if (obj.side.isN) data.tlsObj.neut
+        //                else {
+        //                    if (stager.isTurn(side)) {
+        //                        if (obj.side == side) data.tlsObj.ally(obj.isFresh)
+        //                        else data.tlsObj.enemy(true)
+        //                    } else {
+        //                        if (obj.side == side) data.tlsObj.ally(false)
+        //                        else data.tlsObj.enemy(obj.isFresh)
+        //                    }
+        //                }
+        //            }
+        //            val hint = when {
+        //                obj.flip && hided -> hintTileFlipHide
+        //                obj.flip -> hintTileFlip
+        //                hided -> hintTileHide
+        //                else -> null
+        //            }
+        //            tile to hint
+        //        }
+
+        val tileObjNull = r.tile("null.obj")
+        val tileGrave = r.tile("grave")
+        val htCorpse = r.hintTile("ctx.globalAlpha=0.8;ctx.translate(0.3*rTile,0.3*rTile);ctx.scale(0.4,0.4);")
+        drawer.onDraw(PriorDraw.obj) { side, ctx ->
+            fun tile(obj:Obj):Tile {
+                val data = obj.get<DataTileObj>()
+                return if (data != null) {
+                    if (stager.isBeforeTurn(side)) data.tlsObj.join(obj.side == Side.a) else {
+                        if (obj.side.isN) data.tlsObj.neut
+                        else {
+                            if (stager.isTurn(side)) {
+                                if (obj.side == side) data.tlsObj.ally(obj.isFresh)
+                                else data.tlsObj.enemy(true)
+                            } else {
+                                if (obj.side == side) data.tlsObj.ally(false)
+                                else data.tlsObj.enemy(obj.isFresh)
+                            }
+                        }
                     }
+                } else tileObjNull
+            }
+            for (obj in allData().corpses.sort()) {
+                ctx.drawTile(obj.pg, tileGrave)
+                ctx.drawTile(obj.pg, tile(obj), htCorpse)
+            }
+            for (obj in objs().sort()) if (obj.isVid(side)) {
+                val hidedForVs = !obj.isVid(side.vs)
+                val hint = when {
+                    obj.flip && hidedForVs -> hintTileFlipHide
+                    obj.flip -> hintTileFlip
+                    hidedForVs -> hintTileHide
+                    else -> null
                 }
+                val tile = tile(obj)
+                ctx.drawTile(obj.pg, tile, hint)
+                drawObjs.forEach { it(obj, side, ctx) }
             }
-            val hint = when {
-                obj.flip && hided -> hintTileFlipHide
-                obj.flip -> hintTileFlip
-                hided -> hintTileHide
-                else -> null
-            }
-            tile to hint
         }
     }
 
@@ -108,13 +146,17 @@ class Solider(r: Resource) {
             objs().list.add(solid)
         }
     }
+
+    fun setTls(obj: Obj, tlsObj: TlsObj) {
+        obj.data(DataTileObj(tlsObj))
+    }
 }
 
 class DataTileObj(val tlsObj: TlsObj) : Data
 
 class Telepath(r: Resource) {
     init {
-        val enforcer = injectValue<Enforcer>()
+        val enforcer = injectValue<Enforce>()
         val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("telepath")
         val tlsAkt = r.tileAkt("telepath")
@@ -225,7 +267,7 @@ class Imitator(r: Resource) {
                 } else emptyList()
         }
 
-        injectValue<Stager>().onEndTurn {
+        injectValue<Stager>().slotEndTurn.add(35, "Imitator: имитаторы преращаются обратно") {
             objs().by<DataImitator, Obj>().forEach {
                 it.first.datas.clear()
                 it.second.charged = true
@@ -267,7 +309,7 @@ class Frog(r: Resource) {
                     if (ok()) {
                         data.drLastLeap = -dr
                         lifer.damage(pgAim, 1)
-                        tracer.touch(pgAim,tileAkt)
+                        tracer.touch(pgAim, tileAkt)
                     } else spoter.tire(obj)
                 }
             }
@@ -387,11 +429,11 @@ class Pusher(r: Resource) {
         val tracer = injectValue<Tracer>()
         val skilerMove = injectValue<SkilerMove>()
         spoter.addSkilByBuilder<DataPusher> {
-            if(skilerMove.fuel(obj)>=1) for (dr in Dr.values) {
+            if (skilerMove.fuel(obj) >= 1) for (dr in Dr.values) {
                 val pgDr = obj.pg.plus(dr) ?: continue
                 val aims = objsLine(obj, dr)
                 if (aims.isNotEmpty()) {
-                    if (!slotStopPush.any { it(dr to aims) } && mover.isMovePhantom(obj,obj.pg,pgDr,sideVid)) akt(pgDr, tileAkt) {
+                    if (!slotStopPush.any { it(dr to aims) } && mover.isMovePhantom(obj, obj.pg, pgDr, sideVid)) akt(pgDr, tileAkt) {
                         val last = aims.last()
                         if (last.pg.isEdge()) {
                             aims.removeAt(aims.lastIndex)
