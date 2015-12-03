@@ -169,7 +169,7 @@ class Fortress(r: Resource) {
         val tile = r.tile("fortress")
         injectValue<Flater>().addSimple(tile, TpFlat.special) { it.data(Fortress) }
         val flats = injectFlats().value
-        injectValue<Lifer>().slotStopDamage.add{ obj -> flats()[obj.pg].has<Fortress>()}
+        injectValue<Lifer>().slotStopDamage.add{ obj,isPoison -> !isPoison && flats()[obj.pg].has<Fortress>()}
     }
 
     object Fortress : Data

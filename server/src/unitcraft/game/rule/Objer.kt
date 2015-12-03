@@ -49,28 +49,6 @@ class Objer(r: Resource) {
             }
             false
         }
-        //        drawer.onObj<DataTileObj> { obj, data, side ->
-        //            val hided = !obj.isVid(side.vs)
-        //            val tile = if (stager.isBeforeTurn(side)) data.tlsObj.join(obj.side == Side.a) else {
-        //                if (obj.side.isN) data.tlsObj.neut
-        //                else {
-        //                    if (stager.isTurn(side)) {
-        //                        if (obj.side == side) data.tlsObj.ally(obj.isFresh)
-        //                        else data.tlsObj.enemy(true)
-        //                    } else {
-        //                        if (obj.side == side) data.tlsObj.ally(false)
-        //                        else data.tlsObj.enemy(obj.isFresh)
-        //                    }
-        //                }
-        //            }
-        //            val hint = when {
-        //                obj.flip && hided -> hintTileFlipHide
-        //                obj.flip -> hintTileFlip
-        //                hided -> hintTileHide
-        //                else -> null
-        //            }
-        //            tile to hint
-        //        }
 
         val tileObjNull = r.tile("null.obj")
         val tileGrave = r.tile("grave")
@@ -212,10 +190,9 @@ class Electric(r: Resource) {
         spoter.addSkilByBuilder<DataElectric> {
             obj.near().filter { lifer.canDamage(it) }.forEach {
                 akt(it, tileAkt) {
-                    wave(it, lifer, obj.pg).forEach {
-                        lifer.damage(it, 1)
-                        tracer.touch(it, tileAkt)
-                    }
+                    val aims = wave(it, lifer, obj.pg)
+                    lifer.damagePgs(aims, 1)
+                    aims.forEach { tracer.touch(it, tileAkt) }
                     spoter.tire(obj)
                 }
             }
@@ -412,7 +389,7 @@ class Pusher(r: Resource) {
 
     init {
         val tls = r.tlsVoin("pusher")
-        injectValue<Objer>().add(tls.neut, 35, null) {
+        injectValue<Objer>().add(tls.neut,null) {
             it.data(DataTileObj(tls))
             it.data(DataPusher)
         }
@@ -441,16 +418,17 @@ class Pusher(r: Resource) {
                         skilerMove.spend(obj)
                         spoter.tire(obj)
                     }
-                } else for (pg in pgDr.ray(dr, 3)) {
+                }/* else for (pg in pgDr.ray(dr, skilerMove.fuel(obj))) {
                     val aim = objs()[pg]
                     if (aim != null && lifer.canDamage(aim)) {
-                        akt(aim.pg, tileHit) {
+                        akt(pgDr, tileHit) {
+
                             lifer.damage(aim, obj.pg.distance(aim.pg) - 1)
                             spoter.tire(obj)
                         }
                         break
                     }
-                }
+                }*/
             }
         }
     }
@@ -484,7 +462,7 @@ class Spider(r: Resource) {
             obj.near().filter { !adhesive.hasAdhesive(it) && magic.canMagic(it) }.forEach {
                 akt(it, tlsAkt) {
                     adhesive.plant(it)
-                    lifer.damage(obj, 1)
+                    lifer.poison(obj, 1)
                     spoter.tire(obj)
                 }
             }

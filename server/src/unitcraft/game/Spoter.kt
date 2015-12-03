@@ -66,7 +66,7 @@ class Spoter(r: Resource) {
             endAkt(obj, sideVid)
         } else {
             if (akt !is AktOpt) throw Violation("akt=$akt !is AktOpt")
-            if (num !in akt.dabs.indices) throw Violation("num=$num is out range for opt akt=$akt")
+            if (num !in akt.opts.indices) throw Violation("num=$num is out range for opt akt=$akt")
             tireLast(obj)
             akt.fn(num)
             endAkt(obj, sideVid)
@@ -152,8 +152,8 @@ class Akts(val sideVid: Side, val obj: Obj) {
         list.add(AktSimple(pg, tileAkt, fn))
     }
 
-    fun aktOpt(pg: Pg, tileAkt: Tile, dabs: List<List<Dab>>, fn: (Int) -> Unit) {
-        list.add(AktOpt(pg, tileAkt, dabs, fn))
+    fun aktOpt(pg: Pg, tileAkt: Tile, opts: List<Opt>, fn: (Int) -> Unit) {
+        list.add(AktOpt(pg, tileAkt, opts, fn))
     }
 }
 
@@ -167,7 +167,7 @@ class Raise(val pgErr: Pg, val isOn: Boolean, val hintTileAktOff: HintTile) {
     private val listSloy = ArrayList<Sloy>()
 
     fun addAkt(akt: Akt) {
-        if (akt is AktOpt && akt.dabs.isEmpty()) return
+        if (akt is AktOpt && akt.opts.isEmpty()) return
         if (akt.pg == pgErr) throw Err("self-cast not implemented: akt at ${akt.pg}")
         val idx = listSloy.indexOfLast { it.aktByPg(akt.pg) != null } + 1
         if (idx == listSloy.size) listSloy.add(Sloy(isOn, hintTileAktOff))

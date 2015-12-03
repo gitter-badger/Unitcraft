@@ -22,19 +22,22 @@ abstract class Akt(val pg:Pg,val tileAkt: Tile)
 
 class AktSimple(pg:Pg, tileAkt: Tile, val fn: () -> Unit):Akt(pg, tileAkt)
 
-class AktOpt(pg:Pg, tileAkt: Tile, val dabs:List<List<Dab>>, val fn: (Int) -> Unit):Akt(pg, tileAkt)
+class AktOpt(pg:Pg, tileAkt: Tile, val opts:List<Opt>, val fn: (Int) -> Unit):Akt(pg, tileAkt)
 
 // окно выбора
 class Opter(val opts : List<Opt>) : JSONAware{
     override fun toJSONString() = opts.toJSONString()
 }
 
-// что рисовать и что вызвать
-class Opt(val dabs:List<Dab>): JSONAware{
+// что рисовать
+class Opt(val dabs:List<Dab>,val isOn: Boolean): JSONAware{
 
-    constructor(dab:Dab):this(listOf(dab))
+    constructor(dab:Dab):this(listOf(dab),true)
 
-    override fun toJSONString() = dabs.toJSONString()
+    override fun toJSONString() = jsonObj {
+        put("dabs", dabs)
+        put("isOn", isOn)
+    }
 }
 
 class Sloy(var isOn:Boolean,val hintTileAktOff:HintTile) : JSONAware {
@@ -51,6 +54,6 @@ class Sloy(var isOn:Boolean,val hintTileAktOff:HintTile) : JSONAware {
         put("x", akt.pg.x)
         put("y", akt.pg.y)
         put("dab", DabTile(akt.tileAkt,if(isOn) null else hintTileAktOff))
-        if(akt is AktOpt) put("opter", Opter(akt.dabs.map{Opt(it)}))
+        if(akt is AktOpt) put("opter", akt.opts)
     }
 }

@@ -7,8 +7,8 @@ import unitcraft.server.Err
 import java.util.*
 
 class Lifer(r: Resource) {
-    val slotStopDamage = ArrayList<(Obj)->Boolean>()
-    val slotAfterDamage = ArrayList<(List<Dmg>)->Unit>()
+    val slotStopDamage = ArrayList<(Obj,Boolean)->Boolean>()
+    val slotAfterDamage = r.slot<AideDmg>("После урона")
     val slotAfterDeaths = ArrayList<(List<Obj>)->Unit>()
 
     val allData by injectAllData()
@@ -25,12 +25,20 @@ class Lifer(r: Resource) {
         dmgs.forEach {
             if(canDamage(it.obj)) it.obj.life -= it.value
         }
-        slotAfterDamage.forEach { it(dmgs) }
+        slotAfterDamage.exe(AideDmg(dmgs))
         funeral()
+    }
+
+    fun poison(obj:Obj,value:Int){
+        damage(listOf(Dmg(obj,value,true)))
     }
 
     fun damage(aims:List<Obj>,value:Int){
         damage(aims.map{Dmg(it,value)})
+    }
+
+    fun damagePgs(aims:List<Pg>,value:Int){
+        damage(aims.map{pg -> objs()[pg]?.let{Dmg(it,value)}}.requireNoNulls())
     }
 
     fun damage(obj:Obj,value:Int){
@@ -45,7 +53,11 @@ class Lifer(r: Resource) {
 
     fun canDamage(pg: Pg) = objs()[pg]?.let{canDamage(it)}?:false
 
-    fun canDamage(obj:Obj) = !slotStopDamage.any{it(obj)}
+    private fun can(obj:Obj,isPoison: Boolean) = !slotStopDamage.any{it(obj,isPoison)}
+
+    fun canDamage(obj:Obj) = can(obj,false)
+
+    fun canPoison(obj:Obj) = can(obj,true)
 
     fun change(obj:Obj, value:Int){
         obj.life = value
@@ -72,8 +84,10 @@ class Lifer(r: Resource) {
     }
 }
 
-data class Dmg(val obj:Obj,val value:Int){
+data class Dmg(val obj:Obj,val value:Int,val isPoison:Boolean = false){
     init{
         if(value==0) throw Err("dmg != 0")
     }
 }
+
+class AideDmg(val dmgs:List<Dmg>):Aide

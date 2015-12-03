@@ -185,7 +185,7 @@ class ServerCdn() : NanoHTTPD(8000) {
         for (qdmn in listQdmnPanel) createPanelset(qdmn,dirPrepare)
         val pathPrepare = dirPrepare.toPath()
         val pathCdn = dirCdn.toPath()
-        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" }.forEach {
+        dirCdn.walkTopDown().treeFilter { it.name != "png" && it.name != "server.js" && it.name != "rule.html" }.forEach {
             val src = it.toPath()
             if(src != pathCdn) Files.copy(src, pathPrepare.resolve(pathCdn.relativize(src)))
         }

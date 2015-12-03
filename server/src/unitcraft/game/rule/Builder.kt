@@ -22,16 +22,16 @@ class Builder(r: Resource) {
         val tracer = injectValue<Tracer>()
         injectValue<Spoter>().addSkilByBuilder<SkilBuild> {
             val data = obj<SkilBuild>()
-            val dabs = fabriks.map { listOf(DabTile(it.tile), DabText(price.toString(), if (obj.life >= price) hintText else hintTextRed)) }
+            val opts = fabriks.map { Opt(listOf(DabTile(it.tile), DabText(price.toString(), if (obj.life >= price) hintText else hintTextRed)),obj.life >= price) }
             for (pg in data.zone(obj)) {
                 val ok = mover.canAdd(pg, sideVid)
-                if (ok != null) aktOpt(pg, tileAkt, dabs) { num ->
+                if (ok != null) aktOpt(pg, tileAkt, opts) { num ->
                     ok{objNew ->
                         objNew.side = obj.side
                         data.fabriks[num].create(objNew)
                         data.refine(objNew)
                         tracer.touch(objNew, tileAkt, objNew.sidesVid())
-                        lifer.damage(obj, price)
+                        lifer.poison(obj, price)
                     }
                 }
             }
@@ -64,7 +64,7 @@ class Redeployer(r: Resource) {
         val builder = injectValue<Builder>()
         injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
-            it.data(DataRedeployer)
+            it.data(DataRedeployer())
             builder.add(it, { it.near() }, {})
         }
 
@@ -73,19 +73,25 @@ class Redeployer(r: Resource) {
         val spoter = injectValue<Spoter>()
         val magic = injectValue<Magic>()
         spoter.addSkilByBuilder<DataRedeployer> {
-            obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false && magic.canMagic(it) }.forEach {
+            val data = obj<DataRedeployer>()
+            if(data.charged) obj.near().filter { objs()[it]?.let { it.life >= 3 } ?: false && magic.canMagic(it) }.forEach {
                 akt(it, tileAkt) {
                     objs()[it]?.let {
                         objs().remove(it)
                         builder.plusGold(it.side, 5)
-                        spoter.tire(obj)
+                        data.charged = false
                     }
                 }
             }
         }
+        spoter.listOnTire.add { obj ->
+            obj.get<DataRedeployer>()?.charged = true
+        }
     }
 
-    object DataRedeployer : Data
+    private class DataRedeployer() : Data{
+        var charged = true
+    }
 }
 
 class Armorer(r: Resource) {

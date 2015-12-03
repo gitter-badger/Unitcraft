@@ -106,7 +106,6 @@ class Bttler {
             bttl().clocks.values.forEach { it.start(now) }
         }
         if (bttl().idWin() != null) bttl().clocks.values.forEach { it.stop() }
-
     }
 }
 
@@ -149,7 +148,7 @@ class Clock {
     fun elapsed(): Boolean {
         if (started()) {
             left = leftNow()
-            last = Instant.now()
+            last = if(left.isZero) null else Instant.now()
         }
         return left.isZero
     }

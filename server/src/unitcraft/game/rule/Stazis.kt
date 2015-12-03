@@ -30,7 +30,7 @@ class Stazis(r: Resource) {
         mover.slotStopAdd.add { pg, side -> pg.isStazis() }
 
         injectValue<Spoter>().slotStopSkils.add { it.pg.isStazis() }
-        injectValue<Lifer>().slotStopDamage.add { it.pg.isStazis() }
+        injectValue<Lifer>().slotStopDamage.add { obj,isPoison -> obj.pg.isStazis() }
         injectValue<Magic>().slotStopMagic.add { it.isStazis() }
         injectValue<Pusher>().slotStopPush.add { it.second.last().pg.plus(it.first)?.let { it.isStazis() } ?: false || it.second.any { it.pg.isStazis() } }
     }

@@ -80,11 +80,11 @@ function redrawOpter() {
         ctx.font = tile * 0.3 + "px Arial";
         for (var i = 0; i < ui.opts.length; i++) {
             ctx.save();
-            var dabs = ui.opts[i];
+            var opt = ui.opts[i];
             var xTile = i % dmnOpter.xr * tile;
             var yTile = div(i, dmnOpter.xr) * tile;
             ctx.translate(xTile, yTile);
-            for (var dab of dabs) {
+            for (var dab of opt.dabs) {
                 drawDab(ctx, dab, ui.tilesetOpter, tile);
             }
             ctx.restore();

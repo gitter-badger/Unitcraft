@@ -146,11 +146,16 @@ function onClickToolbar(num, ui) {
 
 function onClickOpter(click, ui) {
     var num = ui.numFromPstOnOpter(click);
-    if (num != null && num < ui.opts.length) {
-        ui.fireAkt(ui.aktSelect(num));
+    if (num != null) {
+        if (num < ui.opts.length && ui.opts[num].isOn) {
+            ui.fireAkt(ui.aktSelect(num));
+            ui.opts = null;
+            ui.fireOpter();
+        }
+    }else {
+        ui.opts = null;
+        ui.fireOpter();
     }
-    ui.opts = null;
-    ui.fireOpter();
 }
 
 function onClickGrid(pg, ui) {
