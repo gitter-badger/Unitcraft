@@ -8,7 +8,7 @@ import java.util.*
 
 class Resource {
 
-    private val slots = ArrayList<Slot<*>>()
+    private val sections = ArrayList<SectionRule>()
 
     val resTiles = ArrayList<ResTile>()
     val hintTiles = ArrayList<ResHintTile>()
@@ -26,9 +26,10 @@ class Resource {
 
     //fun tlsFlatOwn(name:String) = TlsFlatOwn(tile(name,effectControlAlly),tile(name,effectControlEnemy),tile(name,effectControlYelw),tile(name,effectControlBlue))
 
-    fun htmlRule() = HtmlRule(slots).html()
+    fun htmlRule() = HtmlRule(sections).html()
 
-    fun <T:Aide> slot(title: String) = Slot<T>(title).apply { slots.add(this) }
+    fun <T:Aide> slot(title: String) = Slot<T>(title).apply { sections.add(this) }
+    fun <T:Aide> slop(title: String) = Slop<T>(title).apply { sections.add(this) }
 
     fun tlsVoin(name: String) = TlsObj(
             tile(name, effectNeut),

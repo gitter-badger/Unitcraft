@@ -144,6 +144,12 @@ class Mover(r: Resource) {
     fun remove(obj: Obj) {
         objs().list.remove(obj)
     }
+
+    fun each(fn: (Obj)->Boolean) {
+        val iter = objs().list.iterator()
+        while(iter.hasNext())
+            if(fn(iter.next())) iter.remove()
+    }
 }
 
 class ResultMove(val passed: Boolean, val isInterrupt: Boolean)

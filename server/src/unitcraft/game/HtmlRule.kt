@@ -1,18 +1,15 @@
 package unitcraft.game
 
-import java.util.*
-
-class HtmlRule(val slots :List<Slot<*>>) {
-    //private val slots = ArrayList<Slot<*>>()
+class HtmlRule(private val sections:List<SectionRule>) {
     private val sb = StringBuilder()
 
     fun html():String {
         sb.appendln("<!DOCTYPE html>")
         sb.appendln("""<meta charset="UTF-8">""")
         tagLn("title","Приоритет правил")
-        for (slot in slots) {
-            title(slot.title)
-            slot.each{prior,desc -> rule(prior,desc) }
+        for (section in sections) {
+            title(section.title)
+            section.each{prior,desc -> rule(prior,desc) }
 
         }
         return sb.toString()
@@ -37,9 +34,9 @@ class HtmlRule(val slots :List<Slot<*>>) {
         tagLn("h2",s)
     }
 
-    fun rule(prior:Int,desc:String){
+    fun rule(prior:Int?,desc:String){
         tag("p") {
-            tag("strong", prior.toString())
+            prior?.let{tag("strong", it.toString())}
             sb.appendln(" " + desc)
         }
     }

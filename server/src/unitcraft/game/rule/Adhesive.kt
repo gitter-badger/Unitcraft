@@ -6,6 +6,7 @@ import unitcraft.inject.injectValue
 class Adhesive(r: Resource){
     val flats: () -> Flats by injectFlats()
     val objs: () -> Objs by injectObjs()
+    val slop = r.slop<AideAdhesive>("Объекты, которые игнорируют паутину")
 
     init {
         val tile = r.tile("adhesive")
@@ -19,14 +20,14 @@ class Adhesive(r: Resource){
         })
 
         injectValue<Flater>().slotDrawFlat.add(5,this,"рисует паутину на земле") {
-            for (flat in flats().by<Adhesive>()) ctx.drawTile(flat.pg, tile)
+            if (flat.has<Adhesive>()) ctx.drawTile(flat.pg, tile)
         }
 
         injectValue<Objer>().slotDrawObjPost.add(20,this,"рисует паутину на объекте") {
-            if(flats()[obj.pg].has<Adhesive>()) ctx.drawTile(obj.pg, tileObj)
+            if(flats()[obj.pg].has<Adhesive>() && slop.pass(AideAdhesive(obj))) ctx.drawTile(obj.pg, tileObj)
         }
 
-        injectValue<Mover>().slotStopMove.add{ !it.isKick && hasAdhesive(it.pgFrom) }
+        injectValue<Mover>().slotStopMove.add{ !it.isKick && hasAdhesive(it.pgFrom) && slop.pass(AideAdhesive(it.obj)) }
     }
 
     fun plant(pg: Pg) {
@@ -37,3 +38,5 @@ class Adhesive(r: Resource){
 
     fun hasAdhesive(pg: Pg) = flats()[pg].has<Adhesive>()
 }
+
+class AideAdhesive(val obj:Obj) : Aide

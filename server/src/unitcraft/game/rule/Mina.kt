@@ -19,7 +19,7 @@ class Mina(r: Resource) {
             } else false
         })
         injectValue<Flater>().slotDrawFlat.add(3,this,"рисует мину") {
-            if(side == flat.get<Mina>()?.side) ctx.drawTile(flat.pg, tile)
+            if(side == flat.orNull<Mina>()?.side) ctx.drawTile(flat.pg, tile)
         }
         mover.slotMoveAfter.add { move ->
             val flat = flats()[move.pgTo]

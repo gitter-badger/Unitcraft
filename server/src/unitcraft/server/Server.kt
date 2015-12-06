@@ -48,7 +48,7 @@ class Server(val isDebug:Boolean) {
                 't' -> onVsRobot(prm)
                 'm' -> vsRobotMission(prm)
                 'a' -> akt(prm)
-                'r' -> onRefresh(prm)
+                'r' -> onTimeout(prm)
                 'w' -> land(prm)
                 'y' -> accept(prm)
                 'c' -> invite(prm)
@@ -135,7 +135,11 @@ class Server(val isDebug:Boolean) {
             ssn.login(id)
             sendUser()
             ssn.bttl = bttls[id]
-            if (ssn.bttl != null) refresh() else vsRobot(mission)
+            if (ssn.bttl != null){
+                refresh()
+
+            } else vsRobot(mission)
+            sendStatus()
         } else {
             send("w")
         }
@@ -202,7 +206,7 @@ class Server(val isDebug:Boolean) {
     fun land(prm: Prm) {
         ensureLogin("land")
         prm.ensureEmpty()
-        println(bttler.land(ssn.id))
+        println(bttler.land())
     }
 
     fun accept(prm: Prm) {
@@ -252,7 +256,7 @@ class Server(val isDebug:Boolean) {
         ssn.invite = null
     }
 
-    fun onRefresh(prm: Prm) {
+    fun onTimeout(prm: Prm) {
         ensureLogin("refresh")
         prm.ensureEmpty()
         refresh()

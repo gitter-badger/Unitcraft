@@ -55,7 +55,7 @@ class Objer(r: Resource) {
         val htCorpse = r.hintTile("ctx.globalAlpha=0.8;ctx.translate(0.3*rTile,0.3*rTile);ctx.scale(0.4,0.4);")
         drawer.slotDraw.add(10, this, "рисует объекты") {
             fun tile(obj: Obj): Tile {
-                val data = obj.get<DataTileObj>()
+                val data = obj.orNull<DataTileObj>()
                 return if (data == null) tileObjNull
                 else if (obj.side == null) data.tlsObj.neut
                 else if (stager.isBeforeTurn(side)) data.tlsObj.join(obj.side == Side.a)
@@ -90,7 +90,7 @@ class Objer(r: Resource) {
             create: (Obj) -> Unit
     ) {
         tilesEditor.add(tile)
-        val crt = if (hasMove) { obj -> create(obj); obj.data(SkilMove()) } else create
+        val crt = if (hasMove) { obj -> obj.data(SkilMove());create(obj) } else create
         creates.add(crt)
         if (priorFabrik != null) builder.addFabrik(priorFabrik, tile, crt)
         if (tpSolid != null) landTps.getOrPut(tpSolid) { ArrayList<(Obj) -> Unit>() }.add(crt)
@@ -355,28 +355,40 @@ class Jumper(r: Resource) {
         val lifer = injectValue<Lifer>()
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
+        val tracer = injectValue<Tracer>()
         spoter.addSkilByBuilder<DataJumper> {
             val data = obj<DataJumper>()
             val pgDest = data.pgDest
-            if (pgDest == null) objs().filter { it != obj && !it.pg.isNear(obj.pg) && it.isVid(sideVid) }.flatMap { it.near() }.distinct().forEach {
+            fun isAim(cand:Obj) = cand != obj && !cand.pg.isNear(obj.pg) && cand.isVid(sideVid)
+            fun pgsAimNear(dst:Pg) = dst.near.filter { objs()[it]?.let{isAim(it)} ?: false }
+            if (pgDest == null) objs().filter { isAim(it) }.flatMap { it.near() }.distinct().forEach {
                 val can = mover.move(obj, it, sideVid)
                 if (can != null) {
-                    val aims = it.near.filter { it != obj.pg && !it.isNear(obj.pg) && objs()[it]?.isVid(sideVid) ?: false }
+                    val aims = pgsAimNear(it)
                     if (aims.size == 1) akt(it, tileAkt) {
-                        if (can()) lifer.damage(aims.first(), 1)
+                        if (can()){
+                            aims.first().let {
+                                lifer.damage(it, 1)
+                                tracer.touch(it, tileAkt)
+                            }
+                        }
                         spoter.tire(obj)
                     } else akt(it, tileAktDest) { data.pgDest = it }
                 }
-            } else pgDest.near.filter { it != obj.pg && !it.isNear(obj.pg) && objs()[it]?.isVid(sideVid) ?: false }.forEach {
+            } else pgsAimNear(pgDest).forEach {
                 val can = mover.move(obj, pgDest, sideVid)
                 if (can != null) akt(it, tileAkt) {
-                    if (can()) lifer.damage(it, 1)
+                    if (can()) {
+                        lifer.damage(it, 1)
+                        tracer.touch(it,tileAkt)
+                    }
                     data.pgDest = null
                     spoter.tire(obj)
                 }
             }
         }
     }
+
 
     private class DataJumper : Data {
         var pgDest: Pg? = null
@@ -467,6 +479,8 @@ class Spider(r: Resource) {
                 }
             }
         }
+
+        adhesive.slop.add(this,"паукам разрешено"){ obj.has<DataSpider>() }
     }
 
     private object DataSpider : Data

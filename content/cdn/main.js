@@ -231,7 +231,7 @@ function onPanelset(panelset, ui) {
 function onSecond(_, ui) {
     if (ui.game == null) return;
     ui.fireClock();
-    if (ui.game.stage != "win" && ui.game.stage != "winEnemy" && ui.game.clockIsOn[1] && ui.intervalElapsed() >= ui.game.clock[1]) {
+    if (ui.game.clockIsOn[1] && ui.intervalElapsed() >= ui.game.clock[1]) {
         ui.fireCmd("r");
     }
 }

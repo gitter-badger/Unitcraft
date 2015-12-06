@@ -8,7 +8,7 @@ import unitcraft.server.Side
 import java.util.*
 
 class Builder(r: Resource) {
-    val price = 5
+    val price = 3
     val fabriks = ArrayList<Fabrik>()
     val lifer: Lifer by inject()
     val mover: Mover by inject()
@@ -20,6 +20,7 @@ class Builder(r: Resource) {
         val hintTextRed = r.hintText("ctx.translate(rTile,0);ctx.textAlign = 'right';ctx.fillStyle = 'red';")
         val lifer = injectValue<Lifer>()
         val tracer = injectValue<Tracer>()
+        val siklerMove = injectValue<SkilerMove>()
         injectValue<Spoter>().addSkilByBuilder<SkilBuild> {
             val data = obj<SkilBuild>()
             val opts = fabriks.map { Opt(listOf(DabTile(it.tile), DabText(price.toString(), if (obj.life >= price) hintText else hintTextRed)),obj.life >= price) }
@@ -32,6 +33,7 @@ class Builder(r: Resource) {
                         data.refine(objNew)
                         tracer.touch(objNew, tileAkt, objNew.sidesVid())
                         lifer.poison(obj, price)
+                        siklerMove.spendAll(obj)
                     }
                 }
             }
@@ -43,9 +45,9 @@ class Builder(r: Resource) {
         objs().bothBy<SkilBuild>(side).forEach { lifer.heal(it.first, value) }
     }
 
-    fun add(obj: Obj, zone: (Obj) -> List<Pg>, refine: (Obj) -> Unit) {
+    fun add(obj: Obj, refine: (Obj) -> Unit = {}, zone: (Obj) -> List<Pg> = {it.further()}) {
         obj.data(SkilBuild(zone, fabriks, refine))
-        lifer.change(obj, 50)
+        lifer.change(obj, 30)
     }
 
     fun addFabrik(prior: Int, tile: Tile, create: (Obj) -> Unit) {
@@ -65,7 +67,7 @@ class Redeployer(r: Resource) {
         injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
             it.data(DataRedeployer())
-            builder.add(it, { it.near() }, {})
+            builder.add(it)
         }
 
         val tileAkt = r.tileAkt("redeployer")
@@ -85,7 +87,7 @@ class Redeployer(r: Resource) {
             }
         }
         spoter.listOnTire.add { obj ->
-            obj.get<DataRedeployer>()?.charged = true
+            obj.orNull<DataRedeployer>()?.charged = true
         }
     }
 
@@ -101,9 +103,10 @@ class Armorer(r: Resource) {
         val lifer = injectValue<Lifer>()
         val skilerMove = injectValue<SkilerMove>()
         val tls = r.tlsVoin("armorer")
-        solider.add(tls.neut, null, TpSolid.builder, false) {
+        solider.add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
-            builder.add(it, { it.further() }, {
+            skilerMove.slow(it)
+            builder.add(it, {
                 skilerMove.slow(it)
                 lifer.heal(it, 1)
             })
@@ -118,7 +121,7 @@ class Airport(r: Resource) {
         val tls = r.tlsVoin("airport")
         solider.add(tls.neut, null, TpSolid.builder, false) {
             it.data(DataTileObj(tls))
-            builder.add(it, { it.pg.pgser.pgs }, {})
+            builder.add(it, {}, { it.pg.pgser.pgs })
         }
     }
 }
@@ -131,7 +134,7 @@ class Inviser(r: Resource) {
         injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
             it.data(DataTileObj(tls))
             it.data(DataInviser)
-            builder.add(it, { it.near() }, { it.data(DataInviser) })
+            builder.add(it, { it.data(DataInviser) })
         }
         mover.slotHide.add { it.has<DataInviser>() }
     }

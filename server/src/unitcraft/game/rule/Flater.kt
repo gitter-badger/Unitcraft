@@ -98,7 +98,7 @@ class AideDrawFlat(val ctx: CtxDraw, val flat:Flat, val side: Side):Aide
 class Sand(r: Resource) {
     init {
         val tiles = r.tlsList(4, "sand", Resource.effectPlace)
-        injectValue<Flater>().addPlace(tiles, TpFlat.wild) { it.data(DataSand) }
+        injectValue<Flater>().addPlace(tiles, null) { it.data(DataSand) }
     }
 
     object DataSand : Data
@@ -135,6 +135,28 @@ class Water(r: Resource) {
     init {
         val tiles = r.tlsList(3, "water", Resource.effectPlace)
         injectValue<Flater>().addPlace(tiles, TpFlat.liquid) { it.data(DataWater) }
+        val objs = injectObjs().value
+        val flats = injectFlats().value
+        val mover = injectValue<Mover>()
+        injectValue<Stager>().slotTurnEnd.add(30,this,"юниты тонут в воде"){
+            mover.each { obj ->
+                if (flats()[obj.pg].has<DataWater>()) obj.orPut { Drown() }.drown() else {obj.remove<Drown>();false}
+            }
+        }
+        val tilesDrown = r.tlsList(2,"water.drown")
+        injectValue<Objer>().slotDrawObjPost.add(30,this,"капельки воды на притопленных юнитах"){
+            obj.orNull<Drown>()?.value?.let{ctx.drawTile(obj.pg,tilesDrown[it])}
+        }
+
+    }
+
+    class Drown:Data{
+        var value = -1
+
+        fun drown():Boolean{
+            value +=1
+            return value >= 2
+        }
     }
 
     object DataWater : Data

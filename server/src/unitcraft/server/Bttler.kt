@@ -6,8 +6,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-// управление жц игры, оповещение клиентов об измениях в игре, управление контролем времени в игре
-// TODO нужен контроль времени
+// управление жц партии, оповещение клиентов об измениях в игре, управление контролем времени в игре
 class Bttler {
     val log: Log by inject()
     val cmder: CmderGame by inject()
@@ -47,7 +46,7 @@ class Bttler {
 
     fun refresh(id: Id): Chain = sendGame(false, id)
 
-    fun land(id: Id) {
+    fun land() {
         cmder.land()
     }
 

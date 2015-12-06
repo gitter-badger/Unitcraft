@@ -22,10 +22,9 @@ class Lifer(r: Resource) {
     }
 
     fun damage(dmgs:List<Dmg>){
-        dmgs.forEach {
-            if(canDamage(it.obj)) it.obj.life -= it.value
-        }
-        slotAfterDamage.exe(AideDmg(dmgs))
+        val dmgsPass = dmgs.filter { can(it.obj,it.isPoison) }
+        dmgsPass.forEach { it.obj.life -= it.value }
+        slotAfterDamage.exe(AideDmg(dmgsPass))
         funeral()
     }
 

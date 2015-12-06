@@ -68,11 +68,15 @@ class SkilerMove(r: Resource) {
     }
 
     fun slow(obj: Obj) {
-        obj.get<SkilMove>()?.slow()
+        obj.orNull<SkilMove>()?.slow()
     }
 
     fun spend(obj: Obj) {
-        obj.get<SkilMove>()?.spend()
+        obj.orNull<SkilMove>()?.spend()
+    }
+
+    fun spendAll(obj: Obj) {
+        obj.orNull<SkilMove>()?.spendAll()
     }
 
     fun fuel(obj: Obj) = obj<SkilMove>().fuel
@@ -93,6 +97,10 @@ class SkilMove(var fuelMax: Int = 3) : Data {
 
     fun spend(){
         fuel -= 1
+    }
+
+    fun spendAll(){
+        fuel = 0
     }
 }
 

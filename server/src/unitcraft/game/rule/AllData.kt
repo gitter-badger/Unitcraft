@@ -56,7 +56,7 @@ class Obj(pg: Pg) : HasPg(pg) {
     var side:Side? = null
     var isFresh = false
     var flip = pg.x > pg.pgser.xr / 2
-    var life = 5
+    var life = 3
     var hide = false
 
     fun isVid(sideVid: Side) = side==null || side == sideVid || !hide
@@ -121,7 +121,7 @@ open class HasData {
 
     inline operator fun <reified T : Data> invoke() = datas.first { it is T } as T
 
-    inline fun <reified T : Data> get() = datas.firstOrNull { it is T } as T?
+    inline fun <reified T : Data> orNull() = datas.firstOrNull { it is T } as T?
 
     inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { data(this) }
 }
