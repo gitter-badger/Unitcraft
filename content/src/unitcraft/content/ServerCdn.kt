@@ -165,7 +165,7 @@ class ServerCdn() : NanoHTTPD(8000) {
 
     fun deploy(isTest: Boolean) {
         deployOpenshift(isTest)
-        //        deployGithub(isTest)
+        deployGithub(isTest)
     }
 
     fun deployGithub(isTest: Boolean) {
