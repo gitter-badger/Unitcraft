@@ -13,6 +13,7 @@ class Stager(r: Resource) {
     val tileEdgeWait = DabTile(r.tile("edgeWait", Resource.effectPlace))
 
     val focus = DabTile(r.tile("focus"))
+    val focusMore = DabTile(r.tile("focusMore"))
 
     val slotTurnStart = r.slot<AideSide>("Начало хода")
     val slotTurnEnd = r.slot<AideSide>("Конец хода")

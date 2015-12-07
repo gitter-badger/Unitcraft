@@ -31,7 +31,7 @@ class Builder(r: Resource) {
                         objNew.side = obj.side
                         data.fabriks[num].create(objNew)
                         data.refine(objNew)
-                        tracer.touch(objNew, tileAkt, objNew.sidesVid())
+                        tracer.touch(objNew, tileAkt)
                         lifer.poison(obj, price)
                         siklerMove.spendAll(obj)
                     }

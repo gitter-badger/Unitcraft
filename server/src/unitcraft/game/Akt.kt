@@ -56,4 +56,9 @@ class Sloy(var isOn:Boolean,val hintTileAktOff:HintTile) : JSONAware {
         put("dab", DabTile(akt.tileAkt,if(isOn) null else hintTileAktOff))
         if(akt is AktOpt) put("opter", akt.opts)
     }
+
+    fun add(akt:Akt){
+        if(aktByPg(akt.pg)!=null) throw Err("akt clash: $akt")
+        akts.add(akt)
+    }
 }

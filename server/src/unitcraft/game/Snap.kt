@@ -14,6 +14,7 @@ class Snap(
         val stage: Stage,
         val edge:DabTile,
         val dabFocus:DabTile,
+        val dabFocusMore:DabTile,
         val focus:Pg?,
         val vpoint:List<Int>,
         val opterTest:Opter?
@@ -29,6 +30,7 @@ class Snap(
         put("traces", traces)
         put("edge", edge)
         put("dabFocus",dabFocus)
+        put("dabFocusMore",dabFocusMore)
         if(focus!=null) put("focus",JSONObject().apply {
             put("x",focus.x)
             put("y",focus.y)

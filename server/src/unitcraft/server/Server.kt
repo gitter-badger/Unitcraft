@@ -3,10 +3,12 @@ package unitcraft.server
 import org.json.simple.JSONObject
 import org.mindrot.BCrypt
 import unitcraft.inject.inject
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.Executors
 
-class Server(val isDebug:Boolean) {
+class Server(val isDebug: Boolean) {
     val wser: Wser by inject()
     val log: Log by inject()
     val threadMain = Executors.newSingleThreadExecutor()
@@ -38,7 +40,7 @@ class Server(val isDebug:Boolean) {
                 throw Violation("msg len > 20: ${msg.substring(0, 20)}...")
             }
             log.msg(msg)
-            val prm = Prm(msg[1, msg.length].toString())
+            val prm = Prm(msg.substring(1, msg.length))
             when (msg[0]) {
                 'q' -> send("q")
                 'n' -> reg(prm)
@@ -48,11 +50,12 @@ class Server(val isDebug:Boolean) {
                 't' -> onVsRobot(prm)
                 'm' -> vsRobotMission(prm)
                 'a' -> akt(prm)
-                'r' -> onTimeout(prm)
+                'o' -> onTimeout(prm)
                 'w' -> land(prm)
                 'y' -> accept(prm)
                 'c' -> invite(prm)
                 'd' -> onDecline(prm)
+                's' -> onSurrender(prm)
                 else -> throw Violation("unknown msg: " + msg)
             }
         } catch(ex: Violation) {
@@ -135,9 +138,8 @@ class Server(val isDebug:Boolean) {
             ssn.login(id)
             sendUser()
             ssn.bttl = bttls[id]
-            if (ssn.bttl != null){
+            if (ssn.bttl != null) {
                 refresh()
-
             } else vsRobot(mission)
             sendStatus()
         } else {
@@ -214,10 +216,10 @@ class Server(val isDebug:Boolean) {
         prm.ensureEmpty()
         ssn.ensureState(Status.match)
         val ssnVs = ssn.play!!.match!!.ssnVs
-        if (ssnVs.play!!.match!!.accepted) {
+        if (ssnVs.play!!.match!!.accepted()) {
             vsPlayer(ssn, ssnVs, ssn.play!!.match!!.bet)
         } else {
-            ssn.play!!.match!!.accepted = true
+            ssn.play!!.match!!.accept()
             sendStatus()
         }
     }
@@ -243,13 +245,16 @@ class Server(val isDebug:Boolean) {
     fun onDecline(prm: Prm) {
         ensureLogin("decline")
         prm.ensureEmpty()
+        if (ssn.status() == Status.online) throw Violation("Decline is not allowed at Status.online")
+        if (ssn.status() == Status.game) throw Violation("Decline is not allowed at Status.game")
         decline()
         sendStatus()
     }
 
     private fun decline() {
         ssn.play?.match?.ssnVs?.let {
-            it.play?.match = null
+            if (ssn.play!!.match!!.acceptedSomeTimeAgo()) it.play = null
+            else it.play?.match = null
             sendStatus(it)
         }
         ssn.play = null
@@ -257,14 +262,19 @@ class Server(val isDebug:Boolean) {
     }
 
     fun onTimeout(prm: Prm) {
-        ensureLogin("refresh")
+        ensureLogin("timeout")
         prm.ensureEmpty()
-        refresh()
+        send(bttler.timeout(ssn.id))
     }
 
     fun refresh() {
         bttl = ssn.bttl!!
         send(bttler.refresh(ssn.id))
+    }
+
+    fun onSurrender(prm: Prm) {
+        ensureLogin("surrender")
+        prm.ensureEmpty()
     }
 
     fun ensureLogin(cmd: String) {
@@ -328,8 +338,7 @@ class Server(val isDebug:Boolean) {
     }
 
     fun sendStatus(id: Id) {
-        val ssn = ssnById(id)
-        if (ssn != null) send("s" + ssn.status())
+        ssnById(id)?.let{sendStatus(it)}
     }
 
     private fun ssnById(id: Id) = ssns.values.firstOrNull { it.isLogin && it.id == id }
@@ -359,7 +368,7 @@ class Ssn(val key: String) {
     fun status(): Status {
         return when {
             bttl?.let { it.sideRobot() == null && it.idWin() == null } ?: false -> Status.game
-            play?.match?.let { it.accepted } ?: false -> Status.wait
+            play?.match?.let { it.accepted() } ?: false -> Status.wait
             play?.match != null -> Status.match
             play != null -> Status.queue
             invite != null -> Status.invite
@@ -390,7 +399,16 @@ class Play(val min: Int, val max: Int) {
 }
 
 class Match(val ssnVs: Ssn, val bet: Int) {
-    var accepted: Boolean = false
+    var dtAccept: Instant? = null
+
+    fun accepted() = dtAccept != null
+
+    fun accept() {
+        dtAccept = Instant.now()
+    }
+
+    fun acceptedSomeTimeAgo() = dtAccept?.let { it.until(Instant.now(), ChronoUnit.SECONDS) >= 10 } ?: false
+
 }
 
 data class Invite(val idVs: Id, val bet: Int) {init {

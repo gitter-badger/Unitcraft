@@ -19,7 +19,7 @@ class Bttler {
         return sendGame(false)
     }
 
-    fun isVsRobot() = bttl().sideRobot() != null
+    private fun isVsRobot() = bttl().sideRobot() != null
 
     fun cmd(id: Id, prm: Prm): Chain {
         val (version, akt) = prm.akt()
@@ -44,7 +44,13 @@ class Bttler {
         return chain
     }
 
-    fun refresh(id: Id): Chain = sendGame(false, id)
+    fun timeout(id: Id): Chain {
+        updateClock()
+        //if (bttl().idWin() != id) throw Err("too early timeout")
+        return sendGame(false)
+    }
+
+    fun refresh(id: Id) = sendGame(false, id)
 
     fun land() {
         cmder.land()
@@ -82,8 +88,9 @@ class Bttler {
             val json = bttl.state.json[side]!!
             json["version"] = bttl.cmds.size
             json["bet"] = bttl.bet
-            json["clock"] = listOf(side, side.vs).map { bttl().clocks[it]!!.leftNow().toMillis() }
-            json["clockIsOn"] = listOf(side, side.vs).map { bttl().clocks[it]!!.started() }
+            json["clock"] = listOf(side, side.vs).map { bttl().clocks[it]!!.left.toMillis() }
+            json["clockIsOn"] = listOf(side, side.vs).map { !bttl().clocks[it]!!.stoped() }
+            json["isVsRobot"] = isVsRobot()
             if (isErr) json["err"] = true else json.remove("err")
             chain.add(id, "g" + json)
         }
@@ -91,20 +98,28 @@ class Bttler {
     }
 
     private fun updateClock() {
-        if (isVsRobot()) return
+        if (isVsRobot()){
+            bttl().clocks.values.forEach { it.stop() }
+            return
+        }
+        if (bttl().idWin() != null){
+            bttl().clocks.values.forEach { it.stop() }
+            return
+        }
+        val now = Instant.now()
+        bttl().clocks.values.forEach { it.update(now) }
+        bttl().win(bttl().clocks.entries.firstOrNull{it.value.elapsed()}?.key?.vs)
         val sideClockStop = bttl().state.sideClockStop
         if (sideClockStop != null) {
             bttl().clocks[sideClockStop]!!.stop()
             val clockVs = bttl().clocks[sideClockStop.vs]!!
-            if(!clockVs.started()){
+            if (clockVs.stoped()) {
                 clockVs.extend()
-                clockVs.start(Instant.now())
+                clockVs.start(now)
             }
-        }else {
-            val now = Instant.now()
+        } else {
             bttl().clocks.values.forEach { it.start(now) }
         }
-        if (bttl().idWin() != null) bttl().clocks.values.forEach { it.stop() }
     }
 }
 
@@ -126,17 +141,17 @@ class Chain() {
 }
 
 class Clock {
-    private var left = Duration.ofMinutes(3)
+    var left = Duration.ofMinutes(3)
+        private set
     private var last: Instant? = null
 
-    fun start(now: Instant) {
-        if (started()) throw Err("clock already started")
+    fun start(now: Instant = Instant.now()) {
+        if (!stoped()) throw Err("clock already started")
         if (elapsed()) throw Err("clock already elapsed")
         last = now
     }
 
     fun stop() {
-        left = leftNow()
         last = null
     }
 
@@ -144,24 +159,26 @@ class Clock {
         left += Duration.ofMinutes(2)
     }
 
-    fun elapsed(): Boolean {
-        if (started()) {
-            left = leftNow()
-            last = if(left.isZero) null else Instant.now()
-        }
-        return left.isZero
-    }
+    fun elapsed() = left.isZero
 
-    fun started() = last != null
+    fun stoped() = last == null
 
-    fun leftNow(): Duration {
-        if (last != null) {
-            val dur = left.minus(Duration.between(last,Instant.now()))!!
-            return if (dur.isNegative) Duration.ZERO else dur
-        } else {
-            return left
+    fun update(now: Instant = Instant.now()) {
+        if (!stoped()) {
+            val dur = left.minus(Duration.between(last, now))!!
+            left = if (dur.isNegative) Duration.ZERO else dur
+            last = if (left.isZero) null else now
         }
     }
+
+    //    fun leftNow(): Duration {
+    //        if (last != null) {
+    //            val dur = left.minus(Duration.between(last,Instant.now()))!!
+    //            return if (dur.isNegative) Duration.ZERO else dur
+    //        } else {
+    //            return left
+    //        }
+    //    }
 }
 
 interface CmderGame {
@@ -244,6 +261,7 @@ class Bttl(val idPrim: Id, val idSec: Id? = null, val bet: Int = 0) {
 
     fun sideRobot() = if (idSec == null) sides[idPrim]!!.vs else null
 
+    fun win(side:Side?){}
 }
 
 interface GameData

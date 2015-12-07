@@ -351,7 +351,8 @@ class Jumper(r: Resource) {
 
         val objs = injectObjs().value
         val tileAkt = r.tileAkt("jumper")
-        val tileAktDest = r.tileAkt("jumper", "dest")
+        val tileHit = r.tileAkt("jumper","hit")
+        val tileChoice = r.tileAkt("jumper", "choice")
         val lifer = injectValue<Lifer>()
         val mover = injectValue<Mover>()
         val spoter = injectValue<Spoter>()
@@ -369,18 +370,18 @@ class Jumper(r: Resource) {
                         if (can()){
                             aims.first().let {
                                 lifer.damage(it, 1)
-                                tracer.touch(it, tileAkt)
+                                tracer.touch(it, tileHit)
                             }
                         }
                         spoter.tire(obj)
-                    } else akt(it, tileAktDest) { data.pgDest = it }
+                    } else akt(it, tileChoice) { data.pgDest = it }
                 }
             } else pgsAimNear(pgDest).forEach {
                 val can = mover.move(obj, pgDest, sideVid)
-                if (can != null) akt(it, tileAkt) {
+                if (can != null) akt(it, tileHit) {
                     if (can()) {
                         lifer.damage(it, 1)
-                        tracer.touch(it,tileAkt)
+                        tracer.touch(it,tileHit)
                     }
                     data.pgDest = null
                     spoter.tire(obj)

@@ -44,9 +44,14 @@ class Tracer(r:Resource) {
         allData().traces.values.forEach { it.clear() }
     }
 
-    fun touch(pg:Pg,tile:Tile,sides:List<Side> = Side.ab){
-        sides.forEach { side -> traceTile(side,pg,tile,htTouch)}
+    fun touch(pg:Pg,tile:Tile){
+        Side.ab.forEach { side -> traceTile(side,pg,tile,htTouch)}
     }
 
-    fun touch(obj: Obj, tile:Tile,sides:List<Side> = Side.ab) = touch(obj.pg,tile,sides)
+    fun touch(obj: Obj, tile:Tile) = touch(obj.pg,tile)
+
+    fun trace(pg: Pg, tile:Tile, hintTile:HintTile? = null){
+        println(tile)
+        Side.ab.forEach { side -> traceTile(side,pg,tile,hintTile)}
+    }
 }

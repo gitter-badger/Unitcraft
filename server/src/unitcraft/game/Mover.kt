@@ -82,8 +82,9 @@ class Mover(r: Resource) {
 
     /**
      * Добавляет объект на поле, если это возможно.
-     * null - движение недоступно
-     * ()->Unit - совершает движение и выполняет ifMove, или еслив pgTo невидимка, то раскрывает его
+     * null - добавление недоступно, так как клетка занята видимым объектом
+     * ((Obj) -> Unit) -> Unit - функция, которая либо добавит юнита (аргумент = refine),
+     * либо не добавит, но раскроет, помешавшего этому невидимку
      */
     fun canAdd(pg: Pg, sideVid: Side): (((Obj) -> Unit) -> Unit)? {
         if (slotStopAdd.any { it(pg, sideVid) }) return null
@@ -116,11 +117,9 @@ class Mover(r: Resource) {
         return isRevealed || isInterrupted
     }
 
-    private fun watch() = Side.ab.any { side ->
-        val revaled = objs().filter { !it.isVid(side) && isWatched(it) }
-        revaled.forEach { reveal(it) }
-        return revaled.isNotEmpty()
-    }
+    private fun watch() = Side.ab.map { side ->
+        objs().filter { !it.isVid(side) && isWatched(it) }.apply{ forEach { reveal(it) } }
+    }.any{it.isNotEmpty()}
 
     private fun isWatched(obj: Obj) = obj.pg.near.any { objs()[it]?.let { it.isEnemy(obj.side) } ?: false }
 

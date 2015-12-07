@@ -53,8 +53,8 @@ function redrawAkter() {
         ctx.save();
         var pst = ui.pstGrid();
         ctx.translate(pst.x, pst.y);
-        drawDrawing(ctx, ui.akts, ui.tileset, ui.tile());
-        drawDabOnGrid(ctx, ui.game.dabFocus, ui.focus.pg, ui.tileset, ui.tile());
+        drawDrawing(ctx, ui.akts(), ui.tileset, ui.tile());
+        drawDabOnGrid(ctx, ui.sizeSloys() == 1 ? ui.game.dabFocus : ui.game.dabFocusMore, ui.focus.pg, ui.tileset, ui.tile());
         ctx.restore();
     }
 }
@@ -123,13 +123,13 @@ function redrawToolbar() {
 
         var p = prmDrawStage(ui);
         drawClock(ui, p);
-        setSizeFont(ctx,p.sizeFont);
+        setSizeFont(ctx, p.sizeFont);
         ctx.fillStyle = "lightgreen";
-        drawText(ctx, vpoint(ui, 0), p.qdmn - xrText(ctx,vpoint(ui, 0)) - p.pd, p.pd);
+        drawText(ctx, vpoint(ui, 0), p.qdmn - xrText(ctx, vpoint(ui, 0)) - p.pd, p.pd);
         ctx.fillStyle = "pink";
-        drawText(ctx, vpoint(ui, 1), p.pd + xrText(ctx,"00") - xrText(ctx,vpoint(ui, 1)), p.yrRow + p.pd);
+        drawText(ctx, vpoint(ui, 1), p.pd + xrText(ctx, "00") - xrText(ctx, vpoint(ui, 1)), p.yrRow + p.pd);
         ctx.fillStyle = "white";
-        drawText(ctx, ui.game.bet, p.qdmn - xrText(ctx,ui.game.bet) - p.pd, p.yrRow * 3 + p.pd);
+        drawText(ctx, ui.game.bet, p.qdmn - xrText(ctx, ui.game.bet) - p.pd, p.yrRow * 3 + p.pd);
         ctx.restore();
     }
 
@@ -147,11 +147,11 @@ function redrawToolbar() {
             imgPanels[ui.game.stage] * ui.panelset.step + ui.panelset.step - xrClearImg, yrRowImg, xrClearImg, yrRowImg,
             p.qdmn - xrClear, p.yrRow, xrClear, p.yrRow
         );
-        setSizeFont(ctx,p.sizeFont);
+        setSizeFont(ctx, p.sizeFont);
         ctx.fillStyle = "lightgreen";
         drawText(ctx, clock(ui, 0), p.pd, p.pd);
         ctx.fillStyle = "pink";
-        drawText(ctx, clock(ui, 1), p.qdmn - xrText(ctx,clock(ui, 1)) - p.pd, p.yrRow + p.pd);
+        drawText(ctx, clock(ui, 1), p.qdmn - xrText(ctx, clock(ui, 1)) - p.pd, p.yrRow + p.pd);
     }
 
     function prmDrawStage(ui) {
@@ -165,7 +165,7 @@ function redrawToolbar() {
     }
 
     function clock(ui, num) {
-        var ms = ui.game.clockIsOn[num]?Math.max(ui.game.clock[num] - ui.intervalElapsed(), 0):ui.game.clock[num];
+        var ms = ui.game.clockIsOn[num] ? Math.max(ui.game.clock[num] - ui.intervalElapsed(), 0) : ui.game.clock[num];
         var min = div(ms, 60000);
         var sec = div((ms - min * 60000), 1000);
         return padClock(min) + ":" + padClock(sec);
@@ -189,23 +189,23 @@ function redrawToolbar() {
     function drawSettins(ui) {
         ctx.save();
         var qp = ui.qdmnPanel()
-        ctx.translate(0, qp*2);
+        ctx.translate(0, qp * 2);
         ctx.fillStyle = "DarkSeaGreen";
-        ctx.fillRect(0,0,qp,qp);
+        ctx.fillRect(0, 0, qp, qp);
         ctx.restore();
     }
 
     function drawChat(ui) {
         ctx.save();
         var qp = ui.qdmnPanel()
-        ctx.translate(0, qp*3);
+        ctx.translate(0, qp * 3);
         ctx.fillStyle = "MediumAquaMarine";
-        ctx.fillRect(0,0,qp,qp);
+        ctx.fillRect(0, 0, qp, qp);
         ctx.restore();
     }
 
     function drawAccept(ui) {
-        if(ui.status!="match") return;
+        if (ui.status != "match") return;
         ctx.save();
         ctx.translate(ui.qdmnPanel(), ui.qdmnPanel());
         drawPanel("accept", ui);
@@ -219,8 +219,8 @@ function redrawToolbar() {
         drawStage(ui);
         drawStatus(ui);
         drawAccept(ui);
-        drawSettins(ui);
-        drawChat(ui);
+        //drawSettins(ui);
+        //drawChat(ui);
         ctx.restore();
     }
 
@@ -231,14 +231,14 @@ function redrawToolbar() {
         ctx.translate(pst.x, pst.y);
         if (ui.game.stage == "bonus") {
             var qd = ui.qdmnPanel() / 2;
-            var sizeFont = qd;
+            var sizeFont = qd*0.75;
             ctx.fillStyle = "white";
             ctx.drawImage(
                 ui.panelset,
                 imgPanels["bonusBar"] * ui.panelset.step, 0, qd, qd,
                 0, 0, qd, qd
             );
-            setSizeFont(ctx,sizeFont);
+            setSizeFont(ctx, sizeFont);
             for (var i = 0; i <= 9; i++) {
                 ctx.translate(0, qd);
                 ctx.drawImage(
@@ -246,7 +246,8 @@ function redrawToolbar() {
                     imgPanels["bonusBar"] * ui.panelset.step, qd, qd, qd,
                     0, 0, qd, qd
                 );
-                drawText(ctx, i, (qd - xrText(ctx,i)) / 2, (qd - yrText(ctx)) / 2);
+                var num = i + 10 * ui.pageBonusBar;
+                drawText(ctx, num, (qd - xrText(ctx, num)) / 2, (qd - yrText(ctx)) / 2);
             }
             ctx.translate(0, qd);
             ctx.drawImage(

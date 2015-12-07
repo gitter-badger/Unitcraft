@@ -105,6 +105,7 @@ class Sand(r: Resource) {
 }
 
 class Forest(r: Resource) {
+
     init {
         val flats = injectFlats().value
         val tiles = r.tlsList(4, "forest", Resource.effectPlace)
@@ -122,6 +123,8 @@ class Forest(r: Resource) {
     object DataForest : Data
 }
 
+
+
 class Grass(r: Resource) {
     init {
         val tiles = r.tlsList(5, "grass", Resource.effectPlace)
@@ -132,15 +135,20 @@ class Grass(r: Resource) {
 }
 
 class Water(r: Resource) {
+    val slop = r.slop<AideObj>("Предотвращение утопления")
     init {
         val tiles = r.tlsList(3, "water", Resource.effectPlace)
         injectValue<Flater>().addPlace(tiles, TpFlat.liquid) { it.data(DataWater) }
-        val objs = injectObjs().value
         val flats = injectFlats().value
         val mover = injectValue<Mover>()
-        injectValue<Stager>().slotTurnEnd.add(30,this,"юниты тонут в воде"){
+        val tracer = injectValue<Tracer>()
+        val tileDrowned = r.tile("drowned")
+        injectValue<Stager>().slotTurnEnd.add(20,this,"юниты тонут в воде"){
             mover.each { obj ->
-                if (flats()[obj.pg].has<DataWater>()) obj.orPut { Drown() }.drown() else {obj.remove<Drown>();false}
+                if (flats()[obj.pg].has<DataWater>() && slop.pass(AideObj(obj))) {
+                    obj.orPut { Drown() }.drown().apply { if(this) tracer.trace(obj.pg,tileDrowned) }
+
+                }else {obj.remove<Drown>();false}
             }
         }
         val tilesDrown = r.tlsList(2,"water.drown")

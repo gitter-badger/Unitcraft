@@ -65,7 +65,7 @@ function onKey(key, ui) {
         endTurn(ui);
     } else if (key === "w") {
         if (ui.game.stage === "turn") ui.fireAkt("w");
-    } else if (key === "q") {
+    } else if (key === "q" && ui.status == "online") {
         ui.fireCmd("t");
     }
 }
@@ -123,7 +123,15 @@ function onClick(click, ui) {
 }
 
 function onClickBonusbar(bonus, ui) {
-    if (bonus >= 1 && bonus <= 10) ui.fireAkt("s" + (bonus - 1));
+    if (bonus == 0){
+        ui.decrPageBonusBar();
+        ui.fireToolbar();
+    }
+    if (bonus == 11){
+        ui.incrPageBonusBar();
+        ui.fireToolbar();
+    }
+    if (bonus >= 1 && bonus <= 10) ui.fireAkt("s" + ((bonus - 1) + 10 * ui.pageBonusBar));
     if (bonus == 12 || bonus == 13) ui.fireAkt("j" + (bonus - 12));
 }
 
@@ -136,10 +144,10 @@ function onClickToolbar(num, ui) {
         endTurn(ui);
     } else if (num == 1) {
         if (ui.status == "online") ws.send("p1 1");
-        else if (ui.status == "queue" || ui.status == "macth" || ui.status == "invite") ws.send("d");
+        else if (ui.status == "queue" || ui.status == "match" || ui.status == "invite" || ui.status == "wait") ws.send("d");
     } else if (num == 2) {
         // открыть чат
-    }else if (num == 9) {
+    } else if (num == 9) {
         ws.send("y");
     }
 }
@@ -152,7 +160,7 @@ function onClickOpter(click, ui) {
             ui.opts = null;
             ui.fireOpter();
         }
-    }else {
+    } else {
         ui.opts = null;
         ui.fireOpter();
     }
@@ -195,15 +203,24 @@ function findAkt(pg, akts) {
     return null;
 }
 
+var audioYourTurn = new Audio("turn.ogg");
+
 function onMemo(memo, ui) {
     ui.memo = memo;
     var dmnGameOld = ui.game != null ? ui.game.dmn : null;
     ui.game = R.last(memo);
     ui.instant = Date.now();
-    if(ui.game.focus!=null && ui.game.spots[strPg(ui.game.focus)]!=null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
+    if (ui.game.focus != null && ui.game.spots[strPg(ui.game.focus)] != null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
     if (dmnGameOld == null || !R.eqDeep(dmnGameOld, ui.game.dmn)) {
         updateScale(ui.scaleBest(), ui);
     }
+    if (!ui.game.isVsRobot && ui.memo.length > 1) {
+        var cur = ui.game.stage;
+        var prev = ui.memo[ui.memo.length - 2].stage;
+        if ((cur === "turn" || cur === "join") && prev !== "join" && prev !== "join")
+            audioYourTurn.play()
+    }
+    if (ui.game.stage == "bonus") ui.pageBonusBar = 0;
     ui.fireGrid();
     ui.fireAkter();
     ui.fireToolbar();
@@ -231,9 +248,7 @@ function onPanelset(panelset, ui) {
 function onSecond(_, ui) {
     if (ui.game == null) return;
     ui.fireClock();
-    if (ui.game.clockIsOn[1] && ui.intervalElapsed() >= ui.game.clock[1]) {
-        ui.fireCmd("r");
-    }
+    if (ui.game.clockIsOn[1] && ui.intervalElapsed() >= ui.game.clock[1]) ui.fireCmd("o");
 }
 
 function initKeyTest(keyboard) {
@@ -260,8 +275,11 @@ function updateScale(scale, ui) {
     }
 }
 
+var audoiMatch = new Audio("match.ogg");
+
 function onStatus(status, ui) {
     ui.status = status;
+    if (ui.status === "match") audoiMatch.play();
     ui.fireToolbar();
 }
 
@@ -309,15 +327,25 @@ function createUI(tileset, panelset, streamUi) {
         },
         updateFocus(pg) {
             this.focus = {pg, idx: 0};
-            this.akts = ui.game.spots[strPg(this.focus.pg)][this.focus.idx].akts;
         },
         incrIdxFocus() {
             this.focus.idx = (this.focus.idx + 1) % ui.game.spots[strPg(this.focus.pg)].length;
-            this.akts = ui.game.spots[strPg(this.focus.pg)][this.focus.idx].akts;
+
         },
         clearFocus() {
-            this.focus = null;
-            this.akts = null;
+            ui.focus = null;
+        },
+        incrPageBonusBar(){
+            ui.pageBonusBar = Math.min(ui.pageBonusBar + 1, 4);
+        },
+        decrPageBonusBar(){
+            ui.pageBonusBar = Math.max(ui.pageBonusBar - 1, 0);
+        },
+        akts(){
+            return ui.game.spots[strPg(this.focus.pg)][this.focus.idx].akts
+        },
+        sizeSloys(){
+            return ui.game.spots[strPg(this.focus.pg)].length
         },
         openOpter(opts, aktSelect) {
             this.opts = opts;
@@ -344,9 +372,9 @@ function createUI(tileset, panelset, streamUi) {
         numFromPstOnToolbar(pst){
             var pstT = ui.pstToolbar();
             var qp = ui.qdmnPanel();
-            if (isPstInRect(pst, pstT, scaleDmn({xr: 1, yr: 4}, qp)))
+            if (isPstInRect(pst, pstT, scaleDmn({xr: 1, yr: 2}, qp)))
                 return div(pst.y - this.pstToolbar().y, qp);
-            else if (ui.status == "match" && isPstInRect(pst, {x: pstT.x + qp, y: pstT.y + qp}, {xr: qp,yr: qp}))
+            else if (ui.status == "match" && isPstInRect(pst, {x: pstT.x + qp, y: pstT.y + qp}, {xr: qp, yr: qp}))
                 return 9
         },
         bonusFromBonusBar(pst){
@@ -457,7 +485,7 @@ function initServer() {
         ws = new WebSocket(urlWs);
         ws.onmessage = e => em.emit(e.data);
         ws.onerror = em.error;
-        ws.onclose = () => showFatal("Cant connect to server");
+        ws.onclose = () => showFatal("No connection to the server");
     });
     if (isLocal) messages.onValue(msg => console.log(msg.length <= 50 ? msg : msg.substring(0, 50) + "..."));
     return {

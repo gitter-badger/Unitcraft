@@ -28,7 +28,7 @@ class Spoter(r: Resource) {
         stager.slotTurnEnd.add(0,this,"устает последний сходивший, союзники теряют усталость") {
             tireLast()
             allData().objAktLast = null
-            objs().bySide(side).forEach { it.isFresh = true }
+            objs().forEach { it.isFresh = true }
         }
 
         val tileReady = r.tile("ready")
@@ -171,11 +171,13 @@ class Raise(val pgErr: Pg, val isOn: Boolean, val hintTileAktOff: HintTile) {
         if (akt.pg == pgErr) throw Err("self-cast not implemented: akt at ${akt.pg}")
         val idx = listSloy.indexOfLast { it.aktByPg(akt.pg) != null } + 1
         if (idx == listSloy.size) listSloy.add(Sloy(isOn, hintTileAktOff))
-        listSloy[idx].akts.add(akt)
+        listSloy[idx].add(akt)
     }
 
     fun sloys(): List<Sloy> {
-        // TODO заполнить пустоты сверху снизу
+        for((idx,sloy) in listSloy.withIndex()) if(idx<listSloy.size-1) {
+            for(akt in sloy.akts) (idx+1..listSloy.size-1).forEach { if(listSloy[it].aktByPg(akt.pg)==null)listSloy[it].add(akt)  }
+        }
         return listSloy
     }
 }

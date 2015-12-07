@@ -15,7 +15,7 @@ class Stazis(r: Resource) {
                 true
             } else false
         })
-        injectValue<Stager>().slotTurnEnd.add(-1, this, "стазисы теряют заряд") {
+        injectValue<Stager>().slotTurnEnd.add(30, this, "стазисы теряют заряд") {
             for ((flat, stazis) in flats().bothBy<Stazis>()) {
                 stazis.value -= 1
                 if (stazis.value == 0) flat.remove<Stazis>()
@@ -33,6 +33,7 @@ class Stazis(r: Resource) {
         injectValue<Lifer>().slotStopDamage.add { obj,isPoison -> obj.pg.isStazis() }
         injectValue<Magic>().slotStopMagic.add { it.isStazis() }
         injectValue<Pusher>().slotStopPush.add { it.second.last().pg.plus(it.first)?.let { it.isStazis() } ?: false || it.second.any { it.pg.isStazis() } }
+        injectValue<Water>().slop.add(this,"объект в точке со стазисом") { obj.pg.isStazis() }
     }
 
     fun plant(pg: Pg) {

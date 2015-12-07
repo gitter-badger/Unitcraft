@@ -49,7 +49,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
 
     Forest(r)
     Grass(r)
-    Water(r)
+    register(Water(r))
     Sand(r)
     Catapult(r)
     Fortress(r)
@@ -110,7 +110,7 @@ class CmderUnitcraft : CmderGame {
 
     override fun cmd(side: Side, cmd: String): GameState {
         if (cmd.isEmpty()) throw Violation("cmd is empty")
-        val prm = Prm(data().land.pgser, cmd[1, cmd.length].toString())
+        val prm = Prm(data().land.pgser, cmd.substring(1, cmd.length))
         var swapSide: SwapSide? = null
         when (cmd[0]) {
             's' -> selectBonus(side, prm)
@@ -152,7 +152,7 @@ class CmderUnitcraft : CmderGame {
         if (stager.stage(side) != Stage.bonus) throw Violation("stage != bonus")
         prm.ensureSize(1)
         val bonus = prm.int(0)
-        if (bonus > 50) throw Violation("bonus $bonus too high")
+        if (bonus > 49) throw Violation("bonus $bonus too high")
         allData().bonus[side] = bonus
         allData().bonus[side.vs]?.let { allData().sideTurn = if (it >= bonus) side.vs else side }
     }
@@ -235,6 +235,7 @@ class CmderUnitcraft : CmderGame {
             stager.stage(side),
             stager.edge(side),
             stager.focus,
+            stager.focusMore,
             spoter.pgFocus(),
             listOf(allData().point[side]!!, allData().point[side.vs]!!),
             if (data().canEdit) editor.opterTest else null
