@@ -69,10 +69,6 @@ class DabText(val text:String,val hint:HintText? = null) : Dab() {
 // команда нарисовать
 abstract class Dab : JSONAware
 
-enum class Stage{
-    bonus, bonusEnemy, join, joinEnemy, turn, turnEnemy, win, winEnemy
-}
-
 fun jsonObj(init:JSONObject.()->Unit):String{
     val obj = JSONObject()
     obj.init()

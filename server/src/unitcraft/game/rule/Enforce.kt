@@ -9,7 +9,6 @@ import java.util.ArrayList
 class Enforce(r: Resource) {
     val tls = r.tlsBool("enforced", "enforcedAlready")
     val stager: Stager by inject()
-    val drawer: Drawer by inject()
     val spoter: Spoter by inject()
     val objs: () -> Objs  by injectObjs()
 
@@ -22,7 +21,10 @@ class Enforce(r: Resource) {
     fun canEnforce(pg: Pg,sideVid: Side) = objs()[pg]?.let{ it.side!=sideVid && it.isVid(sideVid) && !it.has<DataEnforce>() }?:false
 
     fun enforce(pg: Pg) {
-        objs()[pg]?.data(DataEnforce(true))
+        objs()[pg]?.let{
+            it.add(DataEnforce(true))
+            it.isFresh = true
+        }
     }
 
     private class DataEnforce(var isOn:Boolean):Data

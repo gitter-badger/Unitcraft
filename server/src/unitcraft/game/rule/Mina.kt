@@ -32,7 +32,7 @@ class Mina(r: Resource) {
     }
 
     fun plant(pg: Pg, side: Side) {
-        flats()[pg].data(Mina(side))
+        flats()[pg].add(Mina(side))
     }
 
     operator fun contains(pg: Pg) = flats()[pg].has<Mina>()

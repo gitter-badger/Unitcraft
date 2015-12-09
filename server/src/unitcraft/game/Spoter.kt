@@ -41,6 +41,7 @@ class Spoter(r: Resource) {
         objer.slotDrawObjPost.add(90,this,"рисует lastAkt над последним сходившим") {
             if(obj == allData().objAktLast) ctx.drawTile(obj.pg, tileLastAkt)
         }
+        listCanAkt.add{ side,obj -> allData().needJoin && obj.side!=null }
     }
 
     fun objs() = allData().objs
@@ -54,8 +55,9 @@ class Spoter(r: Resource) {
         return spots
     }
 
-    fun akt(sideVid: Side, pgFrom: Pg, index: Int, pgAkt: Pg, num: Int? = null) {
+    fun akt(sideVid: Side, pgFrom: Pg, index: Int, pgAkt: Pg, num: Int? = null):Side? {
         val obj = objs()[pgFrom] ?: throw Violation("obj not found")
+        val sideJoin = obj.side
         val sloy = sloysObj(obj, sideVid).elementAtOrNull(index) ?: throw Violation("sloy not found")
         if (!sloy.isOn) throw Violation("sloy is off")
         val akt = sloy.aktByPg(pgAkt) ?: throw Violation("akt not found")
@@ -71,6 +73,7 @@ class Spoter(r: Resource) {
             akt.fn(num)
             endAkt(obj, sideVid)
         }
+        return sideJoin
     }
 
     private fun endAkt(obj: Obj, sideVid: Side) {

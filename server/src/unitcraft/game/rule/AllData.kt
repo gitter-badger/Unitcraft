@@ -110,7 +110,7 @@ interface Data
 open class HasData {
     val datas = ArrayList<Data>()
 
-    inline fun <reified T : Data> data(data: T) {
+    inline fun <reified T : Data> add(data: T) {
         if (has<T>()) remove<T>()
         datas.add(data)
     }
@@ -123,7 +123,11 @@ open class HasData {
 
     inline fun <reified T : Data> orNull() = datas.firstOrNull { it is T } as T?
 
-    inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { data(this) }
+    inline fun <reified T : Data> orPut(v: () -> T) = if (has<T>()) invoke<T>() else v().apply { add(this) }
+
+    inline fun <reified T : Data> data(noinline fn: (T) -> Unit){
+        orNull<T>()?.let{ fn(this<T>()) }
+    }
 }
 
 open class HasPg(var pg: Pg) : HasData() {

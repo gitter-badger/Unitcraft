@@ -33,8 +33,6 @@ class Stager(r: Resource) {
         allData().sideWin == sideVid.vs -> Stage.winEnemy
         allData().bonus[sideVid] == null -> Stage.bonus
         allData().bonus[sideVid.vs] == null -> Stage.bonusEnemy
-        allData().needJoin && sideTurn() == sideVid -> Stage.join
-        allData().needJoin && sideTurn() == sideVid.vs -> Stage.joinEnemy
         sideTurn() == sideVid -> Stage.turn
         sideTurn() == sideVid.vs -> Stage.turnEnemy
         else -> throw Err("stage assertion")
@@ -42,18 +40,20 @@ class Stager(r: Resource) {
 
     fun edge(sideVid: Side): DabTile {
         return when (stage(sideVid)) {
-            Stage.turn, Stage.join, Stage.bonus -> tileEdgeTurn
+            Stage.turn, Stage.bonus -> tileEdgeTurn
             else -> tileEdgeWait
         }
     }
-
-    fun isBeforeTurn(sideVid: Side) = stage(sideVid).ordinal <= 3
 
     fun isTurn(sideVid: Side) = stage(sideVid) == Stage.turn
 
     private fun checkSideWin() =
             if (Side.ab.all { allData().objs.bySide(it).isEmpty() }) flag.sideMost()
             else Side.ab.firstOrNull { allData().point[it] == 0 || allData().objs.bySide(it).isEmpty() }?.vs
+}
+
+enum class Stage{
+    bonus, bonusEnemy, turn, turnEnemy, win, winEnemy
 }
 
 class AideSide(val side: Side) : Aide

@@ -5,7 +5,7 @@ import java.util.ArrayList
 import java.util.HashMap
 
 class Disbn<A>(vararg elems: Pair<A, Int>) {
-    private val ranges = ArrayList<Pair<A, Range<Int>>>().apply {
+    private val ranges = ArrayList<Pair<A, ClosedRange<Int>>>().apply {
         var sum = 0
         for ((a, chance) in elems) {
             add(a to (sum..sum + chance - 1))

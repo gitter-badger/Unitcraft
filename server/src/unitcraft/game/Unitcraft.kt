@@ -66,7 +66,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Telepath(r)
 
     Imitator(r)
-    Frog(r)
+    Tiger(r)
     Mina(r)
     Kicker(r)
     register(Pusher(r))
@@ -114,13 +114,12 @@ class CmderUnitcraft : CmderGame {
         var swapSide: SwapSide? = null
         when (cmd[0]) {
             's' -> selectBonus(side, prm)
-            'j' -> swapSide = if (join(side, prm)) SwapSide.usual else null
             'z' -> editAdd(side, prm)
             'r' -> editRemove(prm)
             'd' -> editDestroy(prm)
             'c' -> editChange(side, prm)
-            'a' -> akt(side, prm)
-            'b' -> aktOpt(side, prm)
+            'a' -> swapSide = if (akt(side, prm)) SwapSide.usual else null
+            'b' -> swapSide = if (aktOpt(side, prm)) SwapSide.usual else null
             'e' -> endTurn(side, prm)
             'w' -> {
                 endTurn(side, prm)
@@ -152,21 +151,17 @@ class CmderUnitcraft : CmderGame {
         if (stager.stage(side) != Stage.bonus) throw Violation("stage != bonus")
         prm.ensureSize(1)
         val bonus = prm.int(0)
-        if (bonus > 49) throw Violation("bonus $bonus too high")
+        if (bonus > 29) throw Violation("bonus $bonus too high")
         allData().bonus[side] = bonus
         allData().bonus[side.vs]?.let { allData().sideTurn = if (it >= bonus) side.vs else side }
     }
 
-    private fun join(side: Side, prm: Prm): Boolean {
-        if (stager.stage(side) != Stage.join) throw Violation("stage != join")
-        prm.ensureSize(1)
-        val num = prm.int(0)
-        if (num > 1) throw Violation("num($num) must be 0 or 1")
+    private fun join(side: Side,sideJoin:Side?): Boolean {
+        if(sideJoin==null || allData().needJoin==false) return false
         allData().needJoin = false
-        val sideJoined = Side.ab[num]
-        builder.plusGold(sideJoined.vs, allData().bonus[side]!!)
-        allData().sideTurn = sideJoined
-        return side != sideJoined
+        builder.plusGold(sideJoin.vs, allData().bonus[side]!!)
+        allData().sideTurn = sideJoin
+        return side != sideJoin
     }
 
     private fun editAdd(side: Side, prm: Prm) {
@@ -199,18 +194,18 @@ class CmderUnitcraft : CmderGame {
         objer.editChange(prm.pg(0), side)
     }
 
-    private fun akt(side: Side, prm: Prm) {
+    private fun akt(side: Side, prm: Prm): Boolean {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(5)
         tracer.clear()
-        spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3))
+        return join(side,spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3)))
     }
 
-    private fun aktOpt(side: Side, prm: Prm) {
+    private fun aktOpt(side: Side, prm: Prm): Boolean {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(6)
         tracer.clear()
-        spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5))
+        return join(side,spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5)))
     }
 
     private fun endTurn(side: Side, prm: Prm) {
@@ -236,7 +231,7 @@ class CmderUnitcraft : CmderGame {
             stager.edge(side),
             stager.focus,
             stager.focusMore,
-            spoter.pgFocus(),
+            if(stager.isTurn(side)) spoter.pgFocus() else null,
             listOf(allData().point[side]!!, allData().point[side.vs]!!),
             if (data().canEdit) editor.opterTest else null
     )

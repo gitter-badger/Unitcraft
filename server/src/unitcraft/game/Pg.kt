@@ -1,6 +1,5 @@
 package unitcraft.game
 
-import unitcraft.game.Dr.values
 import unitcraft.server.lzy
 import java.util.*
 
@@ -25,7 +24,7 @@ class Pg(val pgser: Pgser, val x: Int, val y: Int) : Comparable<Pg> {
 
     fun distance(pg:Pg) = Math.abs(pg.x - x) + Math.abs(pg.y - y)
 
-    fun dr(pg: Pg) = Dr.values.first {it.x == Integer.signum(pg.x-x) && it.y == Integer.signum(pg.y-y)}
+    fun dr(pg: Pg) = Dr.values().first {it.x == Integer.signum(pg.x-x) && it.y == Integer.signum(pg.y-y)}
 
     fun isEdge() = x == 0 || x == pgser.xr - 1 || y == 0 || y == pgser.yr - 1
 
@@ -62,5 +61,5 @@ class Pgser(val xr: Int, val yr: Int) : Sequence<Pg> {
 enum class Dr(val x: Int, val y: Int) {
     up(0, -1), rt(1, 0), dw(0, 1), lf(-1, 0);
 
-    operator fun unaryMinus() = values.first { it.x == -x && it.y == -y }
+    operator fun unaryMinus() = values().first { it.x == -x && it.y == -y }
 }

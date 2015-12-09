@@ -225,41 +225,35 @@ function redrawToolbar() {
     }
 
     function drawBonusbar(ui) {
-        if (ui.game.stage !== "bonus" && ui.game.stage !== "join") return;
+        if (ui.game.stage !== "bonus") return;
         ctx.save();
         var pst = ui.pstBonusbar();
         ctx.translate(pst.x, pst.y);
-        if (ui.game.stage == "bonus") {
-            var qd = ui.qdmnPanel() / 2;
-            var sizeFont = qd*0.75;
-            ctx.fillStyle = "white";
-            ctx.drawImage(
-                ui.panelset,
-                imgPanels["bonusBar"] * ui.panelset.step, 0, qd, qd,
-                0, 0, qd, qd
-            );
-            setSizeFont(ctx, sizeFont);
-            for (var i = 0; i <= 9; i++) {
-                ctx.translate(0, qd);
-                ctx.drawImage(
-                    ui.panelset,
-                    imgPanels["bonusBar"] * ui.panelset.step, qd, qd, qd,
-                    0, 0, qd, qd
-                );
-                var num = i + 10 * ui.pageBonusBar;
-                drawText(ctx, num, (qd - xrText(ctx, num)) / 2, (qd - yrText(ctx)) / 2);
-            }
+        var qd = ui.qdmnPanel() / 2;
+        var sizeFont = qd*0.75;
+        ctx.fillStyle = "white";
+        ctx.drawImage(
+            ui.panelset,
+            imgPanels["bonusBar"] * ui.panelset.step, 0, qd, qd,
+            0, 0, qd, qd
+        );
+        setSizeFont(ctx, sizeFont);
+        for (var i = 0; i <= 9; i++) {
             ctx.translate(0, qd);
             ctx.drawImage(
                 ui.panelset,
-                imgPanels["bonusBar"] * ui.panelset.step + qd, 0, qd, qd,
+                imgPanels["bonusBar"] * ui.panelset.step, qd, qd, qd,
                 0, 0, qd, qd
             );
-        } else {
-            drawPanel("blue", ui);
-            ctx.translate(0, ui.qdmnPanel());
-            drawPanel("yelw", ui);
+            var num = i + 10 * ui.pageBonusBar;
+            drawText(ctx, num, (qd - xrText(ctx, num)) / 2, (qd - yrText(ctx)) / 2);
         }
+        ctx.translate(0, qd);
+        ctx.drawImage(
+            ui.panelset,
+            imgPanels["bonusBar"] * ui.panelset.step + qd, 0, qd, qd,
+            0, 0, qd, qd
+        );
         ctx.restore();
     }
 
@@ -268,8 +262,8 @@ function redrawToolbar() {
             ctx.clearRect(0, 0, ui.dmn.xr, ui.dmn.yr);
             if (ui.game == null || ui.panelset == null) return;
             ctx.save();
-            drawToolbar(ui);
             drawBonusbar(ui);
+            drawToolbar(ui);
             ctx.restore();
         },
         redrawClock(ui){

@@ -31,11 +31,10 @@ class ServerCdn() : NanoHTTPD(8000) {
     val imgsPanel = HashMap<String, BufferedImage>()
 
     var maskPlace = ImageIO.read(File(dirTiles + "maskPlace.png"))
-    val qdmnsTileUpdated = HashSet<Int>()
-    val qdmnsPanelUpdated = HashSet<Int>()
+    val qdmnsTileUpdated = Collections.synchronizedSet(HashSet<Int>())
+    val qdmnsPanelUpdated = Collections.synchronizedSet(HashSet<Int>())
 
     init {
-        if (listQdmnTile.any { it % 2 != 0 }) throw Err("qdmnTile must be even")
         loadImgsTile()
         loadImgsPanel()
     }
@@ -191,8 +190,13 @@ class ServerCdn() : NanoHTTPD(8000) {
         val dirTiles = "content/data/tiles/"
         val dirPanels = "content/data/panels/"
 
-        val listQdmnTile = idxsMap(40) { 40 + it * 2 }
-        val listQdmnPanel = idxsMap(11) { 70 + it * 10 }
+        val listQdmnTile = idxsMap(60) { 40 + it * 2 }
+        val listQdmnPanel = idxsMap(40) { 70 + it * 2 }
+
+        init{
+            if (listQdmnTile.any { it % 2 != 0 }) throw Err("qdmnTile must be even")
+            if (listQdmnPanel.any { it % 2 != 0 }) throw Err("qdmnTile must be even")
+        }
 
         @JvmStatic fun main(args: Array<String>) {
             ServerCdn().start()

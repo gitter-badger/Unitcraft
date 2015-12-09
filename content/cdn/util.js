@@ -24,9 +24,8 @@ function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
 
 function div(a,b){ return ~~(a/b) }
 
-function showFatal(msg){
-    $("#spanFatal").html(msg);
-    $.UIkit.modal("#modalFatal", {bgclose: false}).show();
+function showReconnect(){
+    $.UIkit.modal("#modalReconnect", {bgclose: false}).show();
 }
 
 function showErr(){

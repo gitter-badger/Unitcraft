@@ -1,5 +1,6 @@
 var ws = null;
 var isLocal = location.hostname == "localhost";
+var modalSurr = null;
 
 $(function () {
     if (!isOkCanvasAndWs()) return;
@@ -20,7 +21,8 @@ $(function () {
     createResize(dmnCanvas);
     createLogin(server);
     createPing(server, keyboard);
-    createRefresh();
+    createReconnect();
+    modalSurr = initModalSurr();
 
     var streams = [
         [memo, onMemo],
@@ -112,7 +114,7 @@ function onClick(click, ui) {
                 }
             }
 
-            if (ui.game.stage === "bonus" || ui.game.stage === "join") {
+            if (ui.game.stage === "bonus") {
                 var bonus = ui.bonusFromBonusBar(click);
                 if (bonus != null) {
                     onClickBonusbar(bonus, ui);
@@ -123,16 +125,15 @@ function onClick(click, ui) {
 }
 
 function onClickBonusbar(bonus, ui) {
-    if (bonus == 0){
+    if (bonus == 0) {
         ui.decrPageBonusBar();
         ui.fireToolbar();
     }
-    if (bonus == 11){
+    if (bonus == 11) {
         ui.incrPageBonusBar();
         ui.fireToolbar();
     }
     if (bonus >= 1 && bonus <= 10) ui.fireAkt("s" + ((bonus - 1) + 10 * ui.pageBonusBar));
-    if (bonus == 12 || bonus == 13) ui.fireAkt("j" + (bonus - 12));
 }
 
 function endTurn(ui) {
@@ -145,10 +146,11 @@ function onClickToolbar(num, ui) {
     } else if (num == 1) {
         if (ui.status == "online") ws.send("p1 1");
         else if (ui.status == "queue" || ui.status == "match" || ui.status == "invite" || ui.status == "wait") ws.send("d");
+        else if (ui.status == "game") modalSurr.show();
     } else if (num == 2) {
         // открыть чат
     } else if (num == 9) {
-        ws.send("y");
+        if (ui.status == "match") ws.send("y");
     }
 }
 
@@ -217,8 +219,7 @@ function onMemo(memo, ui) {
     if (!ui.game.isVsRobot && ui.memo.length > 1) {
         var cur = ui.game.stage;
         var prev = ui.memo[ui.memo.length - 2].stage;
-        if ((cur === "turn" || cur === "join") && prev !== "join" && prev !== "join")
-            audioYourTurn.play()
+        if (cur === "turn" && prev !== "turn") audioYourTurn.play()
     }
     if (ui.game.stage == "bonus") ui.pageBonusBar = 0;
     ui.fireGrid();
@@ -303,27 +304,23 @@ function createUI(tileset, panelset, streamUi) {
         pstGrid() {
             var xr = this.dmn.xr;
             var yr = this.dmn.yr;
-            var xrTb = ui.qdmnPanel();
+            var qp = ui.qdmnPanel();
+            var xrTbBb = qp + (ui.game.stage == "bonus" ? qp / 2 : 0);
             var xrGrid = this.tile() * ui.game.dmn.xr;
             var yrGrid = this.tile() * ui.game.dmn.yr;
-            var xSm = 0;
-            if (xrTb * 2 + xrGrid <= xr) {
-                xSm = 0;
-            } else if (xrTb + xrGrid <= xr) {
-                xSm = 2 * xrTb - xr + xrGrid;
-            } else {
-                xSm = xrTb;
-            }
-            return {x: div(xr - xSm - xrGrid, 2), y: div(yr - yrGrid, 2)};
+            var diff = Math.max(xr - (xrGrid + xrTbBb), 0);
+            return {x: xrTbBb + div(diff, 2), y: div(yr - yrGrid, 2)};
         },
         pstToolbar() {
             var pstGrid = ui.pstGrid();
-            return {x: Math.max(0, pstGrid.x - ui.qdmnPanel()), y: Math.max(0, pstGrid.y)};
+            var qp = ui.qdmnPanel();
+            var xrTbBb = qp + (ui.game.stage == "bonus" ? qp / 2 : 0);
+            return {x: Math.max(0, pstGrid.x - xrTbBb), y: 0};
         },
         pstBonusbar() {
-            var pstGrid = ui.pstGrid();
-            var xrGrid = this.tile() * ui.game.dmn.xr;
-            return {x: pstGrid.x + xrGrid, y: pstGrid.y};
+            var pstTb = ui.pstToolbar();
+            var qp = ui.qdmnPanel();
+            return {x: pstTb.x + qp, y: 0};
         },
         updateFocus(pg) {
             this.focus = {pg, idx: 0};
@@ -336,7 +333,7 @@ function createUI(tileset, panelset, streamUi) {
             ui.focus = null;
         },
         incrPageBonusBar(){
-            ui.pageBonusBar = Math.min(ui.pageBonusBar + 1, 4);
+            ui.pageBonusBar = Math.min(ui.pageBonusBar + 1, 2);
         },
         decrPageBonusBar(){
             ui.pageBonusBar = Math.max(ui.pageBonusBar - 1, 0);
@@ -378,10 +375,8 @@ function createUI(tileset, panelset, streamUi) {
                 return 9
         },
         bonusFromBonusBar(pst){
-            if (ui.game.stage === "bonus") return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 12},
+            return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 12},
                 this.qdmnPanel() / 2)) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel() / 2) : null;
-            else return isPstInRect(pst, this.pstBonusbar(), scaleDmn({xr: 1, yr: 2},
-                this.qdmnPanel())) ? div(pst.y - this.pstBonusbar().y, this.qdmnPanel()) + 12 : null;
         },
         isAcceptFromPstOnToolbar(pst){
             var qdmn = this.qdmnPanel();
@@ -395,7 +390,7 @@ function createUI(tileset, panelset, streamUi) {
             return {x: div(this.dmn.xr - xr, 2), y: div(this.dmn.yr - yr, 2)}
         },
         qdmnPanel() {
-            return R.minBy(qdmn => Math.abs(ui.dmn.yr / qdmn - 6.5), listQdmnPanel);
+            return R.minBy(qdmn => (ui.dmn.yr - qdmn * 6 > 0) ? ui.dmn.yr - qdmn * 6 : 100000, listQdmnPanel);
         },
         tile(){
             return listQdmnTile[ui.scale];
@@ -485,7 +480,7 @@ function initServer() {
         ws = new WebSocket(urlWs);
         ws.onmessage = e => em.emit(e.data);
         ws.onerror = em.error;
-        ws.onclose = () => showFatal("No connection to the server");
+        ws.onclose = () => showReconnect();
     });
     if (isLocal) messages.onValue(msg => console.log(msg.length <= 50 ? msg : msg.substring(0, 50) + "..."));
     return {
@@ -546,6 +541,15 @@ function initMouse() {
     return Kefir.fromEvents($("#canvasOpter"), "mousemove", pstEvent);
 }
 
-function createRefresh() {
+function createReconnect() {
     $("#btnRefresh").click(() => location.reload());
+}
+
+function initModalSurr() {
+    var modal = $.UIkit.modal("#modalSurr", {bgclose: true})
+    $("#btnSurr").click(() => {
+        ws.send("s");
+        modal.hide();
+    });
+    return modal;
 }

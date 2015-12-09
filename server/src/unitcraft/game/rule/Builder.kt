@@ -46,7 +46,7 @@ class Builder(r: Resource) {
     }
 
     fun add(obj: Obj, refine: (Obj) -> Unit = {}, zone: (Obj) -> List<Pg> = {it.further()}) {
-        obj.data(SkilBuild(zone, fabriks, refine))
+        obj.add(SkilBuild(zone, fabriks, refine))
         lifer.change(obj, 30)
     }
 
@@ -65,8 +65,8 @@ class Redeployer(r: Resource) {
         val tls = r.tlsVoin("redeployer")
         val builder = injectValue<Builder>()
         injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
-            it.data(DataTileObj(tls))
-            it.data(DataRedeployer())
+            it.add(DataTileObj(tls))
+            it.add(DataRedeployer())
             builder.add(it)
         }
 
@@ -104,7 +104,7 @@ class Armorer(r: Resource) {
         val skilerMove = injectValue<SkilerMove>()
         val tls = r.tlsVoin("armorer")
         solider.add(tls.neut, null, TpSolid.builder) {
-            it.data(DataTileObj(tls))
+            it.add(DataTileObj(tls))
             skilerMove.slow(it)
             builder.add(it, {
                 skilerMove.slow(it)
@@ -120,7 +120,7 @@ class Airport(r: Resource) {
         val builder = injectValue<Builder>()
         val tls = r.tlsVoin("airport")
         solider.add(tls.neut, null, TpSolid.builder, false) {
-            it.data(DataTileObj(tls))
+            it.add(DataTileObj(tls))
             builder.add(it, {}, { it.pg.pgser.pgs })
         }
     }
@@ -132,9 +132,9 @@ class Inviser(r: Resource) {
         val tls = r.tlsVoin("inviser")
         val builder = injectValue<Builder>()
         injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
-            it.data(DataTileObj(tls))
-            it.data(DataInviser)
-            builder.add(it, { it.data(DataInviser) })
+            it.add(DataTileObj(tls))
+            it.add(DataInviser)
+            builder.add(it, { it.add(DataInviser) })
         }
         mover.slotHide.add { it.has<DataInviser>() }
     }

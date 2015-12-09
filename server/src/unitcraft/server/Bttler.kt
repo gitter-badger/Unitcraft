@@ -44,6 +44,11 @@ class Bttler {
         return chain
     }
 
+    fun surr(id: Id): Chain {
+        updateClock()
+        return sendGame(false)
+    }
+
     fun timeout(id: Id): Chain {
         updateClock()
         //if (bttl().idWin() != id) throw Err("too early timeout")

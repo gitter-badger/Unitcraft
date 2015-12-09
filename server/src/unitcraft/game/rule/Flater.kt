@@ -42,7 +42,7 @@ class Flater(r: Resource) {
                 val gt = if(flat.has<Simple>()) groundSimple to flat<Simple>().tile
                 else if(flat.has<Point>()){
                     val data = flat<Point>()
-                    (if (stager.isBeforeTurn(side)) grounds[data.side.ordinal + 2] else if (data.side == side) grounds[0] else grounds[1]) to data.tile
+                    (if (allData().needJoin) grounds[data.side.ordinal + 2] else if (data.side == side) grounds[0] else grounds[1]) to data.tile
                 }else if(flat.has<Place>()){
                     val data = flat<Place>()
                     data.tiles[flat.hashCode() % data.tiles.size] to null
@@ -55,18 +55,18 @@ class Flater(r: Resource) {
     }
 
     fun addPoint(tile: Tile, tpFlat: TpFlat?, create: (Flat, Side) -> Unit) {
-        val crt = { flat:Flat,side:Side -> create(flat,side); flat.data(Point(tile,side)) }
+        val crt = { flat:Flat,side:Side -> create(flat,side); flat.add(Point(tile,side)) }
         tilesEditor.add(tile)
         createsEditor.add(crt)
         if(tpFlat!=null) landTps.getOrPut(tpFlat) { ArrayList<(Flat, Side) -> Unit>() }.add(crt)
     }
 
     fun addPlace(tiles: List<Tile>, tpFlat: TpFlat?, create: (Flat) -> Unit) {
-        add(tiles.first(),tpFlat,{ flat,side -> create(flat);flat.data(Place(tiles)) })
+        add(tiles.first(),tpFlat,{ flat,side -> create(flat);flat.add(Place(tiles)) })
     }
 
     fun addSimple(tile:Tile, tpFlat: TpFlat?, create: (Flat) -> Unit) {
-        add(tile,tpFlat,{ flat,side -> create(flat);flat.data(Simple(tile)) })
+        add(tile,tpFlat,{ flat,side -> create(flat);flat.add(Simple(tile)) })
     }
 
     fun side(flat:Flat) = flat<Point>().side
@@ -98,7 +98,7 @@ class AideDrawFlat(val ctx: CtxDraw, val flat:Flat, val side: Side):Aide
 class Sand(r: Resource) {
     init {
         val tiles = r.tlsList(4, "sand", Resource.effectPlace)
-        injectValue<Flater>().addPlace(tiles, null) { it.data(DataSand) }
+        injectValue<Flater>().addPlace(tiles, null) { it.add(DataSand) }
     }
 
     object DataSand : Data
@@ -110,7 +110,7 @@ class Forest(r: Resource) {
         val flats = injectFlats().value
         val tiles = r.tlsList(4, "forest", Resource.effectPlace)
 
-        injectValue<Flater>().addPlace(tiles, TpFlat.wild) { it.data(DataForest) }
+        injectValue<Flater>().addPlace(tiles, TpFlat.wild) { it.add(DataForest) }
 
         val mover = injectValue<Mover>()
         mover.slotHide.add { flats()[it.pg].has<DataForest>() }
@@ -128,7 +128,7 @@ class Forest(r: Resource) {
 class Grass(r: Resource) {
     init {
         val tiles = r.tlsList(5, "grass", Resource.effectPlace)
-        injectValue<Flater>().addPlace(tiles, TpFlat.none) { it.data(DataGrass) }
+        injectValue<Flater>().addPlace(tiles, TpFlat.none) { it.add(DataGrass) }
     }
 
     object DataGrass : Data
@@ -138,7 +138,7 @@ class Water(r: Resource) {
     val slop = r.slop<AideObj>("Предотвращение утопления")
     init {
         val tiles = r.tlsList(3, "water", Resource.effectPlace)
-        injectValue<Flater>().addPlace(tiles, TpFlat.liquid) { it.data(DataWater) }
+        injectValue<Flater>().addPlace(tiles, TpFlat.liquid) { it.add(DataWater) }
         val flats = injectFlats().value
         val mover = injectValue<Mover>()
         val tracer = injectValue<Tracer>()
@@ -174,7 +174,7 @@ class Water(r: Resource) {
 class Catapult(r: Resource) {
     init {
         val tile = r.tile("catapult")
-        injectValue<Flater>().addSimple(tile, TpFlat.special) { it.data(Catapult) }
+        injectValue<Flater>().addSimple(tile, TpFlat.special) { it.add(Catapult) }
 
         val spoter = injectValue<Spoter>()
         val mover = injectValue<Mover>()
@@ -197,7 +197,7 @@ class Catapult(r: Resource) {
 class Fortress(r: Resource) {
     init {
         val tile = r.tile("fortress")
-        injectValue<Flater>().addSimple(tile, TpFlat.special) { it.data(Fortress) }
+        injectValue<Flater>().addSimple(tile, TpFlat.special) { it.add(Fortress) }
         val flats = injectFlats().value
         injectValue<Lifer>().slotStopDamage.add{ obj,isPoison -> !isPoison && flats()[obj.pg].has<Fortress>()}
     }
@@ -213,7 +213,7 @@ class Flag(r: Resource) {
         val tile = r.tile("flag")
 
         flater.addPoint(tile, TpFlat.flag) { flat, side ->
-            flat.data(DataFlag)
+            flat.add(DataFlag)
         }
 
         injectValue<Stager>().slotTurnEnd.add(51,this,"игрок с меньшинством флагов теряет 1 очко")  {
@@ -236,7 +236,7 @@ class Goldmine(r: Resource) {
         val flats = injectFlats().value
         val tile = r.tile("mine")
         val flater = injectValue<Flater>()
-        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.data(Goldmine) }
+        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.add(Goldmine) }
         injectValue<Stager>().slotTurnEnd.add(60,this,"захваченные золотые шахты дают золото")  {
             builder.plusGold(side, flats().by<Goldmine>().count { flater.side(it) == side })
         }
@@ -248,7 +248,7 @@ class Goldmine(r: Resource) {
 class Hospital(r: Resource) {
     init {
         val tile = r.tile("hospital")
-        injectValue<Flater>().addPoint(tile, null) { flat, side -> flat.data(Hospital) }
+        injectValue<Flater>().addPoint(tile, null) { flat, side -> flat.add(Hospital) }
     }
 
     private object Hospital : Data

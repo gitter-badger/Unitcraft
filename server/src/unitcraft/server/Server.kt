@@ -55,7 +55,7 @@ class Server(val isDebug: Boolean) {
                 'y' -> accept(prm)
                 'c' -> invite(prm)
                 'd' -> onDecline(prm)
-                's' -> onSurrender(prm)
+                's' -> onSurr(prm)
                 else -> throw Violation("unknown msg: " + msg)
             }
         } catch(ex: Violation) {
@@ -272,9 +272,11 @@ class Server(val isDebug: Boolean) {
         send(bttler.refresh(ssn.id))
     }
 
-    fun onSurrender(prm: Prm) {
-        ensureLogin("surrender")
+    fun onSurr(prm: Prm) {
+        ensureLogin("surr")
         prm.ensureEmpty()
+        bttl = ssn.bttl!!
+        send(bttler.surr(ssn.id))
     }
 
     fun ensureLogin(cmd: String) {
