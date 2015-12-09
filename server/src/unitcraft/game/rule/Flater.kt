@@ -135,11 +135,12 @@ class Grass(r: Resource) {
 }
 
 class Water(r: Resource) {
+    val flats by injectFlats()
     val slop = r.slop<AideObj>("Предотвращение утопления")
     init {
         val tiles = r.tlsList(3, "water", Resource.effectPlace)
         injectValue<Flater>().addPlace(tiles, TpFlat.liquid) { it.add(DataWater) }
-        val flats = injectFlats().value
+
         val mover = injectValue<Mover>()
         val tracer = injectValue<Tracer>()
         val tileDrowned = r.tile("drowned")
@@ -155,8 +156,10 @@ class Water(r: Resource) {
         injectValue<Objer>().slotDrawObjPost.add(30,this,"капельки воды на притопленных юнитах"){
             obj.orNull<Drown>()?.value?.let{ctx.drawTile(obj.pg,tilesDrown[it])}
         }
-
     }
+
+    fun has(pg:Pg) = flats()[pg].has<DataWater>()
+
 
     class Drown:Data{
         var value = -1

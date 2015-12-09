@@ -16,7 +16,7 @@ class AllData {
     val bonus = HashMap<Side, Int>()
 
     val point = HashMap<Side, Int>().apply {
-        Side.ab.map { put(it, 20) }
+        Side.ab.map { put(it, 16) }
     }
 
     var sideTurn: Side = Side.a

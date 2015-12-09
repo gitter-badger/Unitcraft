@@ -11,6 +11,7 @@ class Enforce(r: Resource) {
     val stager: Stager by inject()
     val spoter: Spoter by inject()
     val objs: () -> Objs  by injectObjs()
+    val magic by inject<Magic>()
 
     init {
         injectValue<Objer>().slotDrawObjPost.add(5,this,"рисует статус Enforce") { if(obj.has<DataEnforce>()) ctx.drawTile(obj.pg,tls(obj<DataEnforce>().isOn)) }
@@ -18,7 +19,7 @@ class Enforce(r: Resource) {
         spoter.listCanAkt.add { side, obj -> obj.has<DataEnforce>() && obj<DataEnforce>().isOn }
     }
 
-    fun canEnforce(pg: Pg,sideVid: Side) = objs()[pg]?.let{ it.side!=sideVid && it.isVid(sideVid) && !it.has<DataEnforce>() }?:false
+    fun canEnforce(pg: Pg,sideVid: Side) = objs()[pg]?.let{ it.side!=sideVid && it.isVid(sideVid) && !it.has<DataEnforce>() }?:false && magic.canMagic(pg)
 
     fun enforce(pg: Pg) {
         objs()[pg]?.let{

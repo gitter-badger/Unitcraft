@@ -182,13 +182,13 @@ class Electric(r: Resource) {
             it.add(DataTileObj(tls))
             it.add(DataElectric)
         }
-
         val tileAkt = r.tileAkt("electric")
         val lifer = injectValue<Lifer>()
         val spoter = injectValue<Spoter>()
         val tracer = injectValue<Tracer>()
+        val objs = injectObjs().value
         spoter.addSkilByBuilder<DataElectric> {
-            obj.near().filter { lifer.canDamage(it) }.forEach {
+            obj.near().filter { objs()[it]?.let{lifer.canDamage(it) && it.isVid(sideVid)}?:false }.forEach {
                 akt(it, tileAkt) {
                     val aims = wave(it, lifer, obj.pg)
                     lifer.damagePgs(aims, 1)
@@ -476,9 +476,8 @@ class Spider(r: Resource) {
         }
         val lifer = injectValue<Lifer>()
         val spoter = injectValue<Spoter>()
-        val magic = injectValue<Magic>()
         spoter.addSkilByBuilder<DataSpider> {
-            obj.near().filter { !adhesive.hasAdhesive(it) && magic.canMagic(it) }.forEach {
+            obj.near().filter { adhesive.canAdhesive(it) }.forEach {
                 akt(it, tlsAkt) {
                     adhesive.plant(it)
                     lifer.poison(obj, 1)

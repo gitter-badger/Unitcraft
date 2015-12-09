@@ -37,10 +37,6 @@ function pstEvent(e){
         x: e.pageX,
         y: e.pageY
     };
-    //return {
-    //    x: e.offsetX!=undefined?e.offsetX:e.layerX,
-    //    y: e.offsetY!=undefined?e.offsetY:e.layerY
-    //}
 }
 
 function isPstInRect({x:xx,y:yy},{x,y},{xr,yr}){
@@ -129,4 +125,8 @@ function storeImages(pool,prefix) {
             return null;
         }
     };
+}
+
+function findBest(fn,list) {
+    return R.pipe(R.filter(x => fn(x)>=0),R.reduce(R.minBy(fn),list[0]))(list);
 }

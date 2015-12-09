@@ -65,19 +65,19 @@ function onCmdScale(cmdScale, ui) {
 function onKey(key, ui) {
     if (key === "Enter") {
         endTurn(ui);
-    } else if (key === "w") {
+    } else if (key === "KeyW") {
         if (ui.game.stage === "turn") ui.fireAkt("w");
-    } else if (key === "q" && ui.status == "online") {
+    } else if (key === "KeyQ" && ui.status == "online") {
         ui.fireCmd("t");
     }
 }
 
-var keyTestToCmd = {"x": "r", "c": "c", "v": "d"};
+var keyTestToCmd = {"KeyX": "r", "KeyC": "c", "KeyV": "d"};
 
 function onKeyTest([key,pst], ui) {
     if (ui.game.opterTest == null) return;
     var pg = ui.pgFromPst(pst);
-    if (key === "z") {
+    if (key === "KeyZ") {
         if (ui.opts != null) {
             ui.opts = null;
             ui.fireOpter();
@@ -180,7 +180,7 @@ function onClickGrid(pg, ui) {
             } else {
                 ui.fireAkt("a" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg));
             }
-        } else if (R.eqDeep(focus.pg, pg)) {
+        } else if (R.equals(focus.pg, pg)) {
             ui.incrIdxFocus();
         } else if (ui.game.spots[strPg(pg)]) {
             ui.updateFocus(pg);
@@ -213,7 +213,7 @@ function onMemo(memo, ui) {
     ui.game = R.last(memo);
     ui.instant = Date.now();
     if (ui.game.focus != null && ui.game.spots[strPg(ui.game.focus)] != null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
-    if (dmnGameOld == null || !R.eqDeep(dmnGameOld, ui.game.dmn)) {
+    if (dmnGameOld == null || !R.equals(dmnGameOld, ui.game.dmn)) {
         updateScale(ui.scaleBest(), ui);
     }
     if (!ui.game.isVsRobot && ui.memo.length > 1) {
@@ -254,15 +254,15 @@ function onSecond(_, ui) {
 
 function initKeyTest(keyboard) {
     var mouse = initMouse();
-    return Kefir.combine([keyboard.key("z", "x", "c", "v", "a")], [mouse]);
+    return Kefir.combine([keyboard.key("KeyZ", "KeyX", "KeyC", "KeyV", "KeyA")], [mouse]);
 }
 
 function initKey(keyboard) {
-    return Kefir.merge([keyboard.key("Enter", "q", "w")]);
+    return Kefir.merge([keyboard.key("Enter", "KeyQ", "KeyW")]);
 }
 
 function initCmdScale(keyboard) {
-    return Kefir.merge([keyboard.key("-").map(() => -1), keyboard.key("=").map(() => 1), keyboard.key("0").map(() => null)]);
+    return Kefir.merge([keyboard.key("Minus").map(() => -1), keyboard.key("Equal").map(() => 1), keyboard.key("Digit0").map(() => null)]);
 }
 
 function updateScale(scale, ui) {
@@ -352,14 +352,12 @@ function createUI(tileset, panelset, streamUi) {
         },
         qdmnTileOpter(){
             var dmn = this.dmnOpter();
-            var qdmnXExact = (ui.dmn.xr - ui.qdmnPanel()) / dmn.xr;
-            var qdmnX = R.minBy(qdmn => qdmnXExact - qdmn, R.filter(qdmn => qdmn <= qdmnXExact, listQdmnTile)) || listQdmnTile[0];
-            var qdmnYExact = ui.dmn.yr / dmn.yr;
-            var qdmnY = R.minBy(qdmn => qdmnYExact - qdmn, R.filter(qdmn => qdmn <= qdmnYExact, listQdmnTile)) || listQdmnTile[0];
-            return Math.min(qdmnX, qdmnY);
+            var xBest = findBest(qdmn => ui.dmn.xr - qdmn*dmn.xr,listQdmnTile);
+            var yBest = findBest(qdmn => ui.dmn.yr - qdmn*dmn.yr, listQdmnTile);
+            return Math.min(xBest, yBest);
         },
         dmnOpter() {
-            var xr = 5;
+            var xr = R.max(5,Math.ceil(Math.sqrt(ui.opts.length)));
             return {xr, yr: div(ui.opts.length, xr) + sign(ui.opts.length % xr)};
         },
         numFromPstOnOpter(pst) {
@@ -390,17 +388,20 @@ function createUI(tileset, panelset, streamUi) {
             return {x: div(this.dmn.xr - xr, 2), y: div(this.dmn.yr - yr, 2)}
         },
         qdmnPanel() {
-            return R.minBy(qdmn => (ui.dmn.yr - qdmn * 6 > 0) ? ui.dmn.yr - qdmn * 6 : 100000, listQdmnPanel);
+            return findBest(qdmn => ui.dmn.yr - qdmn * 6,listQdmnPanel);
+        },
+        xrTbBb() {
+            var qp = ui.qdmnPanel();
+            return qp + (ui.game.stage == "bonus" ? qp / 2 : 0);
         },
         tile(){
             return listQdmnTile[ui.scale];
         },
         scaleBest() {
-            var qdmnXExact = (ui.dmn.xr - ui.qdmnPanel()) / ui.game.dmn.xr;
-            var qdmnX = R.minBy(qdmn => qdmnXExact - qdmn, R.filter(qdmn => qdmn <= qdmnXExact, listQdmnTile)) || listQdmnTile[0];
-            var qdmnYExact = ui.dmn.yr / ui.game.dmn.yr;
-            var qdmnY = R.minBy(qdmn => qdmnYExact - qdmn, R.filter(qdmn => qdmn <= qdmnYExact, listQdmnTile)) || listQdmnTile[0];
-            return R.indexOf(Math.min(qdmnX, qdmnY), listQdmnTile);
+            var xr = ui.dmn.xr-ui.xrTbBb();
+            var xBest = findBest(qdmn => xr - qdmn*ui.game.dmn.xr,listQdmnTile);
+            var yBest = findBest(qdmn => ui.dmn.yr - qdmn*ui.game.dmn.yr, listQdmnTile);
+            return R.indexOf(R.min(xBest, yBest), listQdmnTile);
         },
         intervalElapsed(){
             return Date.now() - this.instant;
@@ -462,12 +463,12 @@ function initDmnCanvas() {
         }
     }
 
-    return Kefir.fromEvents(w, "resize", makeBounds).skipDuplicates(R.eqDeep).toProperty(makeBounds);
+    return Kefir.fromEvents(w, "resize", makeBounds).toProperty(makeBounds);
 }
 
 function initKeyboard() {
-    var keys = Kefir.merge([Kefir.fromEvents(document, 'keydown', R.prop("key")), Kefir.fromEvents(document, 'keyup', R.always(null))])
-        .skipDuplicates().filter(R.not(R.eq(null)));
+    var keys = Kefir.merge([Kefir.fromEvents(document, 'keydown', R.prop("code")), Kefir.fromEvents(document, 'keyup', R.always(null))])
+        .skipDuplicates().filter(key => key!=null);
     return {
         key(...ks) {
             return keys.filter(key => R.contains(key, ks));
@@ -485,7 +486,7 @@ function initServer() {
     if (isLocal) messages.onValue(msg => console.log(msg.length <= 50 ? msg : msg.substring(0, 50) + "..."));
     return {
         msg(tp) {
-            return messages.filter(R.compose(R.eq(tp), R.nthChar(0))).map(R.substringFrom(1));
+            return messages.filter(R.pipe(R.head,R.equals(tp))).map(R.tail);
         }
     }
 }
@@ -501,7 +502,7 @@ function createResize(dmn) {
 }
 
 function createPing(server, keyboard) {
-    Kefir.combine([server.msg("q").map(Date.now)], [keyboard.key("p").onValue(() => ws.send("q")).map(Date.now)], R.subtract).onValue(v =>
+    Kefir.combine([server.msg("q").map(Date.now)], [keyboard.key("KeyP").onValue(() => ws.send("q")).map(Date.now)], R.subtract).onValue(v =>
         console.log(v + "ms")
     );
 }

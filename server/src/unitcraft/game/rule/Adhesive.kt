@@ -1,12 +1,15 @@
 package unitcraft.game.rule
 
 import unitcraft.game.*
+import unitcraft.inject.inject
 import unitcraft.inject.injectValue
 
 class Adhesive(r: Resource){
     val flats: () -> Flats by injectFlats()
     val objs: () -> Objs by injectObjs()
     val slop = r.slop<AideObj>("Объекты, которые игнорируют паутину")
+    val magic by inject<Magic>()
+    val water by inject<Water>()
 
     init {
         val tile = r.tile("adhesive")
@@ -37,6 +40,11 @@ class Adhesive(r: Resource){
     object Adhesive:Data
 
     fun hasAdhesive(pg: Pg) = flats()[pg].has<Adhesive>()
+
+    fun canAdhesive(pg: Pg)= !hasAdhesive(pg) && !water.has(pg) && magic.canMagic(pg)
+
 }
 
 class AideObj(val obj:Obj) : Aide
+
+class AidePg(val pg:Pg) : Aide

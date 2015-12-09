@@ -31,11 +31,12 @@ class Land(val mission: Int?) {
             addFlat(pg, none, 0)
         }
 
-        repeat(rndInt(1,3)){makeSpotWild()}
+        repeat(rndInt(0, 2)) { makeSpot(wild) }
+        repeat(rndInt(0, 1)) { makeSpot(liquid) }
 
-        var cur:List<Pg>
+        var cur: List<Pg>
 
-        if(r.nextBoolean()) {
+        if (r.nextBoolean()) {
             cur = Algs.river(this, exc)
             val idx = idxFlatRnd(liquid)
             cur.forEach {
@@ -44,7 +45,7 @@ class Land(val mission: Int?) {
             exc.addAll(cur)
         }
 
-        cur = Algs.spray(this, exc, rndInt(0,5))
+        cur = Algs.spray(this, exc, rndInt(0, 5))
         cur.forEach { addFlat(it, special, idxFlatRnd(special)) }
         exc.addAll(cur)
 
@@ -60,17 +61,17 @@ class Land(val mission: Int?) {
         }
         exc.addAll(cur)
 
-        val pgBaseA = pgRnd{it.isEdge()}
+        val pgBaseA = pgRnd { it.isEdge() }
         solids.add(Solid(pgBaseA, builder, idxSolidRnd(builder), Side.a))
-        val pgBaseB = pgRnd{it.isEdge() && it.distance(pgBaseA)>=8}
+        val pgBaseB = pgRnd { it.isEdge() && it.distance(pgBaseA) >= 8 }
         solids.add(Solid(pgBaseB, builder, idxSolidRnd(builder), Side.b))
     }
 
-    private fun makeSpotWild(){
-        var cur = Algs.spot(this, exc, rndInt(5,15))
-        var idx = idxFlatRnd(wild)
+    private fun makeSpot(tp:TpFlat) {
+        var cur = Algs.spot(this, exc, rndInt(5, 15))
+        var idx = idxFlatRnd(tp)
         cur.forEach {
-            addFlat(it, wild, idx)
+            addFlat(it, tp, idx)
         }
         exc.addAll(cur)
     }
@@ -104,12 +105,11 @@ class Land(val mission: Int?) {
         return Pgser(x, y)
     }
 
-    private fun rndInt(a:Int,b:Int) = a+r.nextInt(b+1)
+    private fun rndInt(a: Int, b: Int) = a + r.nextInt(b + 1)
 
     companion object {
-        val dmns = (9..12).flatMap{yr -> (yr..12).map{it to yr}}
+        val dmns = listOf(12 to 11, 12 to 10, 12 to 9, 11 to 11, 11 to 10, 11 to 9, 10 to 10, 10 to 9, 9 to 9)
     }
-
 }
 
 enum class TpFlat {
@@ -139,9 +139,9 @@ object Algs {
 
     fun spot(land: Land, exc: List<Pg>, qnt: Int): List<Pg> {
         val lst = ArrayList<Pg>()
-        land.pgRndOrNull { it !in exc }?.let{lst.add(it)}
-        while(lst.size<qnt) {
-            land.selRndOrNull(lst.flatMap{it.near}.filterNot { it in exc || it in lst } )?.let{ lst.add(it) }?:break
+        land.pgRndOrNull { it !in exc }?.let { lst.add(it) }
+        while (lst.size < qnt) {
+            land.selRndOrNull(lst.flatMap { it.near }.filterNot { it in exc || it in lst })?.let { lst.add(it) } ?: break
         }
         return lst
     }

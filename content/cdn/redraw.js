@@ -120,7 +120,6 @@ function redrawToolbar() {
     function drawStage(ui) {
         ctx.save();
         drawPanel(ui.game.stage, ui);
-
         var p = prmDrawStage(ui);
         drawClock(ui, p);
         setSizeFont(ctx, p.sizeFont);
@@ -128,8 +127,6 @@ function redrawToolbar() {
         drawText(ctx, vpoint(ui, 0), p.qdmn - xrText(ctx, vpoint(ui, 0)) - p.pd, p.pd);
         ctx.fillStyle = "pink";
         drawText(ctx, vpoint(ui, 1), p.pd + xrText(ctx, "00") - xrText(ctx, vpoint(ui, 1)), p.yrRow + p.pd);
-        ctx.fillStyle = "white";
-        drawText(ctx, ui.game.bet, p.qdmn - xrText(ctx, ui.game.bet) - p.pd, p.yrRow * 3 + p.pd);
         ctx.restore();
     }
 
@@ -183,6 +180,8 @@ function redrawToolbar() {
         ctx.save();
         ctx.translate(0, ui.qdmnPanel());
         drawPanel(ui.status, ui);
+        //ctx.fillStyle = "white";
+        //drawText(ctx, ui.game.bet, p.qdmn - xrText(ctx, ui.game.bet) - p.pd, p.yrRow * 3 + p.pd);
         ctx.restore();
     }
 
