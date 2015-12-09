@@ -190,8 +190,8 @@ class ServerCdn() : NanoHTTPD(8000) {
         val dirTiles = "content/data/tiles/"
         val dirPanels = "content/data/panels/"
 
-        val listQdmnTile = idxsMap(60) { 40 + it * 2 }
-        val listQdmnPanel = idxsMap(40) { 70 + it * 2 }
+        val listQdmnTile = 60..120 step 2
+        val listQdmnPanel = 110..220 step 4
 
         init{
             if (listQdmnTile.any { it % 2 != 0 }) throw Err("qdmnTile must be even")
