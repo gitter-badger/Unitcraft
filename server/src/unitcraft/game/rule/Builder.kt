@@ -55,7 +55,11 @@ class Builder(r: Resource) {
         fabriks.sort(compareBy { it.prior })
     }
 
-    inner class SkilBuild(val zone: (Obj) -> List<Pg>, val fabriks: List<Fabrik>, val refine: (Obj) -> Unit) : Data
+    fun changeZone(obj:Obj,zone: (Obj) -> List<Pg>){
+        obj.orNull<SkilBuild>()?.zone = zone
+    }
+
+    inner class SkilBuild(var zone: (Obj) -> List<Pg>, val fabriks: List<Fabrik>, val refine: (Obj) -> Unit) : Data
 
     class Fabrik(val prior: Int, val tile: Tile, val create: (Obj) -> Unit)
 }
@@ -116,17 +120,38 @@ class Armorer(r: Resource) {
 
 class Airport(r: Resource) {
     init {
-        val solider = injectValue<Objer>()
+        val objer = injectValue<Objer>()
         val builder = injectValue<Builder>()
         val tls = r.tlsVoin("airport")
-        solider.add(tls.neut, null, TpSolid.builder, false) {
-            it.add(DataTileObj(tls))
-            builder.add(it, {}, { it.pg.pgser.pgs })
+        val tlsSit = r.tlsVoin("airport.sit")
+        val tileAkt = r.tileAkt("airport")
+        objer.add(tls.neut, null, TpSolid.builder) {
+            it.add(Airport())
+            objer.setTls(it,tls)
+            builder.add(it)
         }
-        /*
-        akt{
-         */
+        val mover = injectValue<Mover>()
+        val skilerMove = injectValue<SkilerMove>()
+        val spoter = injectValue<Spoter>()
+        spoter.addSkilByBuilder<Airport> {
+            val data = obj<Airport>()
+            if(data.charged) obj.near().forEach {
+                val ok = mover.move(obj,it, sideVid)
+                if(ok!=null) akt(it, tileAkt) {
+                    if(ok()) {
+                        skilerMove.remove(obj)
+                        builder.changeZone(obj){ it.pg.pgser.pgs }
+                        objer.setTls(obj,tlsSit)
+                        data.charged = false
+                        spoter.tire(obj)
+                    }
+                }
+            }
+        }
+    }
 
+    private class Airport() : Data{
+        var charged = true
     }
 }
 

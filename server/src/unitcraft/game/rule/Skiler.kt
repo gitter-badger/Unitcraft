@@ -71,6 +71,10 @@ class SkilerMove(r: Resource) {
         obj.orNull<SkilMove>()?.slow()
     }
 
+    fun remove(obj: Obj) {
+        obj.remove<SkilMove>()
+    }
+
     fun spend(obj: Obj) {
         obj.orNull<SkilMove>()?.spend()
     }
