@@ -17,15 +17,7 @@ fun main(args: Array<String>) {
 
     val server = Server(System.getProperty("os.name").startsWith("Windows"))
     register(server)
-    ForInject.bttl={ server.bttl }
-    registerUnitcraft({ server.bttl.data })
+    registerUnitcraft({ server.ssn.bttl!!.data })
 
     server.start()
-
 }
-
-object ForInject {
-    lateinit var bttl: () -> Bttl
-}
-
-fun injectBttl() = lazy(LazyThreadSafetyMode.NONE){ForInject.bttl}

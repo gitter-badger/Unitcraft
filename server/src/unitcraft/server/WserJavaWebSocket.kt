@@ -55,6 +55,8 @@ class WserJavaWebSocket(val addr: InetSocketAddress) : WebSocketServer(addr), Ws
         wss[key]?.close()
     }
 
+    override fun sizeWss() = wss.size
+
     private fun toKey(ws: WebSocket) = ws.hashCode().toString()
 }
 
@@ -66,4 +68,5 @@ interface Wser {
     fun start()
     fun send(key: String, msg: String)
     fun close(key: String)
+    fun sizeWss():Int
 }

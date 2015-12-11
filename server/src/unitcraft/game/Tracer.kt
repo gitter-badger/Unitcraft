@@ -51,7 +51,6 @@ class Tracer(r:Resource) {
     fun touch(obj: Obj, tile:Tile) = touch(obj.pg,tile)
 
     fun trace(pg: Pg, tile:Tile, hintTile:HintTile? = null){
-        println(tile)
         Side.ab.forEach { side -> traceTile(side,pg,tile,hintTile)}
     }
 }

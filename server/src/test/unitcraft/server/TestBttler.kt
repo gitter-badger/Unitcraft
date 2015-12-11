@@ -16,15 +16,16 @@ class TestBttler {
     val bttler = Bttler()
 
     val cmder = CmderStub()
-    lateinit var bttl: Bttl
 
     val id = Id("0000")
     val idVs = Id("0001")
 
+    lateinit var bttl:Bttl
+
     init {
         register<Log>(log)
         register<CmderGame>(cmder)
-        ForInject.bttl={ bttl }
+
     }
 
     @Before fun before() {
@@ -33,13 +34,13 @@ class TestBttler {
 
     // bttler отсылает состояние игры
     @Test fun sendState() {
-        val chain = bttler.start(null,false)
+        val chain = bttler.start(bttl,null,false)
         assertEquals(chain.list[0].first,id)
         assertEquals(chain.list[1].first,idVs)
         ensureVersion(chain.list[0],0L)
         ensureVersion(chain.list[1],0L)
 
-        val chain2 = bttler.cmd(id, Prm("0#cmd"))
+        val chain2 = bttler.cmd(bttl,id, Prm("0#cmd"))
 
         assertEquals(chain2.list[0].first,id)
         assertEquals(chain2.list[1].first,idVs)
@@ -55,9 +56,9 @@ class TestBttler {
     // bttler добавляет команды от AI
     @Test fun cmdRobot() {
         bttl = Bttl(id, null)
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#cmd1"))
-        bttler.cmd(id, Prm("2#robot"))
+        bttler.cmd(bttl,id, Prm("0#cmd0"))
+        bttler.cmd(bttl,id, Prm("1#cmd1"))
+        bttler.cmd(bttl,id, Prm("2#robot"))
 
         assertEquals("robotAnswer", bttl.cmds[3].second)
     }
@@ -65,9 +66,9 @@ class TestBttler {
     // после ошибки из-за AI bttler заканчивает ход AI
     @Test fun errCmdRobot() {
         bttl = Bttl(id, null)
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#cmd1"))
-        bttler.cmd(id, Prm("2#errRobot"))
+        bttler.cmd(bttl,id, Prm("0#cmd0"))
+        bttler.cmd(bttl,id, Prm("1#cmd1"))
+        bttler.cmd(bttl,id, Prm("2#errRobot"))
 
         assertEquals(4, bttl.cmds.size)
         assertEquals(bttl.sideRobot(), bttl.cmds[3].first)
@@ -77,11 +78,11 @@ class TestBttler {
     // bttler меняет сторону, если того требует state
     @Test fun sideChange(){
         val side = bttl.sides[id]!!
-        bttler.cmd(id, Prm("0#needSwap"))
+        bttler.cmd(bttl,id, Prm("0#needSwap"))
         assertEquals(side.vs,bttl.sides[id])
         assertEquals(side,bttl.sides[idVs])
 
-        bttler.cmd(id, Prm("1#needSwapIfRobot"))
+        bttler.cmd(bttl,id, Prm("1#needSwapIfRobot"))
         assertEquals(side.vs,bttl.sides[id])
         assertEquals(side,bttl.sides[idVs])
     }
@@ -92,11 +93,11 @@ class TestBttler {
         assertEquals(Side.a,bttl.sides[id])
         assertEquals(Side.b,bttl.sideRobot())
 
-        bttler.cmd(id, Prm("0#needSwap"))
+        bttler.cmd(bttl,id, Prm("0#needSwap"))
         assertEquals(Side.b,bttl.sides[id])
         assertEquals(Side.a,bttl.sideRobot())
 
-        bttler.cmd(id, Prm("1#needSwapIfRobot"))
+        bttler.cmd(bttl,id, Prm("1#needSwapIfRobot"))
         assertEquals(Side.a,bttl.sides[id])
         assertEquals(Side.b,bttl.sideRobot())
     }
@@ -111,35 +112,35 @@ class TestBttler {
 
     // после ошибки при исполнении команды bttler создает партию заново и повторяет команды
     @Test fun errCmd() {
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#cmd1"))
+        bttler.cmd(bttl,id, Prm("0#cmd0"))
+        bttler.cmd(bttl,id, Prm("1#cmd1"))
 
-        bttler.cmd(id, Prm("2#errCmd"))
+        bttler.cmd(bttl,id, Prm("2#errCmd"))
         assertStateAfterReset()
     }
 
     // bttler перебрасывает нарушение протокола выше и не сбрасывает состояние
     @Test fun violationCmd() {
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#cmd1"))
+        bttler.cmd(bttl,id, Prm("0#cmd0"))
+        bttler.cmd(bttl,id, Prm("1#cmd1"))
 
-        assertViolation { bttler.cmd(id, Prm("2#violationCmd")) }
+        assertViolation { bttler.cmd(bttl,id, Prm("2#violationCmd")) }
     }
 
 
     // после ошибки при создании state bttler создает партию заново и повторяет команды
     @Test fun errCmdJson() {
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#cmd1"))
+        bttler.cmd(bttl,id, Prm("0#cmd0"))
+        bttler.cmd(bttl,id, Prm("1#cmd1"))
 
-        bttler.cmd(id, Prm("2#errState"))
+        bttler.cmd(bttl,id, Prm("2#errState"))
         assertStateAfterReset()
     }
 
     @Test fun outSync() {
-        bttler.cmd(id, Prm("0#cmd0"))
-        bttler.cmd(id, Prm("1#cmd1"))
-        val chain = bttler.cmd(id, Prm("0#cmd"))
+        bttler.cmd(bttl,id, Prm("0#cmd0"))
+        bttler.cmd(bttl,id, Prm("1#cmd1"))
+        val chain = bttler.cmd(bttl,id, Prm("0#cmd"))
 
         assertEquals(log.last, "outSync")
         ensureVersion(chain.list[0],2L)

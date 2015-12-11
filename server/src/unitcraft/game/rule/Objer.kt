@@ -385,9 +385,8 @@ class Jumper(r: Resource) {
                     if (can()) {
                         lifer.damage(it, 1)
                         tracer.touch(it,tileHit)
+                        spoter.tire(obj)
                     }
-                    data.pgDest = null
-                    spoter.tire(obj)
                 }
             }
         }

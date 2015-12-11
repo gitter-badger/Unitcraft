@@ -12,7 +12,8 @@ class Snap(
         val spots: Map<Pg, List<Sloy>>,
         val traces: List<DabOnGrid>,
         val stage: Stage,
-        val edge:DabTile,
+        val dabLock:DabTile,
+        val dabEdge:DabTile,
         val dabFocus:DabTile,
         val dabFocusMore:DabTile,
         val focus:Pg?,
@@ -28,7 +29,9 @@ class Snap(
         put("grid",grid)
         put("spots",spots)
         put("traces", traces)
-        put("edge", edge)
+        put("stage",stage.toString())
+        put("dabLock",dabLock)
+        put("dabEdge", dabEdge)
         put("dabFocus",dabFocus)
         put("dabFocusMore",dabFocusMore)
         if(focus!=null) put("focus",JSONObject().apply {
@@ -36,7 +39,7 @@ class Snap(
             put("y",focus.y)
         })
         put("vpoint",vpoint)
-        put("stage",stage.toString())
+
         if(opterTest!=null) put("opterTest",opterTest)
     }
 }

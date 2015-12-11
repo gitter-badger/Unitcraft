@@ -76,6 +76,11 @@ class WserTest:Wser{
         idSsnLast = key
         msgLast = msg
     }
+
+    override fun sizeWss(): Int {
+        throw UnsupportedOperationException()
+    }
+
     fun assertLast(idSsn:String, msg:String){
         assertTrue(idSsnLast == idSsn && msg == msgLast,"send $msgLast to $idSsnLast but expect $msg to $idSsn")
     }

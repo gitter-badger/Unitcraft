@@ -13,7 +13,7 @@ function redrawGrid() {
                 for (var x = -xgLeft; x < ui.game.dmn.xr + xgRight; x++) {
                     for (var y = -ygUp; y < ui.game.dmn.yr + ygDown; y++) {
                         if (x < 0 || y < 0)
-                            drawDabOnGrid(ctx, ui.game.edge, {x, y}, ui.tileset, ui.tile());
+                            drawDabOnGrid(ctx, ui.game.dabEdge, {x, y}, ui.tileset, ui.tile());
                     }
                 }
             },
@@ -21,7 +21,7 @@ function redrawGrid() {
                 for (var x = -xgLeft; x < ui.game.dmn.xr + xgRight; x++) {
                     for (var y = -ygUp; y < ui.game.dmn.yr + ygDown; y++) {
                         if (y >= 0 && x >= ui.game.dmn.xr || x >= 0 && y >= ui.game.dmn.yr)
-                            drawDabOnGrid(ctx, ui.game.edge, {x, y}, ui.tileset, ui.tile());
+                            drawDabOnGrid(ctx, ui.game.dabEdge, {x, y}, ui.tileset, ui.tile());
                     }
                 }
             }
@@ -49,12 +49,16 @@ function redrawAkter() {
 
     return function (ui) {
         ctx.clearRect(0, 0, ui.dmn.xr, ui.dmn.yr);
-        if (ui.focus == null || ui.tileset == null) return;
+        if (ui.tileset == null) return;
         ctx.save();
         var pst = ui.pstGrid();
         ctx.translate(pst.x, pst.y);
-        drawDrawing(ctx, ui.akts(), ui.tileset, ui.tile());
-        drawDabOnGrid(ctx, ui.sizeSloys() == 1 ? ui.game.dabFocus : ui.game.dabFocusMore, ui.focus.pg, ui.tileset, ui.tile());
+        if (ui.pgLock != null && ui.pgLock.x != null)
+            drawDabOnGrid(ctx, ui.game.dabLock, ui.pgLock, ui.tileset, ui.tile());
+        if (ui.focus != null) {
+            drawDrawing(ctx, ui.akts(), ui.tileset, ui.tile());
+            drawDabOnGrid(ctx, ui.sizeSloys() == 1 ? ui.game.dabFocus : ui.game.dabFocusMore, ui.focus.pg, ui.tileset, ui.tile());
+        }
         ctx.restore();
     }
 }
@@ -131,6 +135,7 @@ function redrawToolbar() {
     }
 
     function drawClock(ui, p) {
+        if (ui.game.clock == null) return;
         var xrClear = p.qdmn * 0.7;
         var yrRowImg = ui.panelset.step * (p.yrRow / p.qdmn);
         var xrClearImg = ui.panelset.step * (xrClear / p.qdmn);
@@ -229,7 +234,7 @@ function redrawToolbar() {
         var pst = ui.pstBonusbar();
         ctx.translate(pst.x, pst.y);
         var qd = ui.qdmnPanel() / 2;
-        var sizeFont = qd*0.75;
+        var sizeFont = qd * 0.75;
         ctx.fillStyle = "white";
         ctx.drawImage(
             ui.panelset,

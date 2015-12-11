@@ -4,7 +4,6 @@ import fi.iki.elonen.NanoHTTPD
 import unitcraft.game.ResTile
 import unitcraft.game.registerUnitcraft
 import unitcraft.server.Err
-import unitcraft.server.idxsMap
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.Files

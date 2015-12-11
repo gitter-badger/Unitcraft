@@ -24,7 +24,6 @@ class TestServer {
         register<CmderGame>(CmderStub())
         register(users)
         register(Bttler())
-        ForInject.bttl={ server.bttl }
     }
 
     @Before fun before() {

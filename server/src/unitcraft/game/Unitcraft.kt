@@ -1,13 +1,10 @@
 package unitcraft.game
 
 import unitcraft.game.rule.*
-import unitcraft.inject.clearAllInjects
 import unitcraft.inject.inject
-import unitcraft.inject.injectValue
 import unitcraft.inject.register
 import unitcraft.land.Land
 import unitcraft.server.*
-import java.io.File
 
 object FncUnitcraft {
     lateinit var data: () -> DataUnitcraft
@@ -121,6 +118,7 @@ class CmderUnitcraft : CmderGame {
             'a' -> swapSide = if (akt(side, prm)) SwapSide.usual else null
             'b' -> swapSide = if (aktOpt(side, prm)) SwapSide.usual else null
             'e' -> endTurn(side, prm)
+            'u' -> surr(side, prm)
             'w' -> {
                 endTurn(side, prm)
                 swapSide = SwapSide.ifRobot
@@ -156,8 +154,8 @@ class CmderUnitcraft : CmderGame {
         allData().bonus[side.vs]?.let { allData().sideTurn = if (it >= bonus) side.vs else side }
     }
 
-    private fun join(side: Side,sideJoin:Side?): Boolean {
-        if(sideJoin==null || allData().needJoin==false) return false
+    private fun join(side: Side, sideJoin: Side?): Boolean {
+        if (sideJoin == null || allData().needJoin == false) return false
         allData().needJoin = false
         builder.plusGold(sideJoin.vs, allData().bonus[side]!!)
         allData().sideTurn = sideJoin
@@ -184,7 +182,7 @@ class CmderUnitcraft : CmderGame {
         ensureCanEdit()
         prm.ensureSize(2)
         tracer.clear()
-        lifer.damage(prm.pg(0),1)
+        lifer.damage(prm.pg(0), 1)
     }
 
     private fun editChange(side: Side, prm: Prm) {
@@ -198,14 +196,14 @@ class CmderUnitcraft : CmderGame {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(5)
         tracer.clear()
-        return join(side,spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3)))
+        return join(side, spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3)))
     }
 
     private fun aktOpt(side: Side, prm: Prm): Boolean {
         if (!stager.isTurn(side)) throw Violation("not your turn")
         prm.ensureSize(6)
         tracer.clear()
-        return join(side,spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5)))
+        return join(side, spoter.akt(side, prm.pg(0), prm.int(2), prm.pg(3), prm.int(5)))
     }
 
     private fun endTurn(side: Side, prm: Prm) {
@@ -213,6 +211,12 @@ class CmderUnitcraft : CmderGame {
         prm.ensureSize(0)
         tracer.clear()
         stager.endTurn()
+    }
+
+    private fun surr(side: Side, prm: Prm) {
+        prm.ensureSize(0)
+        tracer.clear()
+        allData().sideWin = side.vs
     }
 
     private fun ensureCanEdit() {
@@ -228,10 +232,11 @@ class CmderUnitcraft : CmderGame {
             spoter.spots(side),
             allData().traces[side]!!,
             stager.stage(side),
+            stager.lock,
             stager.edge(side),
             stager.focus,
             stager.focusMore,
-            if(stager.isTurn(side)) spoter.pgFocus() else null,
+            if (stager.isTurn(side)) spoter.pgFocus() else null,
             listOf(allData().point[side]!!, allData().point[side.vs]!!),
             if (data().canEdit) editor.opterTest else null
     )

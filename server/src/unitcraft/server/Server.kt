@@ -2,6 +2,7 @@ package unitcraft.server
 
 import org.json.simple.JSONObject
 import org.mindrot.BCrypt
+import unitcraft.game.jsonObj
 import unitcraft.inject.inject
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -19,7 +20,6 @@ class Server(val isDebug: Boolean) {
     val bttls = HashMap<Id, Bttl>()
 
     lateinit var ssn: Ssn
-    lateinit var bttl: Bttl
 
     init {
         wser.onOpen { key -> threadMain.execute { onOpen(key) } }
@@ -39,6 +39,7 @@ class Server(val isDebug: Boolean) {
             if (msg.length > 20) {
                 throw Violation("msg len > 20: ${msg.substring(0, 20)}...")
             }
+            startMsg(msg)
             log.msg(msg)
             val prm = Prm(msg.substring(1, msg.length))
             when (msg[0]) {
@@ -55,9 +56,10 @@ class Server(val isDebug: Boolean) {
                 'y' -> accept(prm)
                 'c' -> invite(prm)
                 'd' -> onDecline(prm)
-                's' -> onSurr(prm)
+                'e' -> tgglStats(prm)
                 else -> throw Violation("unknown msg: " + msg)
             }
+            endMsg()
         } catch(ex: Violation) {
             log.violation(ex)
             wser.close(key)
@@ -196,13 +198,16 @@ class Server(val isDebug: Boolean) {
 
     fun akt(prm: Prm) {
         ensureLogin("akt")
-        bttl = bttls[ssn.id]!!
-        send(bttler.cmd(ssn.id, prm))
-        if (bttl.idWin() != null) {
-            log.end(bttl.idWin().toString())
-            sendStatus(bttl.idPrim)
-            sendStatus(bttl.idSec!!)
-        }
+        val bttl = bttls[ssn.id]!!
+        send(bttler.cmd(bttl, ssn.id, prm))
+        maybeEnd(bttl)
+    }
+
+    fun maybeEnd(bttl: Bttl) {
+        if (bttl.idWin() == null) return
+        log.end(bttl.idWin().toString())
+        sendStatus(bttl.idPrim)
+        sendStatus(bttl.idSec!!)
     }
 
     fun land(prm: Prm) {
@@ -264,19 +269,20 @@ class Server(val isDebug: Boolean) {
     fun onTimeout(prm: Prm) {
         ensureLogin("timeout")
         prm.ensureEmpty()
-        send(bttler.timeout(ssn.id))
+        val bttl = ssn.bttl!!
+        send(bttler.timeout(bttl, ssn.id))
+        maybeEnd(bttl)
     }
 
     fun refresh() {
-        bttl = ssn.bttl!!
-        send(bttler.refresh(ssn.id))
+        val bttl = ssn.bttl!!
+        send(bttler.refresh(bttl, ssn.id))
     }
 
-    fun onSurr(prm: Prm) {
-        ensureLogin("surr")
+    fun tgglStats(prm: Prm) {
+        ensureAdmin("tgglStats")
         prm.ensureEmpty()
-        bttl = ssn.bttl!!
-        send(bttler.surr(ssn.id))
+        ssn.stat = if (ssn.stat == null) StatSsn() else null
     }
 
     fun ensureLogin(cmd: String) {
@@ -284,7 +290,7 @@ class Server(val isDebug: Boolean) {
     }
 
     fun ensureAdmin(cmd: String) {
-        if (!ssn.isLogin || ssn.id.toString() != "0000") throw Violation("need admin for $cmd")
+        if (!ssn.isLogin) throw Violation("need admin for $cmd")
     }
 
     fun ensureUnlogin(cmd: String) {
@@ -303,17 +309,17 @@ class Server(val isDebug: Boolean) {
     private fun vsRobot(mission: Int? = null) {
         ssn.ensureStateNotGame()
         log.vsRobot(ssn.id)
-        bttl = Bttl(ssn.id)
+        val bttl = Bttl(ssn.id)
         bttls[ssn.id] = bttl
         ssn.bttl = bttl
-        send(bttler.start(mission, true))
+        send(bttler.start(bttl, mission, true))
     }
 
     private fun vsPlayer(ssnA: Ssn, ssnB: Ssn, bet: Int) {
         ssnA.ensureStateNotGame()
         ssnB.ensureStateNotGame()
         log.vsPlayer(ssnA.id, ssnB.id)
-        bttl = Bttl(ssnA.id, ssnB.id, bet)
+        val bttl = Bttl(ssnA.id, ssnB.id, bet)
         bttls[ssnA.id] = bttl
         bttls[ssnB.id] = bttl
         ssnA.bttl = bttl
@@ -322,7 +328,7 @@ class Server(val isDebug: Boolean) {
         ssnB.invite = null
         ssnA.play = null
         ssnB.play = null
-        send(bttler.start(null, false))
+        send(bttler.start(bttl, null, false))
         sendStatus(ssnA)
         sendStatus(ssnB)
     }
@@ -340,12 +346,32 @@ class Server(val isDebug: Boolean) {
     }
 
     fun sendStatus(id: Id) {
-        ssnById(id)?.let{sendStatus(it)}
+        ssnById(id)?.let { sendStatus(it) }
     }
 
     private fun ssnById(id: Id) = ssns.values.firstOrNull { it.isLogin && it.id == id }
 
+    fun startMsg(msg: String) {
+        ssn.stat?.let {
+            it.msgLast = msg
+            it.dtRecieved = Instant.now()
+        }
+    }
+
+    fun endMsg() {
+        ssn.stat?.let { stat ->
+            send("a" + jsonObj {
+                put("# ws", wser.sizeWss())
+                put("# ssn", ssns.size)
+                put("# battle", bttls.size)
+                put("# user", users.users.size)
+                put("last msg", stat.msgLast)
+                put("calc time", stat.msCalc())
+            })
+        }
+    }
 }
+
 
 class Ssn(val key: String) {
 
@@ -366,6 +392,7 @@ class Ssn(val key: String) {
     var play: Play? = null
     var invite: Invite? = null
     var bttl: Bttl? = null
+    var stat: StatSsn? = null
 
     fun status(): Status {
         return when {
@@ -386,6 +413,12 @@ class Ssn(val key: String) {
         val actual = status()
         if (actual != state) throw Violation("wrong state $actual expected $state")
     }
+}
+
+class StatSsn {
+    var msgLast = "e"
+    var dtRecieved = Instant.now()
+    fun msCalc() = ChronoUnit.MILLIS.between(dtRecieved,Instant.now())
 }
 
 data class RegData(val pw: String, val digest: String)

@@ -1,6 +1,9 @@
 package unitcraft.server
 
 import java.text.SimpleDateFormat
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
 interface Log {
@@ -37,8 +40,10 @@ interface Log {
 }
 
 class LogFile : Log {
+    val frmt = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
+    val zoneId = ZoneId.of("Europe/Moscow")
+
     override fun log(event: String) {
-        val timeStamp = SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(Calendar.getInstance().time)
-        println(timeStamp + " " + event)
+        println(frmt.format(ZonedDateTime.now(zoneId)) + " " + event)
     }
 }

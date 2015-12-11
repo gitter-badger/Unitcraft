@@ -1,10 +1,10 @@
 var ws = null;
 var isLocal = location.hostname == "localhost";
-var modalSurr = null;
 
 $(function () {
     if (!isOkCanvasAndWs()) return;
 
+    var surr = initSurr();
     var second = Kefir.interval(1000, null);
     var server = initServer();
     var dmnCanvas = initDmnCanvas();
@@ -22,19 +22,20 @@ $(function () {
     createLogin(server);
     createPing(server, keyboard);
     createReconnect();
-    modalSurr = initModalSurr();
+    createStats(server);
 
     var streams = [
         [memo, onMemo],
         [status, onStatus],
         [dmnCanvas, onDmnCanvas],
-        [click, onClick],
+        [click, R.curry(onClick)(surr.modal)],
         [key, onKey],
         [keyTest, onKeyTest],
         [cmdScale, onCmdScale],
         [tileset, onTileset],
         [panelset, onPanelset],
-        [second, onSecond]
+        [second, onSecond],
+        [surr.stream, surr.onSurr]
     ];
 
     var streamUi = Kefir.merge(R.map(([stream,fn]) => stream.map(R.curry(fn)), streams));
@@ -69,6 +70,8 @@ function onKey(key, ui) {
         if (ui.game.stage === "turn") ui.fireAkt("w");
     } else if (key === "KeyQ" && ui.status == "online") {
         ui.fireCmd("t");
+    } else if (key === "KeyT") {
+        ws.send("e");
     }
 }
 
@@ -92,17 +95,19 @@ function onKeyTest([key,pst], ui) {
         var akt = key === "a" ?
         "z" + strPg(pg) + " " + (ui.numOpterTestLast == null ? 0 : ui.numOpterTestLast) :
         keyTestToCmd[key] + strPg(pg);
-        ui.fireAkt(akt);
+        ui.fireAkt(akt,pg);
+        ui.fireAkter();
     }
 }
 
-function onClick(click, ui) {
+function onClick(modalSurr, click, ui) {
+    if (ui.pgLock) return;
     if (ui.opts != null) {
         onClickOpter(click, ui);
     } else {
         var num = ui.numFromPstOnToolbar(click);
         if (num != null) {
-            onClickToolbar(num, ui);
+            onClickToolbar(modalSurr, num, ui);
         } else {
             function clickGrid() {
                 var pg = ui.pgFromPst(click);
@@ -140,7 +145,7 @@ function endTurn(ui) {
     if (ui.game.stage === "turn") ui.fireAkt("e");
 }
 
-function onClickToolbar(num, ui) {
+function onClickToolbar(modalSurr, num, ui) {
     if (num == 0) {
         endTurn(ui);
     } else if (num == 1) {
@@ -150,7 +155,7 @@ function onClickToolbar(num, ui) {
     } else if (num == 2) {
         // открыть чат
     } else if (num == 9) {
-        if (ui.status == "match") ws.send("y");
+        if (ui.status == "match") ui.fireCmd("y");
     }
 }
 
@@ -161,6 +166,7 @@ function onClickOpter(click, ui) {
             ui.fireAkt(ui.aktSelect(num));
             ui.opts = null;
             ui.fireOpter();
+            ui.fireAkter();
         }
     } else {
         ui.opts = null;
@@ -178,7 +184,7 @@ function onClickGrid(pg, ui) {
                 ui.openOpter(akt.opter, num => "b" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg) + " " + num);
                 ui.fireOpter();
             } else {
-                ui.fireAkt("a" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg));
+                ui.fireAkt("a" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg),pg);
             }
         } else if (R.equals(focus.pg, pg)) {
             ui.incrIdxFocus();
@@ -212,16 +218,30 @@ function onMemo(memo, ui) {
     var dmnGameOld = ui.game != null ? ui.game.dmn : null;
     ui.game = R.last(memo);
     ui.instant = Date.now();
-    if (ui.game.focus != null && ui.game.spots[strPg(ui.game.focus)] != null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
+
+    // поменять фокус
+    if (ui.game.stage == "turn") {
+        if (ui.game.focus != null && ui.game.spots[strPg(ui.game.focus)] != null) ui.updateFocus(ui.game.focus); else ui.clearFocus();
+    } else {
+        if (ui.focus != null && ui.game.spots[strPg(ui.focus.pg)] == null) ui.clearFocus();
+    }
+
+    // нужно ли выбрать новый scale
     if (dmnGameOld == null || !R.equals(dmnGameOld, ui.game.dmn)) {
         updateScale(ui.scaleBest(), ui);
     }
+
+    // звук пора ходить
     if (!ui.game.isVsRobot && ui.memo.length > 1) {
         var cur = ui.game.stage;
         var prev = ui.memo[ui.memo.length - 2].stage;
         if (cur === "turn" && prev !== "turn") audioYourTurn.play()
     }
+
+    // сбросить страницу в bonusBar
     if (ui.game.stage == "bonus") ui.pageBonusBar = 0;
+
+    ui.pgLock = null;
     ui.fireGrid();
     ui.fireAkter();
     ui.fireToolbar();
@@ -247,7 +267,7 @@ function onPanelset(panelset, ui) {
 }
 
 function onSecond(_, ui) {
-    if (ui.game == null) return;
+    if (ui.game == null || ui.game.clock == null) return;
     ui.fireClock();
     if (ui.game.clockIsOn[1] && ui.intervalElapsed() >= ui.game.clock[1]) ui.fireCmd("o");
 }
@@ -258,7 +278,7 @@ function initKeyTest(keyboard) {
 }
 
 function initKey(keyboard) {
-    return Kefir.merge([keyboard.key("Enter", "KeyQ", "KeyW")]);
+    return Kefir.merge([keyboard.key("Enter", "KeyQ", "KeyW", "KeyT")]);
 }
 
 function initCmdScale(keyboard) {
@@ -327,7 +347,6 @@ function createUI(tileset, panelset, streamUi) {
         },
         incrIdxFocus() {
             this.focus.idx = (this.focus.idx + 1) % ui.game.spots[strPg(this.focus.pg)].length;
-
         },
         clearFocus() {
             ui.focus = null;
@@ -352,12 +371,12 @@ function createUI(tileset, panelset, streamUi) {
         },
         qdmnTileOpter(){
             var dmn = this.dmnOpter();
-            var xBest = findBest(qdmn => ui.dmn.xr - qdmn*dmn.xr,listQdmnTile);
-            var yBest = findBest(qdmn => ui.dmn.yr - qdmn*dmn.yr, listQdmnTile);
+            var xBest = findBest(qdmn => ui.dmn.xr - qdmn * dmn.xr, listQdmnTile);
+            var yBest = findBest(qdmn => ui.dmn.yr - qdmn * dmn.yr, listQdmnTile);
             return Math.min(xBest, yBest);
         },
         dmnOpter() {
-            var xr = R.max(5,Math.ceil(Math.sqrt(ui.opts.length)));
+            var xr = R.max(5, Math.ceil(Math.sqrt(ui.opts.length)));
             return {xr, yr: div(ui.opts.length, xr) + sign(ui.opts.length % xr)};
         },
         numFromPstOnOpter(pst) {
@@ -388,7 +407,7 @@ function createUI(tileset, panelset, streamUi) {
             return {x: div(this.dmn.xr - xr, 2), y: div(this.dmn.yr - yr, 2)}
         },
         qdmnPanel() {
-            return findBest(qdmn => ui.dmn.yr - qdmn * 6,listQdmnPanel);
+            return findBest(qdmn => ui.dmn.yr - qdmn * 6, listQdmnPanel);
         },
         xrTbBb() {
             var qp = ui.qdmnPanel();
@@ -398,9 +417,9 @@ function createUI(tileset, panelset, streamUi) {
             return listQdmnTile[ui.scale];
         },
         scaleBest() {
-            var xr = ui.dmn.xr-ui.xrTbBb();
-            var xBest = findBest(qdmn => xr - qdmn*ui.game.dmn.xr,listQdmnTile);
-            var yBest = findBest(qdmn => ui.dmn.yr - qdmn*ui.game.dmn.yr, listQdmnTile);
+            var xr = ui.dmn.xr - ui.xrTbBb();
+            var xBest = findBest(qdmn => xr - qdmn * ui.game.dmn.xr, listQdmnTile);
+            var yBest = findBest(qdmn => ui.dmn.yr - qdmn * ui.game.dmn.yr, listQdmnTile);
             return R.indexOf(R.min(xBest, yBest), listQdmnTile);
         },
         intervalElapsed(){
@@ -408,9 +427,6 @@ function createUI(tileset, panelset, streamUi) {
         },
         storeTileset: storeImages(tileset, "tile"),
         storePanelset: storeImages(panelset, "panel"),
-        lock() {
-            console.log("lock");
-        },
         fireGrid() {
             emitter.emit([grid, this]);
         },
@@ -426,14 +442,16 @@ function createUI(tileset, panelset, streamUi) {
         fireClock() {
             emitter.emit([toolbar.redrawClock, this]);
         },
-        fireAkt(akt) {
-            this.lock();
+        fireAkt(akt, pgLock={}) {
+            if (ui.pgLock != null) return;
             ws.send("a" + ui.game.version + "#" + akt);
             ui.clearFocus();
+            ui.pgLock = pgLock;
         },
         fireCmd(cmd) {
-            this.lock();
+            if (ui.pgLock != null) return;
             ws.send(cmd);
+            ui.pgLock = {};
         }
     };
     streamUi.scan((ui, fn) => {
@@ -468,7 +486,7 @@ function initDmnCanvas() {
 
 function initKeyboard() {
     var keys = Kefir.merge([Kefir.fromEvents(document, 'keydown', R.prop("code")), Kefir.fromEvents(document, 'keyup', R.always(null))])
-        .skipDuplicates().filter(key => key!=null);
+        .skipDuplicates().filter(key => key != null);
     return {
         key(...ks) {
             return keys.filter(key => R.contains(key, ks));
@@ -486,7 +504,7 @@ function initServer() {
     if (isLocal) messages.onValue(msg => console.log(msg.length <= 50 ? msg : msg.substring(0, 50) + "..."));
     return {
         msg(tp) {
-            return messages.filter(R.pipe(R.head,R.equals(tp))).map(R.tail);
+            return messages.filter(R.pipe(R.head, R.equals(tp))).map(R.tail);
         }
     }
 }
@@ -546,11 +564,18 @@ function createReconnect() {
     $("#btnRefresh").click(() => location.reload());
 }
 
-function initModalSurr() {
-    var modal = $.UIkit.modal("#modalSurr", {bgclose: true})
-    $("#btnSurr").click(() => {
-        ws.send("s");
-        modal.hide();
-    });
-    return modal;
+function initSurr() {
+    var modal = $.UIkit.modal("#modalSurr", {bgclose: true});
+    return {
+        stream: Kefir.fromEvents($("#btnSurr"), "click"),
+        modal,
+        onSurr(e, ui){
+            ui.fireAkt("u");
+            modal.hide();
+        }
+    };
+}
+
+function createStats(server){
+    server.msg("a").onValue(stat => console.log(stat));
 }
