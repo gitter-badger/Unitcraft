@@ -235,13 +235,13 @@ function redrawToolbar() {
         ctx.translate(pst.x, pst.y);
         var qd = ui.qdmnPanel() / 2;
         var sizeFont = qd * 0.75;
+        setSizeFont(ctx, sizeFont);
         ctx.fillStyle = "white";
         ctx.drawImage(
             ui.panelset,
             imgPanels["bonusBar"] * ui.panelset.step, 0, qd, qd,
             0, 0, qd, qd
         );
-        setSizeFont(ctx, sizeFont);
         for (var i = 0; i <= 9; i++) {
             ctx.translate(0, qd);
             ctx.drawImage(
@@ -261,6 +261,17 @@ function redrawToolbar() {
         ctx.restore();
     }
 
+    function drawStat(ui) {
+        if (ui.stat == null) return;
+        ctx.save();
+        var sf = 30;
+        setSizeFont(ctx, sf);
+        ctx.fillStyle = "white";
+        for (var i = 0; i < ui.stat.length; i++)
+            drawText(ctx, ui.stat[i], sf, i * sf);
+        ctx.restore();
+    }
+
     return {
         redraw(ui){
             ctx.clearRect(0, 0, ui.dmn.xr, ui.dmn.yr);
@@ -268,6 +279,7 @@ function redrawToolbar() {
             ctx.save();
             drawBonusbar(ui);
             drawToolbar(ui);
+            drawStat(ui);
             ctx.restore();
         },
         redrawClock(ui){

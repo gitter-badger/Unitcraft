@@ -1,6 +1,8 @@
 package unitcraft.server
 
+import org.json.simple.JSONAware
 import org.json.simple.JSONObject
+import org.json.simple.JSONValue
 import org.mindrot.BCrypt
 import unitcraft.game.jsonObj
 import unitcraft.inject.inject
@@ -360,14 +362,14 @@ class Server(val isDebug: Boolean) {
 
     fun endMsg() {
         ssn.stat?.let { stat ->
-            send("a" + jsonObj {
-                put("# ws", wser.sizeWss())
-                put("# ssn", ssns.size)
-                put("# battle", bttls.size)
-                put("# user", users.users.size)
-                put("last msg", stat.msgLast)
-                put("calc time", stat.msCalc())
-            })
+            send("a" + JSONValue.toJSONString(listOf(
+                "# ws: "+ wser.sizeWss(),
+                "# ssn: "+ssns.size,
+                "# battle: "+ bttls.size,
+                "# user: "+ users.users.size,
+                "last msg: "+ stat.msgLast,
+                "calc time: "+ stat.msCalc()
+            )))
         }
     }
 }

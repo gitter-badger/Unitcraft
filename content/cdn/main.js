@@ -17,12 +17,12 @@ $(function () {
     var cmdScale = initCmdScale(keyboard);
     var tileset = Kefir.pool();
     var panelset = Kefir.pool();
+    var stat = initStat(server);
 
     createResize(dmnCanvas);
     createLogin(server);
     createPing(server, keyboard);
     createReconnect();
-    createStats(server);
 
     var streams = [
         [memo, onMemo],
@@ -35,7 +35,8 @@ $(function () {
         [tileset, onTileset],
         [panelset, onPanelset],
         [second, onSecond],
-        [surr.stream, surr.onSurr]
+        [surr.stream, surr.onSurr],
+        [stat.stream, stat.onEvent]
     ];
 
     var streamUi = Kefir.merge(R.map(([stream,fn]) => stream.map(R.curry(fn)), streams));
@@ -72,6 +73,8 @@ function onKey(key, ui) {
         ui.fireCmd("t");
     } else if (key === "KeyT") {
         ws.send("e");
+        ui.stat = null;
+        ui.fireToolbar();
     }
 }
 
@@ -576,6 +579,12 @@ function initSurr() {
     };
 }
 
-function createStats(server){
-    server.msg("a").onValue(stat => console.log(stat));
+function initStat(server){
+    return{
+        stream: server.msg("a").map(JSON.parse),
+        onEvent(stat,ui){
+            ui.stat = stat;
+            ui.fireToolbar();
+        }
+    }
 }
