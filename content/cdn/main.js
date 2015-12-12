@@ -248,7 +248,7 @@ function onMemo(memo, ui) {
     if (ui.game.stage == "bonus") ui.pageBonusBar = 0;
 
     // сбросить счетчик спешки
-    ui.dtHurry = new Date();
+    ui.dtAktHurry = new Date();
 
     ui.pgLock = null;
     ui.fireGrid();
@@ -279,13 +279,14 @@ var audioHurry = new Audio("hurry.mp3");
 
 function onSecond(_, ui) {
     if (ui.game == null || ui.game.clock == null) return;
-    if (ui.game.stage == "turn" && (new Date() - ui.dtHurry) > 10 * 1000) {
-        ui.dtHurry = new Date();
+    if (ui.game.stage == "turn" && (new Date() - ui.dtAktHurry) >= 30 * 1000) {
+        ui.dtAktHurry = new Date();
         audioHurry.play();
-        ui.isHurry = true;
+        ui.dtHurry = new Date();
         ui.fireToolbar();
-    } else if (ui.isHurry) {
-        ui.isHurry = false;
+    }
+    if (ui.dtHurry != null && new Date() - ui.dtHurry >= 3 * 1000) {
+        ui.dtHurry = null;
         ui.fireToolbar();
     }
     ui.fireClock();

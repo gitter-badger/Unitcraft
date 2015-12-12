@@ -217,7 +217,7 @@ function redrawToolbar() {
     }
 
     function drawHurry(ui) {
-        if (!(ui.isHurry==true)) return;
+        if (ui.dtHurry==null) return;
         ctx.save();
         ctx.translate(ui.qdmnPanel(), 0);
         drawPanel("hurry", ui);
