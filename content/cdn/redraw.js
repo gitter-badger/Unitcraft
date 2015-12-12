@@ -280,7 +280,7 @@ function redrawToolbar() {
         setSizeFont(ctx, sf);
         ctx.fillStyle = "white";
         for (var i = 0; i < ui.stat.length; i++)
-            drawText(ctx, ui.stat[i], sf, i * sf);
+            drawText(ctx, ui.stat[i], sf/2, i * sf);
         ctx.restore();
     }
 
