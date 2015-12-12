@@ -194,7 +194,7 @@ class ServerCdn() : NanoHTTPD(8000) {
 
         init{
             if (listQdmnTile.any { it % 2 != 0 }) throw Err("qdmnTile must be even")
-            if (listQdmnPanel.any { it % 2 != 0 }) throw Err("qdmnTile must be even")
+            if (listQdmnPanel.any { it % 2 != 0 }) throw Err("listQdmnPanel must be even")
         }
 
         @JvmStatic fun main(args: Array<String>) {

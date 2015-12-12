@@ -216,15 +216,24 @@ function redrawToolbar() {
         ctx.restore();
     }
 
+    function drawHurry(ui) {
+        if (!(ui.isHurry==true)) return;
+        ctx.save();
+        ctx.translate(ui.qdmnPanel(), 0);
+        drawPanel("hurry", ui);
+        ctx.restore();
+    }
+
     function drawToolbar(ui) {
         ctx.save();
         var pst = ui.pstToolbar();
         ctx.translate(pst.x, pst.y);
         drawStage(ui);
         drawStatus(ui);
-        drawAccept(ui);
         //drawSettins(ui);
         //drawChat(ui);
+        drawAccept(ui);
+        drawHurry(ui);
         ctx.restore();
     }
 

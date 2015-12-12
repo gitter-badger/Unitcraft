@@ -1,10 +1,8 @@
 package unitcraft.server
 
-import org.json.simple.JSONAware
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
 import org.mindrot.BCrypt
-import unitcraft.game.jsonObj
 import unitcraft.inject.inject
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -362,15 +360,26 @@ class Server(val isDebug: Boolean) {
 
     fun endMsg() {
         ssn.stat?.let { stat ->
+            val rt = Runtime.getRuntime()
             send("a" + JSONValue.toJSONString(listOf(
-                "# ws: "+ wser.sizeWss(),
-                "# ssn: "+ssns.size,
-                "# battle: "+ bttls.size,
-                "# user: "+ users.users.size,
-                "last msg: "+ stat.msgLast,
-                "calc time: "+ stat.msCalc()
+                    "# ws: " + wser.sizeWss(),
+                    "# ssn: " + ssns.size,
+                    "# battle: " + bttls.size,
+                    "# user: " + users.users.size,
+                    "last msg: " + stat.msgLast,
+                    "calc time: " + stat.msCalc() + "ms",
+                    "# core: " + rt.availableProcessors(),
+                    "freeMemory: " + toKb(rt.freeMemory()),
+                    "maxMemory: " + rt.maxMemory().let { if (it == Long.MAX_VALUE) "no limit" else toKb(it) },
+                    "totalMemory: " + toKb(rt.totalMemory())
+
             )))
         }
+    }
+
+    companion object{
+        fun toKb(value:Long)= "${value/1024}Kb"
+
     }
 }
 
@@ -420,7 +429,7 @@ class Ssn(val key: String) {
 class StatSsn {
     var msgLast = "e"
     var dtRecieved = Instant.now()
-    fun msCalc() = ChronoUnit.MILLIS.between(dtRecieved,Instant.now())
+    fun msCalc() = ChronoUnit.MILLIS.between(dtRecieved, Instant.now())
 }
 
 data class RegData(val pw: String, val digest: String)

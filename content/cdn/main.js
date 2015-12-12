@@ -98,7 +98,7 @@ function onKeyTest([key,pst], ui) {
         var akt = key === "a" ?
         "z" + strPg(pg) + " " + (ui.numOpterTestLast == null ? 0 : ui.numOpterTestLast) :
         keyTestToCmd[key] + strPg(pg);
-        ui.fireAkt(akt,pg);
+        ui.fireAkt(akt, pg);
         ui.fireAkter();
     }
 }
@@ -158,7 +158,10 @@ function onClickToolbar(modalSurr, num, ui) {
     } else if (num == 2) {
         // открыть чат
     } else if (num == 9) {
-        if (ui.status == "match") ui.fireCmd("y");
+        if (ui.status == "match") {
+            ui.fireCmd("y");
+            audoiMatch.pause();
+        }
     }
 }
 
@@ -187,7 +190,7 @@ function onClickGrid(pg, ui) {
                 ui.openOpter(akt.opter, num => "b" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg) + " " + num);
                 ui.fireOpter();
             } else {
-                ui.fireAkt("a" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg),pg);
+                ui.fireAkt("a" + strPg(focus.pg) + " " + focus.idx + " " + strPg(pg), pg);
             }
         } else if (R.equals(focus.pg, pg)) {
             ui.incrIdxFocus();
@@ -214,7 +217,7 @@ function findAkt(pg, akts) {
     return null;
 }
 
-var audioYourTurn = new Audio("turn.ogg");
+var audioYourTurn = new Audio("turn.mp3");
 
 function onMemo(memo, ui) {
     ui.memo = memo;
@@ -244,6 +247,9 @@ function onMemo(memo, ui) {
     // сбросить страницу в bonusBar
     if (ui.game.stage == "bonus") ui.pageBonusBar = 0;
 
+    // сбросить счетчик спешки
+    ui.dtHurry = new Date();
+
     ui.pgLock = null;
     ui.fireGrid();
     ui.fireAkter();
@@ -263,14 +269,25 @@ function onTileset(tileset, ui) {
 }
 
 function onPanelset(panelset, ui) {
-    if (ui.qdmnPanel == panelset.step || ui.panelset == null) {
+    if (ui.panelset == null || ui.qdmnPanel() == panelset.step) {
         ui.panelset = panelset;
         ui.fireToolbar();
     }
 }
 
+var audioHurry = new Audio("hurry.mp3");
+
 function onSecond(_, ui) {
     if (ui.game == null || ui.game.clock == null) return;
+    if (ui.game.stage == "turn" && (new Date() - ui.dtHurry) > 10 * 1000) {
+        ui.dtHurry = new Date();
+        audioHurry.play();
+        ui.isHurry = true;
+        ui.fireToolbar();
+    } else if (ui.isHurry) {
+        ui.isHurry = false;
+        ui.fireToolbar();
+    }
     ui.fireClock();
     if (ui.game.clockIsOn[1] && ui.intervalElapsed() >= ui.game.clock[1]) ui.fireCmd("o");
 }
@@ -299,7 +316,7 @@ function updateScale(scale, ui) {
     }
 }
 
-var audoiMatch = new Audio("match.ogg");
+var audoiMatch = new Audio("match.mp3");
 
 function onStatus(status, ui) {
     ui.status = status;
@@ -445,10 +462,11 @@ function createUI(tileset, panelset, streamUi) {
         fireClock() {
             emitter.emit([toolbar.redrawClock, this]);
         },
-        fireAkt(akt, pgLock={}) {
+        fireAkt(akt, pgLock = {}) {
             if (ui.pgLock != null) return;
             ws.send("a" + ui.game.version + "#" + akt);
             ui.clearFocus();
+            ui.dtAktLast = new Date();
             ui.pgLock = pgLock;
         },
         fireCmd(cmd) {
@@ -579,10 +597,10 @@ function initSurr() {
     };
 }
 
-function initStat(server){
-    return{
+function initStat(server) {
+    return {
         stream: server.msg("a").map(JSON.parse),
-        onEvent(stat,ui){
+        onEvent(stat, ui){
             ui.stat = stat;
             ui.fireToolbar();
         }
