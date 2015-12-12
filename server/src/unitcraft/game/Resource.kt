@@ -63,10 +63,10 @@ class Resource {
             }
         }
 
-        fun effectObjLight(h: Int, s: Int, b: Int, size: Int = 2) = Effect("objLight($h,$s,$b)") {
+        fun effectObjLight(h: Int, s: Int, b: Int) = Effect("objLight($h,$s,$b)") {
             fit()
             extendBottom()
-            light(h, s, b, size)
+            light(h, s, b)
         }
 
         val effectStandard = Effect("standard") {
@@ -76,7 +76,7 @@ class Resource {
 
         val effectNeut = effectObjLight(0, 0, 40)
 
-        val effectAllyMyTurn = effectObjLight(120, 100, 100, 3)
+        val effectAllyMyTurn = effectObjLight(120, 100, 100)
         val effectAlly = effectObjLight(120, 100, 75)
         val effectAllyNeedTire = effectObjLight(120, 0, 100)
         val effectAllyTire = effectObjLight(180, 100, 100)
@@ -141,7 +141,7 @@ interface CtxEffect {
     fun fit()
     fun extend()
     fun extendBottom()
-    fun light(h: Int, s: Int, b: Int, size: Int)
+    fun light(h: Int, s: Int, b: Int)
     fun place()
     fun shadow(color: Color)
     fun opacity(procent: Int)

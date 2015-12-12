@@ -39,8 +39,9 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         }
     }
 
-    override fun light(h: Int, s: Int, b: Int, lightSize: Int) {
+    override fun light(h: Int, s: Int, b: Int) {
         val color = colorFromHsb(h,s,b)
+        val sizeLight = 2
         img = image(sizeExtend) {
             val imgLight = image(sizeExtend) {
                 it.drawImage(img, 0, 0, null)
@@ -48,14 +49,14 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
                 it.color = color
                 it.fillRect(0, 0, sizeExtend, sizeExtend)
             }
-            it.drawImage(imgLight, lightSize, lightSize, null)
-            it.drawImage(imgLight, -lightSize, lightSize, null)
-            it.drawImage(imgLight, lightSize, -lightSize, null)
-            it.drawImage(imgLight, -lightSize, -lightSize, null)
-            it.drawImage(imgLight, lightSize, 0, null)
-            it.drawImage(imgLight, -lightSize, 0, null)
-            it.drawImage(imgLight, 0, -lightSize, null)
-            it.drawImage(imgLight, 0, lightSize, null)
+            it.drawImage(imgLight, sizeLight, sizeLight, null)
+            it.drawImage(imgLight, -sizeLight, sizeLight, null)
+            it.drawImage(imgLight, sizeLight, -sizeLight, null)
+            it.drawImage(imgLight, -sizeLight, -sizeLight, null)
+            it.drawImage(imgLight, sizeLight, 0, null)
+            it.drawImage(imgLight, -sizeLight, 0, null)
+            it.drawImage(imgLight, 0, -sizeLight, null)
+            it.drawImage(imgLight, 0, sizeLight, null)
             it.drawImage(img, 0, 0, null)
         }
     }
