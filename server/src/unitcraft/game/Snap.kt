@@ -39,7 +39,6 @@ class Snap(
             put("y",focus.y)
         })
         put("vpoint",vpoint)
-
         if(opterTest!=null) put("opterTest",opterTest)
     }
 }

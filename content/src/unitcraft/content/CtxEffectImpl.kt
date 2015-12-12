@@ -39,9 +39,8 @@ class CtxEffectImpl(var img: BufferedImage, val size: Int, val maskRaw: Buffered
         }
     }
 
-    override fun light(h:Int,s:Int,b:Int) {
+    override fun light(h: Int, s: Int, b: Int, lightSize: Int) {
         val color = colorFromHsb(h,s,b)
-        val lightSize = 2
         img = image(sizeExtend) {
             val imgLight = image(sizeExtend) {
                 it.drawImage(img, 0, 0, null)

@@ -95,7 +95,7 @@ function onKeyTest([key,pst], ui) {
             ui.fireOpter();
         }
     } else if (ui.opts == null) {
-        var akt = key === "a" ?
+        var akt = key === "KeyA" ?
         "z" + strPg(pg) + " " + (ui.numOpterTestLast == null ? 0 : ui.numOpterTestLast) :
         keyTestToCmd[key] + strPg(pg);
         ui.fireAkt(akt, pg);

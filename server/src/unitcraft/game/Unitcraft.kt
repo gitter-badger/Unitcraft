@@ -238,6 +238,6 @@ class CmderUnitcraft : CmderGame {
             stager.focusMore,
             if (stager.isTurn(side)) spoter.pgFocus() else null,
             listOf(allData().point[side]!!, allData().point[side.vs]!!),
-            if (data().canEdit) editor.opterTest else null
+            if (data().canEdit && allData().sideWin==null) editor.opterTest else null
     )
 }

@@ -28,14 +28,18 @@ class Resource {
 
     fun htmlRule() = HtmlRule(sections).html()
 
-    fun <T:Aide> slot(title: String) = Slot<T>(title).apply { sections.add(this) }
-    fun <T:Aide> slop(title: String) = Slop<T>(title).apply { sections.add(this) }
+    fun <T : Aide> slot(title: String) = Slot<T>(title).apply { sections.add(this) }
+    fun <T : Aide> slop(title: String) = Slop<T>(title).apply { sections.add(this) }
 
     fun tlsVoin(name: String) = TlsObj(
-            tile(name, effectNeut),
-            listOf(tile(name, effectFriend),tile(name, effectFriendNeedTire),tile(name, effectFriendTire)),
-            listOf(tile(name, effectEnemy),tile(name, effectEnemyNeedTire),tile(name, effectEnemyTire)),
-            TlsBool(tile(name, effectBlue), tile(name, effectYelw))
+            neut = tile(name, effectNeut),
+            allyMyTurn = tile(name, effectAllyMyTurn),
+            ally = tile(name, effectAlly),
+            allyNeedTire = tile(name, effectAllyNeedTire),
+            allyTire = tile(name, effectAllyTire),
+            enemy = tile(name, effectEnemy),
+            enemyTire = tile(name, effectEnemyTire),
+            join = TlsBool(tile(name, effectBlue), tile(name, effectYelw))
     )
 
     fun tileAkt(name: String, fix: String = "akt") = tile("$name.$fix", effectAkt)
@@ -59,10 +63,10 @@ class Resource {
             }
         }
 
-        fun effectObjLight(h: Int, s: Int, b: Int)=Effect("objLight($h,$s,$b)") {
+        fun effectObjLight(h: Int, s: Int, b: Int, size: Int = 2) = Effect("objLight($h,$s,$b)") {
             fit()
             extendBottom()
-            light(h, s, b)
+            light(h, s, b, size)
         }
 
         val effectStandard = Effect("standard") {
@@ -70,18 +74,18 @@ class Resource {
             extend()
         }
 
-        val effectNeut = effectObjLight(0,0,50)
+        val effectNeut = effectObjLight(0, 0, 40)
 
-        val effectFriend = effectObjLight(120, 90, 90)
-        val effectFriendNeedTire = effectObjLight(120, 50, 100)
-        val effectFriendTire = effectObjLight(180, 90, 90)
+        val effectAllyMyTurn = effectObjLight(120, 100, 100, 3)
+        val effectAlly = effectObjLight(120, 100, 75)
+        val effectAllyNeedTire = effectObjLight(120, 0, 100)
+        val effectAllyTire = effectObjLight(180, 100, 100)
 
-        val effectEnemy = effectObjLight(360, 90, 90)
-        val effectEnemyNeedTire = effectObjLight(360, 50, 100)
-        val effectEnemyTire = effectObjLight(280, 90, 90)
+        val effectEnemy = effectObjLight(360, 100, 100)
+        val effectEnemyTire = effectObjLight(280, 100, 100)
 
-        val effectBlue = effectObjLight(240, 90, 90)
-        val effectYelw = effectObjLight(60, 90, 90)
+        val effectBlue = effectObjLight(240, 100, 100)
+        val effectYelw = effectObjLight(60, 100, 100)
 
         val effectAkt = Effect("akt") {
             fit()
@@ -95,7 +99,14 @@ class Resource {
     }
 }
 
-class TlsObj(val neut: Tile, val ally: List<Tile>, val enemy: List<Tile>, val join: TlsBool)
+class TlsObj(val neut: Tile,
+             val allyMyTurn: Tile,
+             val ally: Tile,
+             val allyNeedTire: Tile,
+             val allyTire: Tile,
+             val enemy: Tile,
+             val enemyTire: Tile,
+             val join: TlsBool)
 
 class TlsBool(val tileTrue: Tile, val tileFalse: Tile) {
     operator fun invoke(b: Boolean) = if (b) tileTrue else tileFalse
@@ -130,7 +141,7 @@ interface CtxEffect {
     fun fit()
     fun extend()
     fun extendBottom()
-    fun light(h: Int, s: Int, b: Int)
+    fun light(h: Int, s: Int, b: Int, size: Int)
     fun place()
     fun shadow(color: Color)
     fun opacity(procent: Int)

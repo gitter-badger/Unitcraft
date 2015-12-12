@@ -222,7 +222,7 @@ class Server(val isDebug: Boolean) {
         ssn.ensureState(Status.match)
         val ssnVs = ssn.play!!.match!!.ssnVs
         if (ssnVs.play!!.match!!.accepted()) {
-            vsPlayer(ssn, ssnVs, ssn.play!!.match!!.bet)
+            vsPlayer(ssnVs, ssn, ssn.play!!.match!!.bet)
         } else {
             ssn.play!!.match!!.accept()
             sendStatus()

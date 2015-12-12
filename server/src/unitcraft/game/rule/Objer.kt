@@ -23,6 +23,7 @@ class Objer(r: Resource) {
     val mover: Mover  by inject()
     val builder: Builder by inject()
     val spoter: Spoter by inject()
+    val stager: Stager by inject()
     val objs: () -> Objs by injectObjs()
     val allData: () -> AllData by injectAllData()
 
@@ -59,7 +60,16 @@ class Objer(r: Resource) {
                 return if (data == null) tileObjNull
                 else if (obj.side == null) data.tlsObj.neut
                 else if (allData().needJoin) data.tlsObj.join(obj.side == Side.a)
-                else (if (obj.isAlly(side)) data.tlsObj.ally else data.tlsObj.enemy)[spoter.objState(obj).ordinal]
+                else if (obj.isAlly(side)){
+                    when(spoter.objState(obj)){
+                        ObjState.ready -> if(stager.isTurn(side)) data.tlsObj.allyMyTurn else data.tlsObj.ally
+                        ObjState.needTire -> data.tlsObj.allyNeedTire
+                        ObjState.tire -> data.tlsObj.allyTire
+                    }
+                } else {
+                    if(spoter.objState(obj)==ObjState.tire) data.tlsObj.enemyTire
+                    else data.tlsObj.enemy
+                }
             }
             for (obj in allData().corpses.sort()) {
                 drawTile(obj.pg, tileGrave)

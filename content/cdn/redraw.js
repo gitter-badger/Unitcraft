@@ -246,11 +246,13 @@ function redrawToolbar() {
         var sizeFont = qd * 0.75;
         setSizeFont(ctx, sizeFont);
         ctx.fillStyle = "white";
+        if(ui.pageBonusBar<=0) ctx.globalAlpha = 0.5;
         ctx.drawImage(
             ui.panelset,
             imgPanels["bonusBar"] * ui.panelset.step, 0, qd, qd,
             0, 0, qd, qd
         );
+        ctx.globalAlpha = 1.0;
         for (var i = 0; i <= 9; i++) {
             ctx.translate(0, qd);
             ctx.drawImage(
@@ -262,6 +264,7 @@ function redrawToolbar() {
             drawText(ctx, num, (qd - xrText(ctx, num)) / 2, (qd - yrText(ctx)) / 2);
         }
         ctx.translate(0, qd);
+        if(ui.pageBonusBar>=2) ctx.globalAlpha = 0.5;
         ctx.drawImage(
             ui.panelset,
             imgPanels["bonusBar"] * ui.panelset.step + qd, 0, qd, qd,
