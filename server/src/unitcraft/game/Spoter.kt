@@ -34,9 +34,9 @@ class Spoter(r: Resource) {
         val tileReady = r.tile("ready")
         val tileNeedTire = r.tile("needTire")
         val objer = injectValue<Objer>()
-        objer.slotDrawObjPre.add(90,this,"рисует ready и needTire") {
-            if(canAkt(obj,side)) ctx.drawTile(obj.pg, if(obj==allData().objNeedTire) tileNeedTire else tileReady)
-        }
+//        objer.slotDrawObjPre.add(90,this,"рисует ready и needTire") {
+//            if(canAkt(obj,side)) ctx.drawTile(obj.pg, if(obj==allData().objNeedTire) tileNeedTire else tileReady)
+//        }
         val tileLastAkt = r.tile("lastAkt")
         objer.slotDrawObjPost.add(90,this,"рисует lastAkt над последним сходившим") {
             if(obj == allData().objAktLast) ctx.drawTile(obj.pg, tileLastAkt)
@@ -123,6 +123,9 @@ class Spoter(r: Resource) {
 
     fun pgFocus() = allData().objNeedTire?.pg
 
+    fun objState(obj:Obj)=
+        if(obj==allData().objNeedTire) ObjState.needTire else if(obj.isFresh) ObjState.ready else ObjState.tire
+
     inline fun <reified D : Data> addSkil(noinline akts: (Side, Obj) -> List<Akt>) {
         val fn = { side: Side, obj: Obj ->
             val h = Akts(side, obj)
@@ -140,6 +143,10 @@ class Spoter(r: Resource) {
         }
         listSkil.add { obj -> if (obj.has<D>()) fn else null }
     }
+}
+
+enum class ObjState{
+    ready, needTire, tire
 }
 
 class Akts(val sideVid: Side, val obj: Obj) {

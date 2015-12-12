@@ -22,7 +22,7 @@ class Objer(r: Resource) {
     val drawer: Drawer by inject()
     val mover: Mover  by inject()
     val builder: Builder by inject()
-    val stager: Stager by inject()
+    val spoter: Spoter by inject()
     val objs: () -> Objs by injectObjs()
     val allData: () -> AllData by injectAllData()
 
@@ -59,8 +59,7 @@ class Objer(r: Resource) {
                 return if (data == null) tileObjNull
                 else if (obj.side == null) data.tlsObj.neut
                 else if (allData().needJoin) data.tlsObj.join(obj.side == Side.a)
-                else if (obj.isAlly(side)) data.tlsObj.ally
-                else data.tlsObj.enemy
+                else (if (obj.isAlly(side)) data.tlsObj.ally else data.tlsObj.enemy)[spoter.objState(obj).ordinal]
             }
             for (obj in allData().corpses.sort()) {
                 drawTile(obj.pg, tileGrave)

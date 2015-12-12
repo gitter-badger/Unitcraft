@@ -33,8 +33,8 @@ class Resource {
 
     fun tlsVoin(name: String) = TlsObj(
             tile(name, effectNeut),
-            tile(name, effectFriend),
-            tile(name, effectEnemy),
+            listOf(tile(name, effectFriend),tile(name, effectFriendNeedTire),tile(name, effectFriendTire)),
+            listOf(tile(name, effectEnemy),tile(name, effectEnemyNeedTire),tile(name, effectEnemyTire)),
             TlsBool(tile(name, effectBlue), tile(name, effectYelw))
     )
 
@@ -59,40 +59,29 @@ class Resource {
             }
         }
 
+        fun effectObjLight(h: Int, s: Int, b: Int)=Effect("objLight($h,$s,$b)") {
+            fit()
+            extendBottom()
+            light(h, s, b)
+        }
+
         val effectStandard = Effect("standard") {
             fit()
             extend()
         }
 
-        val effectNeut = Effect("neut") {
-            fit()
-            extendBottom()
-            light(0, 0, 50)
-        }
+        val effectNeut = effectObjLight(0,0,50)
 
-        val effectFriend = Effect("friend") {
-            fit()
-            extendBottom()
-            light(120, 90, 90)
-        }
+        val effectFriend = effectObjLight(120, 90, 90)
+        val effectFriendNeedTire = effectObjLight(120, 50, 100)
+        val effectFriendTire = effectObjLight(180, 90, 90)
 
-        val effectEnemy = Effect("enemy") {
-            fit()
-            extendBottom()
-            light(360, 90, 90)
-        }
+        val effectEnemy = effectObjLight(360, 90, 90)
+        val effectEnemyNeedTire = effectObjLight(360, 50, 100)
+        val effectEnemyTire = effectObjLight(280, 90, 90)
 
-        val effectBlue = Effect("blue") {
-            fit()
-            extendBottom()
-            light(180, 90, 90)
-        }
-
-        val effectYelw = Effect("yelw") {
-            fit()
-            extendBottom()
-            light(60, 90, 90)
-        }
+        val effectBlue = effectObjLight(240, 90, 90)
+        val effectYelw = effectObjLight(60, 90, 90)
 
         val effectAkt = Effect("akt") {
             fit()
@@ -106,7 +95,7 @@ class Resource {
     }
 }
 
-class TlsObj(val neut: Tile, val ally: Tile, val enemy: Tile, val join: TlsBool)
+class TlsObj(val neut: Tile, val ally: List<Tile>, val enemy: List<Tile>, val join: TlsBool)
 
 class TlsBool(val tileTrue: Tile, val tileFalse: Tile) {
     operator fun invoke(b: Boolean) = if (b) tileTrue else tileFalse
