@@ -328,6 +328,7 @@ class Kicker(r: Resource) {
         spoter.addSkilByBuilder<DataKicker> {
             for (dr in Dr.values()) {
                 val aim = obj.pg.plus(dr)?.let { objs()[it] } ?: continue
+                if(!aim.isVid(sideVid)) continue
                 val ray = rayKick(aim, dr, sideVid, mover)
                 if (ray.isNotEmpty() || lifer.canDamage(aim)) akt(aim.pg, tileAkt) {
                     mover.kickPath(aim, ray, sideVid)
