@@ -1,6 +1,6 @@
 package unitcraft.lander
 
-fun spray(qnt:Int) = prism {
+fun spray(qnt:Int) = primt {
     var i = 0
     while (i < qnt) {
         val pg = rnd(ppp().filter { isFree(it) }) ?: break

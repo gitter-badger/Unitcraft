@@ -8,9 +8,11 @@ val spotsAndRiver = land{
     }
     repeat(rnd(0..2)) { lay(spot(rnd(5..15)),wild) }
     if(random.nextBoolean()) lay(river,liquid)
-    layDistinct(spray(rnd(0..10)), special)
-    layFormation(formationChess(10,3))
+    layDistinct(spray(rnd(1..10)), special)
+    squad(rnd(squads)!!)
 }
+
+val squads = listOf(squadVersus(3),squadVersusCorner,squadChess,squadSpray(5))
 
 fun main(args: Array<String>) {
     play(spotsAndRiver)

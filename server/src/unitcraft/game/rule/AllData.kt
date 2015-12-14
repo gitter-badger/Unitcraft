@@ -15,16 +15,13 @@ class AllData {
 
     val bonus = HashMap<Side, Int>()
 
-    val point = HashMap<Side, Int>().apply {
-        Side.ab.map { put(it, 16) }
-    }
+    var qntTurnLeft = 10
+    var sideFirst:Side? = null
 
-    var sideTurn: Side = Side.a
+    var sideTurn = Side.a
 
     var objAktLast: Obj? = null
     var objNeedTire: Obj? = null
-
-    var needJoin = true
 
     val traces = HashMap<Side, ArrayList<DabOnGrid>>().apply {
         Side.ab.map { put(it, ArrayList<DabOnGrid>()) }

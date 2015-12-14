@@ -5,7 +5,7 @@ import unitcraft.lander.Player
 
 import java.util.*
 
-val river = prism {
+val river = primt {
     fun isCnn(start: Pg, finish: Pg, where: (Pg) -> Boolean): Boolean {
         val wave = ArrayList<Pg>()
         val que = ArrayList<Pg>()
@@ -20,9 +20,9 @@ val river = prism {
         return finish in wave
     }
 
-    val start = pgRnd { it.isEdge() } ?: return@prism
-    val finish = pgRnd { it.isEdge() && it != start && it.distance(start) > 5 } ?: return@prism
-    if (!isCnn(start, finish) { !isExc(it) }) return@prism
+    val start = pgRnd { it.isEdge() } ?: return@primt
+    val finish = pgRnd { it.isEdge() && it != start && it.distance(start) > 5 } ?: return@primt
+    if (!isCnn(start, finish) { !isExc(it) }) return@primt
     lay(ppp())
     val pgsMust = ArrayList<Pg>()
     while (true) {

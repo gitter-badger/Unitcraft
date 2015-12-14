@@ -1,14 +1,15 @@
 package unitcraft.game
 
 import unitcraft.game.rule.AllData
-import unitcraft.game.rule.Flag
+import unitcraft.game.rule.Hamlet
+import unitcraft.game.rule.Flater
 import unitcraft.inject.inject
 import unitcraft.server.Err
 import unitcraft.server.Side
 
 class Stager(r: Resource) {
     val allData: () -> AllData by injectAllData()
-    val flag by inject<Flag>()
+    val flater by inject<Flater>()
     val tileEdgeTurn = DabTile(r.tile("edgeTurn", Resource.effectPlace))
     val tileEdgeWait = DabTile(r.tile("edgeWait", Resource.effectPlace))
 
@@ -23,6 +24,7 @@ class Stager(r: Resource) {
     fun endTurn() {
         val sideTurn = allData().sideTurn
         slotTurnEnd.exe(AideSide(sideTurn))
+        if(sideTurn.vs==allData().sideFirst) allData().qntTurnLeft -= 1
         allData().sideWin = checkSideWin()
         allData().sideTurn = sideTurn.vs
     }
@@ -46,9 +48,9 @@ class Stager(r: Resource) {
 
     fun isTurn(sideVid: Side) = stage(sideVid) == Stage.turn
 
-    private fun checkSideWin() =
-            if (Side.ab.all { allData().objs.bySide(it).isEmpty() }) flag.sideMost()
-            else Side.ab.firstOrNull { allData().point[it] == 0 || allData().objs.bySide(it).isEmpty() }?.vs
+    private fun checkSideWin() = if (Side.ab.all { allData().objs.bySide(it).isEmpty() } || allData().qntTurnLeft==0) sideMost()!! else null
+
+    fun sideMost() = flater.sideMostPoint()?:allData().sideFirst
 }
 
 enum class Stage{

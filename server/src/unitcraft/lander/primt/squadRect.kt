@@ -3,7 +3,7 @@ package unitcraft.lander
 import unitcraft.game.Pg
 
 // юниты располагаются в двух прямоугольниках, которые удалены друг от друга на distMin
-fun formationRect(qnt: Int, distMin: Int) = prism {
+fun squadRect(qnt: Int, distMin: Int) = primt {
 
 //    fun inRect(pg: Pg, list: List<Pg>) = list.all { it -> pg.distance(it) >= distMin }
 //    var i = 0
@@ -17,5 +17,5 @@ fun formationRect(qnt: Int, distMin: Int) = prism {
 }
 
 fun main(args: Array<String>) {
-    play(formationRect(10, 5))
+    play(squadRect(10, 5))
 }

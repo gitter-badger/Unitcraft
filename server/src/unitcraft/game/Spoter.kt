@@ -31,8 +31,8 @@ class Spoter(r: Resource) {
             objs().forEach { it.isFresh = true }
         }
 
-        val tileReady = r.tile("ready")
-        val tileNeedTire = r.tile("needTire")
+        //val tileReady = r.tile("ready")
+        //val tileNeedTire = r.tile("needTire")
         val objer = injectValue<Objer>()
 //        objer.slotDrawObjPre.add(90,this,"рисует ready и needTire") {
 //            if(canAkt(obj,side)) ctx.drawTile(obj.pg, if(obj==allData().objNeedTire) tileNeedTire else tileReady)
@@ -41,7 +41,7 @@ class Spoter(r: Resource) {
         objer.slotDrawObjPost.add(90,this,"рисует lastAkt над последним сходившим") {
             if(obj == allData().objAktLast) ctx.drawTile(obj.pg, tileLastAkt)
         }
-        listCanAkt.add{ side,obj -> allData().needJoin && obj.side!=null }
+        listCanAkt.add{ side,obj -> allData().sideFirst==null && obj.side!=null }
     }
 
     fun objs() = allData().objs

@@ -53,7 +53,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Fortress(r)
     Goldmine(r)
     Hospital(r)
-    register(Flag(r))
+    Hamlet(r)
     Inviser(r)
 
     Electric(r)
@@ -151,10 +151,10 @@ class CmderUnitcraft : CmderGame {
     }
 
     private fun join(side: Side, sideJoin: Side?): Boolean {
-        if (sideJoin == null || allData().needJoin == false) return false
-        allData().needJoin = false
+        if (sideJoin == null || allData().sideFirst != null) return false
         fabriker.plusGold(sideJoin.vs, allData().bonus[side]!!)
         allData().sideTurn = sideJoin
+        allData().sideFirst = sideJoin
         return side != sideJoin
     }
 
@@ -233,7 +233,7 @@ class CmderUnitcraft : CmderGame {
             stager.focus,
             stager.focusMore,
             if (stager.isTurn(side)) spoter.pgFocus() else null,
-            listOf(allData().point[side]!!, allData().point[side.vs]!!),
+            listOf(allData().qntTurnLeft, 0),
             if (data().canEdit && allData().sideWin==null) editor.opterTest else null
     )
 }

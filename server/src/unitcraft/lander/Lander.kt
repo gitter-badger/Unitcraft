@@ -21,6 +21,7 @@ class Lander {
     }
 
     val dmns = listOf(
+            14 to 11, 14 to 10, 14 to 9,
             13 to 11, 13 to 10, 13 to 9,
             12 to 11, 12 to 10, 12 to 9,
             11 to 11, 11 to 10, 11 to 9,

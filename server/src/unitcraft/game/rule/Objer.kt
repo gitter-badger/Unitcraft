@@ -60,7 +60,7 @@ class Objer(r: Resource) {
                 val data = obj.orNull<DataTileObj>()
                 return if (data == null) tileObjNull
                 else if (obj.side == null) data.tlsObj.neut
-                else if (allData().needJoin) data.tlsObj.join(obj.side == Side.a)
+                else if (allData().sideFirst==null) data.tlsObj.join(obj.side == Side.a)
                 else if (obj.isAlly(side)) {
                     when (spoter.objState(obj)) {
                         ObjState.ready -> if (stager.isTurn(side)) data.tlsObj.allyMyTurn else data.tlsObj.ally
@@ -522,7 +522,7 @@ class Fabriker(r: Resource) {
         val tls = r.tlsVoin("fabriker")
         val tileAkt = r.tileAkt("fabriker")
         val objer = injectValue<Objer>()
-        objer.add(tls.neut) {
+        objer.add(tls.neut, TpObj.fabriker) {
             it.add(DataTileObj(tls))
             it.add(Fabricator)
         }

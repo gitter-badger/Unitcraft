@@ -2,15 +2,16 @@ package unitcraft.lander
 
 import unitcraft.game.Pg
 import unitcraft.game.Pgser
-import unitcraft.lander.TpObj.*
+import unitcraft.lander.TpObj.fabriker
+import unitcraft.lander.TpObj.std
 import unitcraft.server.Side
 import java.util.*
 
-class MoldLand(val fn:(Random, Pgser, Map<TpFlat,Int>, Map<TpObj,Int>) -> Land){
-    operator fun invoke(r:Random, p: Pgser, mf: Map<TpFlat,Int>, mo: Map<TpObj,Int>) = fn(r,p,mf,mo)
+class MoldLand(val fn: (Random, Pgser, Map<TpFlat, Int>, Map<TpObj, Int>) -> Land) {
+    operator fun invoke(r: Random, p: Pgser, mf: Map<TpFlat, Int>, mo: Map<TpObj, Int>) = fn(r, p, mf, mo)
 }
 
-class Land(val random:Random, val pgser: Pgser, val maxTpFlat: Map<TpFlat,Int>, val maxTpObj: Map<TpObj,Int>) {
+class Land(val random: Random, val pgser: Pgser, val maxTpFlat: Map<TpFlat, Int>, val maxTpObj: Map<TpObj, Int>) {
     val xr = pgser.xr
     val yr = pgser.yr
 
@@ -19,33 +20,37 @@ class Land(val random:Random, val pgser: Pgser, val maxTpFlat: Map<TpFlat,Int>, 
 
     val exc = HashSet<Pg>()
 
-    init{
-
-    }
-
-    fun rnd(range:IntRange)=rnd(range.toList())!!
+    fun rnd(range: IntRange) = rnd(range.toList())!!
 
     fun <E> rnd(list: List<E>) = if (list.isEmpty()) null else list[random.nextInt(list.size)]
 
-    fun lay(moldPrimt: MoldPrimt, tp:TpFlat){
+    fun lay(moldPrimt: MoldPrimt, tp: TpFlat) {
         var idx = idxFlatRnd(tp)
-        moldPrimt(random,pgser,exc).pgsLay().apply{exc.addAll(this)}.forEach {
+        moldPrimt(random, pgser, exc).pgsLay().apply { exc.addAll(this) }.forEach {
             addFlat(it, tp, idx)
         }
     }
 
-    fun layFormation(moldPrimt: MoldPrimt){
-        val ctx = moldPrimt(random,pgser,emptySet())
-        ctx.pgsLay().forEach {
-            objs[it] = ObjLand(std, idxObjRnd(std), Side.a)
-        }
-        ctx.pgsAux().forEach {
-            objs[it] = ObjLand(std, idxObjRnd(std), Side.b)
+    fun squad(moldPrimt: MoldPrimt) {
+        val ctx = moldPrimt(random, pgser, emptySet())
+        val side = sideRnd()
+        squadByPrimt(ctx, TpPrism.lay, side)
+        squadByPrimt(ctx, TpPrism.aux, side.vs)
+    }
+
+    private fun squadByPrimt(primt: Primt, tpPrism: TpPrism, side: Side) {
+        val pgFabr = primt.pgRnd { primt.map[it] == tpPrism }!!
+        objs[pgFabr] = ObjLand(fabriker, idxObjRnd(fabriker), side)
+        var i = 0
+        while (i < 10) {
+            val pg = primt.pgRnd { it!=pgFabr && it !in objs.keys && primt.map[it] == tpPrism } ?: break
+            objs[pg] = ObjLand(std, idxObjRnd(std), side)
+            i += 1
         }
     }
 
-    fun layDistinct(moldPrimt: MoldPrimt, tp:TpFlat){
-        moldPrimt(random,pgser,exc).pgsLay().apply{exc.addAll(this)}.forEach {
+    fun layDistinct(moldPrimt: MoldPrimt, tp: TpFlat) {
+        moldPrimt(random, pgser, exc).pgsLay().apply { exc.addAll(this) }.forEach {
             addFlat(it, tp, idxFlatRnd(tp))
         }
     }
@@ -71,7 +76,7 @@ enum class TpFlat() {
     none, liquid, wild, special, flag
 }
 
-enum class TpObj{
+enum class TpObj {
     std, fabriker
 }
 

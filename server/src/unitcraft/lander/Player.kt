@@ -18,7 +18,7 @@ import javafx.stage.Stage
 import unitcraft.game.Pg
 import unitcraft.game.Pgser
 import unitcraft.lander.TpFlat.*
-import unitcraft.lander.TpObj.std
+import unitcraft.lander.TpObj.*
 import unitcraft.lander.TpPrism.*
 import unitcraft.server.Side
 import java.util.*
@@ -26,9 +26,9 @@ import java.util.*
 
 class Player : Application() {
 
-    val pgser = Pgser(10, 10)
+    val pgser = Pgser(11, 10)
     val maxTpFlat = mapOf(special to 5, liquid to 1, wild to 2)
-    val maxTpObj = mapOf(std to 7)
+    val maxTpObj = mapOf(std to 7,fabriker to 1)
     val random = Random(System.currentTimeMillis())
 
     val exc = HashSet<Pg>()
@@ -95,7 +95,7 @@ class Player : Application() {
                     if(obj!=null) {
                         g.fill = obj.color()
                         g.fillOval(smObj + pg.x * qdmn, smObj + pg.y * qdmn, qdmn - 2 * smObj, qdmn - 2 * smObj)
-                        g.fill = obj.side.vs.color()
+                        g.fill = obj.color().invert()
                         g.font = Font.font(mg * 20)
                         g.fillText("" + obj.num, pg.x * qdmn + qdmn / 2, pg.y * qdmn + qdmn / 2)
                     }
@@ -186,7 +186,7 @@ fun play(moldLand: MoldLand) {
 
 fun Side.color() = if (this == Side.a) BLUE else YELLOW
 
-fun ObjLand.color() = side.color()
+fun ObjLand.color() = if(tpObj==std) side.color() else side.color().darker().darker()
 
 fun FlatLand.color() =
         when (tpFlat) {
