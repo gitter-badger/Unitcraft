@@ -2,7 +2,7 @@ package unitcraft.game
 
 import java.util.ArrayList
 import unitcraft.server.Side
-import unitcraft.land.Land
+import unitcraft.lander.Land
 import unitcraft.server.Violation
 import java.util.regex.Pattern
 

@@ -3,9 +3,11 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.inject.inject
 import unitcraft.inject.injectValue
-import unitcraft.land.TpFlat
+import unitcraft.lander.FlatLand
+import unitcraft.lander.TpFlat
 import unitcraft.server.Err
 import unitcraft.server.Side
+import unitcraft.server.lzy
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -77,12 +79,12 @@ class Flater(r: Resource) {
         if(tpFlat!=null) landTps.getOrPut(tpFlat) { ArrayList<(Flat, Side) -> Unit>() }.add(create)
     }
 
-    fun maxFromTpFlat() = landTps.mapValues { it.value.size }
+    val maxFromTpFlat by lzy{ landTps.mapValues { it.value.size }}
 
-    fun reset(flatsL: ArrayList<unitcraft.land.Flat>) {
+    fun reset(flatLands: Map<Pg, FlatLand>) {
         val flats = allData().flats
-        for (flatL in flatsL) {
-            val flat = Flat(flatL.pg)
+        for ((pg,flatL) in flatLands) {
+            val flat = Flat(pg)
             landTps[flatL.tpFlat]!![flatL.num](flat, flatL.side)
             flats.add(flat)
         }

@@ -3,9 +3,11 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.inject.inject
 import unitcraft.inject.injectValue
-import unitcraft.land.TpSolid
+import unitcraft.lander.ObjLand
+import unitcraft.lander.TpObj
 import unitcraft.server.Err
 import unitcraft.server.Side
+import unitcraft.server.lzy
 import java.util.*
 
 class Objer(r: Resource) {
@@ -17,7 +19,7 @@ class Objer(r: Resource) {
     private val tilesEditor = ArrayList<Tile>()
     private val creates = ArrayList<(Obj) -> Unit>()
 
-    private val landTps = HashMap<TpSolid, MutableList<(Obj) -> Unit>>()
+    private val landTps = HashMap<TpObj, MutableList<(Obj) -> Unit>>()
 
     val drawer: Drawer by inject()
     val mover: Mover  by inject()
@@ -94,7 +96,7 @@ class Objer(r: Resource) {
 
     fun add(tile: Tile,
             priorFabrik: Int?,
-            tpSolid: TpSolid? = null,
+            tpObj: TpObj? = null,
             hasMove: Boolean = true,
             create: (Obj) -> Unit
     ) {
@@ -102,7 +104,7 @@ class Objer(r: Resource) {
         val crt = if (hasMove) { obj -> obj.add(SkilMove());create(obj) } else create
         creates.add(crt)
         if (priorFabrik != null) builder.addFabrik(priorFabrik, tile, crt)
-        if (tpSolid != null) landTps.getOrPut(tpSolid) { ArrayList<(Obj) -> Unit>() }.add(crt)
+        if (tpObj != null) landTps.getOrPut(tpObj) { ArrayList<(Obj) -> Unit>() }.add(crt)
     }
 
     fun editChange(pg: Pg, sideVid: Side) {
@@ -116,15 +118,16 @@ class Objer(r: Resource) {
         }
     }
 
-    fun maxFromTpSolid() = landTps.mapValues { it.value.size }
+    val maxFromTpSolid by lzy{ landTps.mapValues { it.value.size }}
 
-    fun reset(solidsL: ArrayList<unitcraft.land.Solid>) {
-        for (solidL in solidsL) {
-            val solid = Obj(solidL.pg)
-            solid.side = solidL.side
+    fun reset(objLands: Map<Pg,ObjLand>) {
+        val objs = objs()
+        for ((pg,objLand) in objLands) {
+            val solid = Obj(pg)
+            solid.side = objLand.side
             solid.isFresh = true
-            landTps[solidL.tpSolid]!![solidL.num](solid)
-            objs().list.add(solid)
+            landTps[objLand.tpObj]!![objLand.num](solid)
+            objs.list.add(solid)
         }
     }
 

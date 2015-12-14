@@ -3,7 +3,7 @@ package unitcraft.game.rule
 import unitcraft.game.*
 import unitcraft.inject.inject
 import unitcraft.inject.injectValue
-import unitcraft.land.TpSolid
+import unitcraft.lander.TpObj
 import unitcraft.server.Side
 import java.util.*
 
@@ -68,7 +68,7 @@ class Redeployer(r: Resource) {
     init {
         val tls = r.tlsVoin("redeployer")
         val builder = injectValue<Builder>()
-        injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
+        injectValue<Objer>().add(tls.neut, null, TpObj.builder) {
             it.add(DataTileObj(tls))
             it.add(DataRedeployer())
             builder.add(it)
@@ -107,7 +107,7 @@ class Armorer(r: Resource) {
         val lifer = injectValue<Lifer>()
         val skilerMove = injectValue<SkilerMove>()
         val tls = r.tlsVoin("armorer")
-        solider.add(tls.neut, null, TpSolid.builder) {
+        solider.add(tls.neut, null, TpObj.builder) {
             it.add(DataTileObj(tls))
             skilerMove.slow(it)
             builder.add(it, {
@@ -125,7 +125,7 @@ class Airport(r: Resource) {
         val tls = r.tlsVoin("airport")
         val tlsSit = r.tlsVoin("airport.sit")
         val tileAkt = r.tileAkt("airport")
-        objer.add(tls.neut, null, TpSolid.builder) {
+        objer.add(tls.neut, null, TpObj.builder) {
             it.add(Airport())
             objer.setTls(it,tls)
             builder.add(it)
@@ -160,7 +160,7 @@ class Inviser(r: Resource) {
         val mover = injectValue<Mover>()
         val tls = r.tlsVoin("inviser")
         val builder = injectValue<Builder>()
-        injectValue<Objer>().add(tls.neut, null, TpSolid.builder) {
+        injectValue<Objer>().add(tls.neut, null, TpObj.builder) {
             it.add(DataTileObj(tls))
             it.add(DataInviser)
             builder.add(it, { it.add(DataInviser) })

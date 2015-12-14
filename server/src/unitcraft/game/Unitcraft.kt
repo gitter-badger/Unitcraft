@@ -3,7 +3,8 @@ package unitcraft.game
 import unitcraft.game.rule.*
 import unitcraft.inject.inject
 import unitcraft.inject.register
-import unitcraft.land.Land
+import unitcraft.lander.Land
+import unitcraft.lander.Lander
 import unitcraft.server.*
 
 object FncUnitcraft {
@@ -27,7 +28,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     FncUnitcraft.flats = { FncUnitcraft.data().allData.flats }
 
     val r = Resource()
-
+    register(Lander())
     register(Stager(r))
     register(Editor())
     register(Drawer(r))
@@ -78,8 +79,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     return r
 }
 
-class DataUnitcraft(mission: Int?, val canEdit: Boolean) : GameData {
-    val land = Land(mission)
+class DataUnitcraft(val land : Land, val canEdit: Boolean) : GameData {
     lateinit var allData: AllData
 }
 
@@ -95,13 +95,14 @@ class CmderUnitcraft : CmderGame {
     val drawer: Drawer by inject()
     val tracer: Tracer by inject()
     val lifer: Lifer by inject()
+    val lander: Lander by inject()
 
-    override fun createData(mission: Int?, canEdit: Boolean) = DataUnitcraft(mission, canEdit)
+    override fun createData(mission: Int?, canEdit: Boolean) = DataUnitcraft(lander.land(mission), canEdit)
 
     override fun reset(): GameState {
         data().allData = AllData()
         flater.reset(data().land.flats)
-        objer.reset(data().land.solids)
+        objer.reset(data().land.objs)
         return state()
     }
 
