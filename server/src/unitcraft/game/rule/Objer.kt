@@ -96,7 +96,7 @@ class Objer(r: Resource) {
 
     fun add(tile: Tile,
             priorFabrik: Int?,
-            tpObj: TpObj? = null,
+            tpObj: TpObj? = TpObj.std,
             hasMove: Boolean = true,
             create: (Obj) -> Unit
     ) {
@@ -420,7 +420,7 @@ class Pusher(r: Resource) {
 
     init {
         val tls = r.tlsVoin("pusher")
-        injectValue<Objer>().add(tls.neut,null) {
+        injectValue<Objer>().add(tls.neut,null,null) {
             it.add(DataTileObj(tls))
             it.add(DataPusher)
         }
