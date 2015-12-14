@@ -23,7 +23,6 @@ class Objer(r: Resource) {
 
     val drawer: Drawer by inject()
     val mover: Mover  by inject()
-    val builder: Builder by inject()
     val spoter: Spoter by inject()
     val stager: Stager by inject()
     val objs: () -> Objs by injectObjs()
@@ -62,14 +61,14 @@ class Objer(r: Resource) {
                 return if (data == null) tileObjNull
                 else if (obj.side == null) data.tlsObj.neut
                 else if (allData().needJoin) data.tlsObj.join(obj.side == Side.a)
-                else if (obj.isAlly(side)){
-                    when(spoter.objState(obj)){
-                        ObjState.ready -> if(stager.isTurn(side)) data.tlsObj.allyMyTurn else data.tlsObj.ally
+                else if (obj.isAlly(side)) {
+                    when (spoter.objState(obj)) {
+                        ObjState.ready -> if (stager.isTurn(side)) data.tlsObj.allyMyTurn else data.tlsObj.ally
                         ObjState.needTire -> data.tlsObj.allyNeedTire
                         ObjState.tire -> data.tlsObj.allyTire
                     }
                 } else {
-                    if(spoter.objState(obj)==ObjState.tire) data.tlsObj.enemyTire
+                    if (spoter.objState(obj) == ObjState.tire) data.tlsObj.enemyTire
                     else data.tlsObj.enemy
                 }
             }
@@ -95,15 +94,18 @@ class Objer(r: Resource) {
     }
 
     fun add(tile: Tile,
-            priorFabrik: Int?,
             tpObj: TpObj? = TpObj.std,
             hasMove: Boolean = true,
             create: (Obj) -> Unit
     ) {
         tilesEditor.add(tile)
-        val crt = if (hasMove) { obj -> obj.add(SkilMove());create(obj) } else create
+        val num = creates.size
+        val crt = { obj: Obj ->
+            if (hasMove) obj.add(SkilMove())
+            obj.add(Fabrik(num))
+            create(obj)
+        }
         creates.add(crt)
-        if (priorFabrik != null) builder.addFabrik(priorFabrik, tile, crt)
         if (tpObj != null) landTps.getOrPut(tpObj) { ArrayList<(Obj) -> Unit>() }.add(crt)
     }
 
@@ -118,11 +120,11 @@ class Objer(r: Resource) {
         }
     }
 
-    val maxFromTpSolid by lzy{ landTps.mapValues { it.value.size }}
+    val maxFromTpSolid by lzy { landTps.mapValues { it.value.size } }
 
-    fun reset(objLands: Map<Pg,ObjLand>) {
+    fun reset(objLands: Map<Pg, ObjLand>) {
         val objs = objs()
-        for ((pg,objLand) in objLands) {
+        for ((pg, objLand) in objLands) {
             val solid = Obj(pg)
             solid.side = objLand.side
             solid.isFresh = true
@@ -134,6 +136,13 @@ class Objer(r: Resource) {
     fun setTls(obj: Obj, tlsObj: TlsObj) {
         obj.add(DataTileObj(tlsObj))
     }
+
+    fun isVidObj(pg: Pg, side: Side) = objs()[pg]?.isVid(side) ?: false
+    fun fabricate(pgSrc: Pg, objNew: Obj) {
+        objs()[pgSrc]?.orNull<Fabrik>()?.num?.let { creates[it](objNew) }
+    }
+
+    class Fabrik(val num: Int) : Data
 }
 
 class AideDrawObj(val ctx: CtxDraw, val obj: Obj, val side: Side) : Aide
@@ -146,7 +155,7 @@ class Telepath(r: Resource) {
         val spoter = injectValue<Spoter>()
         val tls = r.tlsVoin("telepath")
         val tlsAkt = r.tileAkt("telepath")
-        injectValue<Objer>().add(tls.neut, 60) {
+        injectValue<Objer>().add(tls.neut) {
             it.add(DataTileObj(tls))
             it.add(DataTelepath)
         }
@@ -168,7 +177,7 @@ class Staziser(r: Resource) {
         val stazis = injectValue<Stazis>()
         val tls = r.tlsVoin("staziser")
         val tlsAkt = r.tileAkt("staziser")
-        injectValue<Objer>().add(tls.neut, 50) {
+        injectValue<Objer>().add(tls.neut) {
             it.add(DataTileObj(tls))
             it.add(DataStaziser)
         }
@@ -190,7 +199,7 @@ class Staziser(r: Resource) {
 class Electric(r: Resource) {
     init {
         val tls = r.tlsVoin("electric")
-        injectValue<Objer>().add(tls.neut, 3) {
+        injectValue<Objer>().add(tls.neut) {
             it.add(DataTileObj(tls))
             it.add(DataElectric)
         }
@@ -200,7 +209,7 @@ class Electric(r: Resource) {
         val tracer = injectValue<Tracer>()
         val objs = injectObjs().value
         spoter.addSkilByBuilder<DataElectric> {
-            obj.near().filter { objs()[it]?.let{lifer.canDamage(it) && it.isVid(sideVid)}?:false }.forEach {
+            obj.near().filter { objs()[it]?.let { lifer.canDamage(it) && it.isVid(sideVid) } ?: false }.forEach {
                 akt(it, tileAkt) {
                     val aims = wave(it, lifer, obj.pg)
                     lifer.damagePgs(aims, 1)
@@ -234,7 +243,7 @@ class Imitator(r: Resource) {
         val objs = injectObjs().value
         val tls = r.tlsVoin("imitator")
         val dataTileObj = DataTileObj(tls)
-        injectValue<Objer>().add(tls.neut, null, null, false) {
+        injectValue<Objer>().add(tls.neut, null, false) {
             it.add(dataTileObj)
             it.add(DataImitator())
         }
@@ -273,7 +282,7 @@ class Imitator(r: Resource) {
 class Tiger(r: Resource) {
     init {
         val tls = r.tlsVoin("tiger")
-        injectValue<Objer>().add(tls.neut, 3) {
+        injectValue<Objer>().add(tls.neut) {
             it.add(DataTileObj(tls))
             it.add(DataFrog())
         }
@@ -285,7 +294,7 @@ class Tiger(r: Resource) {
         spoter.addSkilByBuilder<DataFrog> {
             val data = obj<DataFrog>()
             if (data.drLastLeap != null) modal()
-            if(data.charges>0) for (dr in Dr.values().filter { dr -> dr != data.drLastLeap }) {
+            if (data.charges > 0) for (dr in Dr.values().filter { dr -> dr != data.drLastLeap }) {
                 val pgAim = obj.pg.plus(dr) ?: continue
                 val pgTo = pgAim.plus(dr) ?: continue
                 if (mover.isMove(obj, pgAim, sideVid)) continue
@@ -301,7 +310,7 @@ class Tiger(r: Resource) {
             }
         }
         spoter.listOnTire.add { obj ->
-            obj.data<DataFrog>{
+            obj.data<DataFrog> {
                 it.drLastLeap = null
                 it.charges = 50
             }
@@ -318,7 +327,7 @@ class Kicker(r: Resource) {
     init {
         val objs = injectObjs().value
         val tls = r.tlsVoin("kicker")
-        injectValue<Objer>().add(tls.neut, 15) {
+        injectValue<Objer>().add(tls.neut) {
             it.add(DataTileObj(tls))
             it.add(DataKicker)
         }
@@ -331,7 +340,7 @@ class Kicker(r: Resource) {
         spoter.addSkilByBuilder<DataKicker> {
             for (dr in Dr.values()) {
                 val aim = obj.pg.plus(dr)?.let { objs()[it] } ?: continue
-                if(!aim.isVid(sideVid)) continue
+                if (!aim.isVid(sideVid)) continue
                 val ray = rayKick(aim, dr, sideVid, mover)
                 if (ray.isNotEmpty() || lifer.canDamage(aim)) akt(aim.pg, tileAkt) {
                     mover.kickPath(aim, ray, sideVid)
@@ -362,14 +371,14 @@ class Kicker(r: Resource) {
 class Jumper(r: Resource) {
     init {
         val tls = r.tlsVoin("jumper")
-        injectValue<Objer>().add(tls.neut, 40, null, false) {
+        injectValue<Objer>().add(tls.neut, null, false) {
             it.add(DataTileObj(tls))
             it.add(DataJumper())
         }
 
         val objs = injectObjs().value
         val tileAkt = r.tileAkt("jumper")
-        val tileHit = r.tileAkt("jumper","hit")
+        val tileHit = r.tileAkt("jumper", "hit")
         val tileChoice = r.tileAkt("jumper", "choice")
         val lifer = injectValue<Lifer>()
         val mover = injectValue<Mover>()
@@ -378,14 +387,14 @@ class Jumper(r: Resource) {
         spoter.addSkilByBuilder<DataJumper> {
             val data = obj<DataJumper>()
             val pgDest = data.pgDest
-            fun isAim(cand:Obj) = cand != obj && !cand.pg.isNear(obj.pg) && cand.isVid(sideVid)
-            fun pgsAimNear(dst:Pg) = dst.near.filter { objs()[it]?.let{isAim(it)} ?: false }
+            fun isAim(cand: Obj) = cand != obj && !cand.pg.isNear(obj.pg) && cand.isVid(sideVid)
+            fun pgsAimNear(dst: Pg) = dst.near.filter { objs()[it]?.let { isAim(it) } ?: false }
             if (pgDest == null) objs().filter { isAim(it) }.flatMap { it.near() }.distinct().forEach {
                 val can = mover.move(obj, it, sideVid)
                 if (can != null) {
                     val aim = pgsAimNear(it).singleOrNull()
                     if (aim != null) akt(it, tileAkt) {
-                        if (can()){
+                        if (can()) {
                             lifer.damage(aim, 1)
                             tracer.touch(aim, tileHit)
                             spoter.tire(obj)
@@ -397,7 +406,7 @@ class Jumper(r: Resource) {
                 if (can != null) akt(it, tileHit) {
                     if (can()) {
                         lifer.damage(it, 1)
-                        tracer.touch(it,tileHit)
+                        tracer.touch(it, tileHit)
                         spoter.tire(obj)
                     }
                 }
@@ -420,7 +429,7 @@ class Pusher(r: Resource) {
 
     init {
         val tls = r.tlsVoin("pusher")
-        injectValue<Objer>().add(tls.neut,null,null) {
+        injectValue<Objer>().add(tls.neut, null) {
             it.add(DataTileObj(tls))
             it.add(DataPusher)
         }
@@ -482,7 +491,7 @@ class Spider(r: Resource) {
         val adhesive = injectValue<Adhesive>()
         val tls = r.tlsVoin("spider")
         val tlsAkt = r.tileAkt("spider")
-        injectValue<Objer>().add(tls.neut, 50) {
+        injectValue<Objer>().add(tls.neut) {
             it.add(DataTileObj(tls))
             it.add(DataSpider)
         }
@@ -498,9 +507,47 @@ class Spider(r: Resource) {
             }
         }
 
-        adhesive.slop.add(this,"паукам разрешено"){ obj.has<DataSpider>() }
+        adhesive.slop.add(this, "паукам разрешено") { obj.has<DataSpider>() }
     }
 
     private object DataSpider : Data
+}
+
+class Fabriker(r: Resource) {
+    val objs by injectObjs()
+    val lifer: Lifer by inject()
+    val price = 3
+
+    init {
+        val tls = r.tlsVoin("fabriker")
+        val tileAkt = r.tileAkt("fabriker")
+        val objer = injectValue<Objer>()
+        objer.add(tls.neut) {
+            it.add(DataTileObj(tls))
+            it.add(Fabricator)
+        }
+        val spoter = injectValue<Spoter>()
+        val mover = injectValue<Mover>()
+        val tracer = injectValue<Tracer>()
+        spoter.addSkilByBuilder<Fabricator> {
+            obj.near().filter { objer.isVidObj(it, sideVid) }.forEach {
+                val ok = it.plus(obj.pg.dr(it))?.let { mover.canAdd(it, sideVid) }
+                if (ok != null) akt(it, tileAkt) {
+                    ok { objNew ->
+                        objNew.side = obj.side
+                        objer.fabricate(it, objNew)
+                        tracer.touch(objNew, tileAkt)
+                        lifer.poison(obj, price)
+                    }
+                }
+            }
+        }
+    }
+
+    fun plusGold(side: Side?, value: Int) {
+        objs().by<Fabricator>(side).forEach { lifer.heal(it, value) }
+    }
+
+    private object Fabricator : Data
 }
 

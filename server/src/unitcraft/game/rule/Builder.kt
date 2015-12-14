@@ -7,7 +7,7 @@ import unitcraft.lander.TpObj
 import unitcraft.server.Side
 import java.util.*
 
-class Builder(r: Resource) {
+/*class Builder(r: Resource) {
     val price = 3
     val fabriks = ArrayList<Fabrik>()
     val lifer: Lifer by inject()
@@ -169,4 +169,4 @@ class Inviser(r: Resource) {
     }
 
     private object DataInviser : Data
-}
+}*/

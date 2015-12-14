@@ -236,14 +236,15 @@ class Flag(r: Resource) {
 }
 
 class Goldmine(r: Resource) {
+    val fabriker by inject<Fabriker>()
+
     init {
-        val builder = injectValue<Builder>()
         val flats = injectFlats().value
         val tile = r.tile("mine")
         val flater = injectValue<Flater>()
         injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.add(Goldmine) }
         injectValue<Stager>().slotTurnEnd.add(60,this,"захваченные золотые шахты дают золото")  {
-            builder.plusGold(side, flats().by<Goldmine>().count { flater.side(it) == side })
+            fabriker.plusGold(side, flats().by<Goldmine>().count { flater.side(it) == side })
         }
     }
 
@@ -257,4 +258,16 @@ class Hospital(r: Resource) {
     }
 
     private object Hospital : Data
+}
+
+class Inviser(r: Resource) {
+    init {
+        val tile = r.tile("inviser")
+        val flater = injectValue<Flater>()
+        val flats = injectFlats().value
+        injectValue<Flater>().addPoint(tile, TpFlat.special) { flat, side -> flat.add(Inviser) }
+        injectValue<Mover>().slotHide.add {obj -> flats().any{it.has<Inviser>() && flater.side(it)==obj.side} }
+    }
+
+    private object Inviser : Data
 }

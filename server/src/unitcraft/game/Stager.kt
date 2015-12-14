@@ -16,7 +16,6 @@ class Stager(r: Resource) {
     val lock = DabTile(r.tile("lock"))
     val focusMore = DabTile(r.tile("focusMore"))
 
-    val slotTurnStart = r.slot<AideSide>("Начало хода")
     val slotTurnEnd = r.slot<AideSide>("Конец хода")
 
     fun sideTurn() = allData().sideTurn
@@ -24,9 +23,8 @@ class Stager(r: Resource) {
     fun endTurn() {
         val sideTurn = allData().sideTurn
         slotTurnEnd.exe(AideSide(sideTurn))
-        allData().sideTurn = sideTurn.vs
-        slotTurnStart.exe(AideSide(sideTurn.vs))
         allData().sideWin = checkSideWin()
+        allData().sideTurn = sideTurn.vs
     }
 
     fun stage(sideVid: Side) = when {

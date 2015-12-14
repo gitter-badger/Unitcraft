@@ -20,7 +20,7 @@ class Mover(r: Resource) {
     val tileReveal = r.tile("reveal")
 
     init {
-        stager.slotTurnStart.add(100,this,"скрывает юнитов получивших невидимость") { objs().bySide(side).forEach { hideIfNeed(it) } }
+        stager.slotTurnEnd.add(1000,this,"скрывает юнитов получивших невидимость") { objs().bySide(side.vs).forEach { hideIfNeed(it) } }
     }
 
     /**

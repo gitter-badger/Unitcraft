@@ -78,6 +78,7 @@ class Objs : ListHasShape<Obj> {
     fun bySide(side: Side?) = list.bySide(side)
 
     inline fun <reified D : Data> by() = filter { it.has<D>() }
+    inline fun <reified D : Data> by(side:Side?) = filter { it.side == side && it.has<D>() }
 
     inline fun <reified T : Data> bothBy() = filter { it.has<T>() }.map { it to it<T>() }
 

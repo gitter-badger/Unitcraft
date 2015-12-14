@@ -72,7 +72,7 @@ enum class TpFlat() {
 }
 
 enum class TpObj{
-    std, builder
+    std, fabriker
 }
 
 class FlatLand(val tpFlat: TpFlat, val num: Int, val side: Side) {

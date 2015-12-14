@@ -43,7 +43,7 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     register(Lifer(r))
     register(SkilerMove(r))
     register(SkilerHit(r))
-    register(Builder(r))
+    register(Fabriker(r))
 
     Forest(r)
     Grass(r)
@@ -54,15 +54,10 @@ fun registerUnitcraft(data: () -> GameData = { object : GameData {} }): Resource
     Goldmine(r)
     Hospital(r)
     register(Flag(r))
-
-    Redeployer(r)
-    Armorer(r)
-    Airport(r)
     Inviser(r)
 
     Electric(r)
     Telepath(r)
-
     Imitator(r)
     Tiger(r)
     Mina(r)
@@ -88,7 +83,7 @@ class CmderUnitcraft : CmderGame {
 
     val flater: Flater by inject()
     val objer: Objer by inject()
-    val builder: Builder by inject()
+    val fabriker: Fabriker by inject()
     val editor: Editor by inject()
     val stager: Stager by inject()
     val spoter: Spoter by inject()
@@ -158,7 +153,7 @@ class CmderUnitcraft : CmderGame {
     private fun join(side: Side, sideJoin: Side?): Boolean {
         if (sideJoin == null || allData().needJoin == false) return false
         allData().needJoin = false
-        builder.plusGold(sideJoin.vs, allData().bonus[side]!!)
+        fabriker.plusGold(sideJoin.vs, allData().bonus[side]!!)
         allData().sideTurn = sideJoin
         return side != sideJoin
     }
