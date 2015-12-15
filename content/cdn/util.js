@@ -115,8 +115,10 @@ function storeImages(pool,prefix) {
         for(var q of qdmnLast) plugLoadImg(q);
     });
     return qdmn => {
-        if(qdmnLast[qdmnLast.length-1]!==qdmn) qdmnLast.push(qdmn);
-        if(qdmnLast.length>2) qdmnLast.shift();
+        if (isLocal) {
+            if (qdmnLast[qdmnLast.length - 1] !== qdmn) qdmnLast.push(qdmn);
+            if (qdmnLast.length > 2) qdmnLast.shift();
+        }
         var img = imgs.get(qdmn);
         if (img) {
             return img;

@@ -14,7 +14,6 @@ $(function () {
     var memo = initMemo(server);
     var key = initKey(keyboard);
     var keyTest = initKeyTest(keyboard);
-    var cmdScale = initCmdScale(keyboard);
     var tileset = Kefir.pool();
     var panelset = Kefir.pool();
     var stat = initStat(server);
@@ -31,7 +30,6 @@ $(function () {
         [click, R.curry(onClick)(surr.modal)],
         [key, onKey],
         [keyTest, onKeyTest],
-        [cmdScale, onCmdScale],
         [tileset, onTileset],
         [panelset, onPanelset],
         [second, onSecond],
@@ -45,23 +43,17 @@ $(function () {
 
 function onDmnCanvas(dmn, ui) {
     var qdmnPanelOld = ui.dmn != null ? ui.qdmnPanel() : null;
+    var qdmnTileOld = ui.dmn != null ? ui.qdmnTile() : null;
     ui.dmn = dmn;
     if (qdmnPanelOld != ui.qdmnPanel()) {
         var panelset = ui.storePanelset(ui.qdmnPanel());
         if (panelset) ui.panelset = panelset;
-        ui.fireGrid();
-        ui.fireAkter();
-    } else {
-        ui.fireGrid();
-        ui.fireAkter();
     }
+    updateTileset(qdmnTileOld,ui);
+    ui.fireGrid();
+    ui.fireAkter();
     ui.fireOpter();
     ui.fireToolbar();
-}
-
-function onCmdScale(cmdScale, ui) {
-    var scale = cmdScale != null ? clamp(ui.scale + cmdScale, 0, listQdmnTile.length - 1) : ui.scaleBest();
-    updateScale(scale, ui);
 }
 
 function onKey(key, ui) {
@@ -222,6 +214,7 @@ var audioYourTurn = new Audio("turn.mp3");
 function onMemo(memo, ui) {
     ui.memo = memo;
     var dmnGameOld = ui.game != null ? ui.game.dmn : null;
+    var qdmnTileOld = ui.game != null ? ui.qdmnTile(): null;
     ui.game = R.last(memo);
     ui.instant = Date.now();
 
@@ -232,9 +225,9 @@ function onMemo(memo, ui) {
         if (ui.focus != null && ui.game.spots[strPg(ui.focus.pg)] == null) ui.clearFocus();
     }
 
-    // нужно ли выбрать новый scale
+    // нужно ли изменить tileset
     if (dmnGameOld == null || !R.equals(dmnGameOld, ui.game.dmn)) {
-        updateScale(ui.scaleBest(), ui);
+        updateTileset(qdmnTileOld, ui);
     }
 
     // звук пора ходить
@@ -257,7 +250,7 @@ function onMemo(memo, ui) {
 }
 
 function onTileset(tileset, ui) {
-    if (ui.tileset == null || ui.tile() == tileset.step) {
+    if (ui.tileset == null || ui.qdmnTile() == tileset.step) {
         ui.tileset = tileset;
         ui.fireGrid();
         ui.fireAkter();
@@ -302,18 +295,11 @@ function initKey(keyboard) {
     return Kefir.merge([keyboard.key("Enter", "KeyQ", "KeyW", "KeyT")]);
 }
 
-function initCmdScale(keyboard) {
-    return Kefir.merge([keyboard.key("Minus").map(() => -1), keyboard.key("Equal").map(() => 1), keyboard.key("Digit0").map(() => null)]);
-}
-
-function updateScale(scale, ui) {
-    if (ui.scale != scale) {
-        ui.scale = scale;
-        var tileset = ui.storeTileset(ui.tile());
+function updateTileset(qdmnTileOld, ui) {
+    if(ui.game==null) return;
+    if (qdmnTileOld != ui.qdmnTile()) {
+        var tileset = ui.storeTileset(ui.qdmnTile());
         if (tileset) ui.tileset = tileset;
-        ui.fireGrid();
-        ui.fireAkter();
-        ui.fireToolbar();
     }
 }
 
@@ -337,9 +323,9 @@ function createUI(tileset, panelset, streamUi) {
         pgFromPst({x,y}) {
             var xx = x - ui.pstGrid().x;
             var yy = y - ui.pstGrid().y;
-            return (xx >= 0 && xx < this.tile() * this.game.dmn.xr && yy >= 0 && yy < this.tile() * this.game.dmn.yr) ? {
-                x: div(xx, this.tile()),
-                y: div(yy, this.tile())
+            return (xx >= 0 && xx < this.qdmnTile() * this.game.dmn.xr && yy >= 0 && yy < this.qdmnTile() * this.game.dmn.yr) ? {
+                x: div(xx, this.qdmnTile()),
+                y: div(yy, this.qdmnTile())
             } : null;
         },
         pstGrid() {
@@ -347,8 +333,8 @@ function createUI(tileset, panelset, streamUi) {
             var yr = this.dmn.yr;
             var qp = ui.qdmnPanel();
             var xrTbBb = qp + (ui.game.stage == "bonus" ? qp / 2 : 0);
-            var xrGrid = this.tile() * ui.game.dmn.xr;
-            var yrGrid = this.tile() * ui.game.dmn.yr;
+            var xrGrid = this.qdmnTile() * ui.game.dmn.xr;
+            var yrGrid = this.qdmnTile() * ui.game.dmn.yr;
             var diff = Math.max(xr - (xrGrid + xrTbBb), 0);
             return {x: xrTbBb + div(diff, 2), y: div(yr - yrGrid, 2)};
         },
@@ -434,14 +420,12 @@ function createUI(tileset, panelset, streamUi) {
             var qp = ui.qdmnPanel();
             return qp + (ui.game.stage == "bonus" ? qp / 2 : 0);
         },
-        tile(){
-            return listQdmnTile[ui.scale];
-        },
-        scaleBest() {
+        qdmnTile(){
             var xr = ui.dmn.xr - ui.xrTbBb();
             var xBest = findBest(qdmn => xr - qdmn * ui.game.dmn.xr, listQdmnTile);
             var yBest = findBest(qdmn => ui.dmn.yr - qdmn * ui.game.dmn.yr, listQdmnTile);
-            return R.indexOf(R.min(xBest, yBest), listQdmnTile);
+            var scale = R.indexOf(R.min(xBest, yBest), listQdmnTile);
+            return listQdmnTile[scale];
         },
         intervalElapsed(){
             return Date.now() - this.instant;

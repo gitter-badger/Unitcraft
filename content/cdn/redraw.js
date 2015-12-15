@@ -2,18 +2,18 @@ function redrawGrid() {
     var ctx = $("#canvasGrid")[0].getContext("2d");
 
     function calcEdge(pst, ui) {
-        var xr = ui.tile() * ui.game.dmn.xr;
-        var yr = ui.tile() * ui.game.dmn.yr;
-        var xgLeft = Math.max(0, div(pst.x, ui.tile()) + 1);
-        var xgRight = Math.max(0, div(ui.dmn.xr - pst.x - xr, ui.tile()) + 1);
-        var ygUp = Math.max(0, div(pst.y, ui.tile()) + 1);
-        var ygDown = Math.max(0, div(ui.dmn.yr - pst.y - yr, ui.tile()) + 1);
+        var xr = ui.qdmnTile() * ui.game.dmn.xr;
+        var yr = ui.qdmnTile() * ui.game.dmn.yr;
+        var xgLeft = Math.max(0, div(pst.x, ui.qdmnTile()) + 1);
+        var xgRight = Math.max(0, div(ui.dmn.xr - pst.x - xr, ui.qdmnTile()) + 1);
+        var ygUp = Math.max(0, div(pst.y, ui.qdmnTile()) + 1);
+        var ygDown = Math.max(0, div(ui.dmn.yr - pst.y - yr, ui.qdmnTile()) + 1);
         return {
             drawTopLeft(){
                 for (var x = -xgLeft; x < ui.game.dmn.xr + xgRight; x++) {
                     for (var y = -ygUp; y < ui.game.dmn.yr + ygDown; y++) {
                         if (x < 0 || y < 0)
-                            drawDabOnGrid(ctx, ui.game.dabEdge, {x, y}, ui.tileset, ui.tile());
+                            drawDabOnGrid(ctx, ui.game.dabEdge, {x, y}, ui.tileset, ui.qdmnTile());
                     }
                 }
             },
@@ -21,7 +21,7 @@ function redrawGrid() {
                 for (var x = -xgLeft; x < ui.game.dmn.xr + xgRight; x++) {
                     for (var y = -ygUp; y < ui.game.dmn.yr + ygDown; y++) {
                         if (y >= 0 && x >= ui.game.dmn.xr || x >= 0 && y >= ui.game.dmn.yr)
-                            drawDabOnGrid(ctx, ui.game.dabEdge, {x, y}, ui.tileset, ui.tile());
+                            drawDabOnGrid(ctx, ui.game.dabEdge, {x, y}, ui.tileset, ui.qdmnTile());
                     }
                 }
             }
@@ -36,8 +36,8 @@ function redrawGrid() {
 
         var edge = calcEdge(pst, ui);
         edge.drawTopLeft();
-        drawDrawing(ctx, ui.game.grid, ui.tileset, ui.tile());
-        drawDrawing(ctx, ui.game.traces, ui.tileset, ui.tile());
+        drawDrawing(ctx, ui.game.grid, ui.tileset, ui.qdmnTile());
+        drawDrawing(ctx, ui.game.traces, ui.tileset, ui.qdmnTile());
         edge.drawBotRight();
 
         ctx.restore();
@@ -54,10 +54,10 @@ function redrawAkter() {
         var pst = ui.pstGrid();
         ctx.translate(pst.x, pst.y);
         if (ui.pgLock != null && ui.pgLock.x != null)
-            drawDabOnGrid(ctx, ui.game.dabLock, ui.pgLock, ui.tileset, ui.tile());
+            drawDabOnGrid(ctx, ui.game.dabLock, ui.pgLock, ui.tileset, ui.qdmnTile());
         if (ui.focus != null) {
-            drawDrawing(ctx, ui.akts(), ui.tileset, ui.tile());
-            drawDabOnGrid(ctx, ui.sizeSloys() == 1 ? ui.game.dabFocus : ui.game.dabFocusMore, ui.focus.pg, ui.tileset, ui.tile());
+            drawDrawing(ctx, ui.akts(), ui.tileset, ui.qdmnTile());
+            drawDabOnGrid(ctx, ui.sizeSloys() == 1 ? ui.game.dabFocus : ui.game.dabFocusMore, ui.focus.pg, ui.tileset, ui.qdmnTile());
         }
         ctx.restore();
     }
